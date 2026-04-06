@@ -8,7 +8,11 @@ export type PlanTier = {
   stripePriceId?: string;
 };
 
-/** Match embed `targetPlanName` + `targetPriceMonthly` to a configured cheaper plan with a Stripe price id. */
+/**
+ * Match agent's targetPlanName + targetPriceMonthly to a configured cheaper plan.
+ * Returns the plan if name + price match and it's cheaper than current MRR.
+ * stripePriceId may be absent — caller decides whether to apply in Stripe.
+ */
 export function matchDowngradePlan(
   plans: PlanTier[],
   subscriberMrr: number,
@@ -22,9 +26,7 @@ export function matchDowngradePlan(
     if (pl.name.trim().toLowerCase().replace(/\s+/g, " ") !== key) continue;
     if (Math.abs(pl.priceMonthly - targetPriceMonthly) > 0.02) continue;
     if (pl.priceMonthly >= subscriberMrr - 0.02) continue;
-    const pid = pl.stripePriceId?.trim();
-    if (!pid || !pid.startsWith("price_")) continue;
-    return pl;
+    return pl; // matched — stripePriceId presence checked by caller
   }
   return null;
 }
@@ -438,20 +440,20 @@ export function resolveBillingOfferFromSession(params: {
       const match = matchDowngradePlan(
         settings.plans ?? [],
         mrr,
-        String(p.targetPlanName).trim(),
-        Number(p.targetPriceMonthly),
+        String(p.targetPlanName ?? "").trim(),
+        Number(p.targetPriceMonthly ?? 0),
       );
-      if (match?.stripePriceId) {
-        return {
-          offerType: "downgrade",
-          discountPct: 0,
-          discountMonths: defaultMonths,
-          offerMade: p.summary.trim().slice(0, 500),
-          source: "pending",
-          downgradeStripePriceId: match.stripePriceId,
-          downgradeNewMrr: match.priceMonthly,
-        };
-      }
+      // Always return downgrade — Stripe execution only happens when stripePriceId is present.
+      // Fall-through to empathy was silently swallowing valid downgrade offers.
+      return {
+        offerType: "downgrade",
+        discountPct: 0,
+        discountMonths: defaultMonths,
+        offerMade: p.summary.trim().slice(0, 500),
+        source: "pending",
+        downgradeStripePriceId: match?.stripePriceId ?? null,
+        downgradeNewMrr: match?.priceMonthly ?? null,
+      };
     } else {
       return {
         offerType: p.type,
