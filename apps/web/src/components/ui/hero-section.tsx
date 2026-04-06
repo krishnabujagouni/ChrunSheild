@@ -58,10 +58,12 @@ export function HeroSection({
           {badge && (
             <Badge variant="outline" className="animate-appear gap-2">
               <span className="text-muted-foreground">{badge.text}</span>
-              <a href={badge.action.href} className="flex items-center gap-1 font-semibold">
-                {badge.action.text}
-                <ArrowRightIcon className="h-3 w-3" />
-              </a>
+              {badge.action && (
+                <a href={badge.action.href} className="flex items-center gap-1 font-semibold">
+                  {badge.action.text}
+                  <ArrowRightIcon className="h-3 w-3" />
+                </a>
+              )}
             </Badge>
           )}
 
