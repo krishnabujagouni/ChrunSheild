@@ -4,10 +4,34 @@ import { tool, jsonSchema } from "ai";
 export type PlanTier = {
   name: string;
   priceMonthly: number;
+  /** Stripe Price id (`price_...`) on the connected account  required to apply a downgrade in Stripe */
+  stripePriceId?: string;
 };
 
+/** Match embed `targetPlanName` + `targetPriceMonthly` to a configured cheaper plan with a Stripe price id. */
+export function matchDowngradePlan(
+  plans: PlanTier[],
+  subscriberMrr: number,
+  targetName: string,
+  targetPriceMonthly: number,
+): PlanTier | null {
+  const key = targetName.trim().toLowerCase().replace(/\s+/g, " ");
+  if (!key || !Number.isFinite(targetPriceMonthly) || targetPriceMonthly <= 0) return null;
+  for (const pl of plans) {
+    if (!pl.name || !(pl.priceMonthly > 0)) continue;
+    if (pl.name.trim().toLowerCase().replace(/\s+/g, " ") !== key) continue;
+    if (Math.abs(pl.priceMonthly - targetPriceMonthly) > 0.02) continue;
+    if (pl.priceMonthly >= subscriberMrr - 0.02) continue;
+    const pid = pl.stripePriceId?.trim();
+    if (!pid || !pid.startsWith("price_")) continue;
+    return pl;
+  }
+  return null;
+}
+
 export type MerchantOfferSettings = {
-  maxDiscountPct: 0 | 10 | 25 | 40;
+  /** Ordered list of discount tiers the merchant has enabled (e.g. [10, 25]). Agent starts lowest, escalates. */
+  allowedDiscountPcts: Array<10 | 25 | 40>;
   discountDurationMonths: 1 | 2 | 3 | 6 | 12;
   allowPause: boolean;
   allowFreeExtension: boolean;
@@ -27,12 +51,22 @@ export type CancelAgentContext = {
   planName?: string;
 };
 
-/** Max % off you may quote for this subscriber, capped by MRR tier and merchant ceiling. */
-export function getEffectiveDiscountPctCap(mrr: number, settings: MerchantOfferSettings): number {
-  if (settings.maxDiscountPct <= 0) return 0;
-  if (mrr >= 200) return settings.maxDiscountPct;
-  if (mrr >= 50) return Math.min(settings.maxDiscountPct, 25);
-  return Math.min(settings.maxDiscountPct, 10);
+/** MRR-based cap on the maximum discount tier this subscriber can receive. */
+function mrrDiscountCap(mrr: number): 10 | 25 | 40 {
+  if (mrr >= 200) return 40;
+  if (mrr >= 50) return 25;
+  return 10;
+}
+
+/**
+ * Returns the ordered discount tiers available for this subscriber,
+ * filtered by both the merchant's selection and the MRR cap.
+ */
+export function getEffectiveDiscountTiers(mrr: number, settings: MerchantOfferSettings): Array<10 | 25 | 40> {
+  const cap = mrrDiscountCap(mrr);
+  return (settings.allowedDiscountPcts ?? [])
+    .filter((t) => t <= cap)
+    .sort((a, b) => a - b) as Array<10 | 25 | 40>;
 }
 
 /**
@@ -40,14 +74,22 @@ export function getEffectiveDiscountPctCap(mrr: number, settings: MerchantOfferS
  */
 function buildMerchantAllowlist(mrr: number, settings: MerchantOfferSettings): string {
   const lines: string[] = [];
-  const cap = getEffectiveDiscountPctCap(mrr, settings);
+  const tiers = getEffectiveDiscountTiers(mrr, settings);
 
-  if (cap > 0) {
+  if (tiers.length > 0) {
     const durationMonths = settings.discountDurationMonths ?? 3;
     const durationLabel = `${durationMonths} month${durationMonths !== 1 ? "s" : ""}`;
-    lines.push(
-      `- **Discount:** up to **${cap}% off** for exactly **${durationLabel}**  quote this exact duration, never a different number. (Merchant ceiling: ${settings.maxDiscountPct}%; your tier caps the amount you may quote.)`,
-    );
+    if (tiers.length === 1) {
+      lines.push(
+        `- **Discount:** offer **${tiers[0]}% off** for exactly **${durationLabel}**  quote this exact duration, never a different number.`,
+      );
+    } else {
+      const ladder = tiers.map((t) => `**${t}% off**`).join(" → ");
+      lines.push(
+        `- **Discount escalation:** ${ladder}, each for exactly **${durationLabel}**.\n` +
+        `  Start with the lowest (${tiers[0]}% off). Only escalate to the **next enabled** tier if they decline and still want to cancel. Do not skip an enabled step in this list. Never open with the highest offer.`,
+      );
+    }
   } else {
     lines.push("- **Discount:** **disabled** by this merchant  do not offer or mention percent-off pricing.");
   }
@@ -69,9 +111,14 @@ function buildMerchantAllowlist(mrr: number, settings: MerchantOfferSettings): s
       .filter((p) => p.name && p.priceMonthly > 0)
       .sort((a, b) => a.priceMonthly - b.priceMonthly);
     if (plans.length > 0) {
-      const planList = plans.map((p) => `  • ${p.name}: $${p.priceMonthly}/mo`).join("\n");
+      const planList = plans
+        .map((p) => `  • **${p.name}** — **$${p.priceMonthly}/mo** (fixed recurring price, not a percent off)`)
+        .join("\n");
       lines.push(
-        `- **Downgrade:** suggest switching to a cheaper plan. Only suggest plans whose price is lower than the subscriber's current plan. Available plans:\n${planList}`,
+        `- **Downgrade (fixed lower price):** Only suggest rows below that are **cheaper** than the subscriber's current **$${mrr}/mo**. ` +
+          `A downgrade is a **switch to that plan's monthly amount** (e.g. $40/mo means they pay $40/mo)  it is **never** a "40% off" or percent-off of their current plan. ` +
+          `When you present a concrete cheaper tier, call \`makeOffer\` with type **downgrade** and set **targetPlanName** and **targetPriceMonthly** to match **one row exactly** (same spelling and dollar amount). ` +
+          `Do **not** use type **discount** for moving to a listed cheaper tier.\n${planList}`,
       );
     } else {
       lines.push(
@@ -83,7 +130,7 @@ function buildMerchantAllowlist(mrr: number, settings: MerchantOfferSettings): s
   }
 
   if (
-    cap <= 0 &&
+    tiers.length === 0 &&
     !settings.allowPause &&
     !settings.allowFreeExtension &&
     !settings.allowPlanDowngrade
@@ -98,7 +145,7 @@ export function buildCancelAgentSystem(ctx: CancelAgentContext): string {
   const { mrr, riskClass, cancelAttempts = 0, offerSettings, locale, planName } = ctx;
 
   const defaultSettings: MerchantOfferSettings = {
-    maxDiscountPct: 25,
+    allowedDiscountPcts: [10, 25],
     discountDurationMonths: 3,
     allowPause: true,
     allowFreeExtension: true,
@@ -155,13 +202,14 @@ ${allowlist}
 
 How to make offers:
 - **You MUST call the \`makeOffer\` tool** in the **same turn** whenever you present a **concrete** retention incentive (discount, pause, extension, or downgrade). Call it **before** or **alongside** the subscriber-facing text so the server records the exact offer. For **empathy-only** replies with **no** concrete perk, do **not** call \`makeOffer\`.
+- **Percent-off vs downgrade:** Type **discount** is only for temporary **percentage off** the current subscription. If the merchant listed cheaper **plans with dollar prices**, pitching **$X/mo** (e.g. $40/mo) is type **downgrade**, not discount  never equate "40" in "$40/mo" with "40% off".
 - **One incentive type per message** when you propose something concrete. Examples: offer **only** a discount, **or** only a pause, **or** only a free extension, **or** only a downgrade path  **not** combinations like "pause this month, then 25% off after" in the same proposal.
 - If they decline the first option, your **next** reply may offer **one different** allowed type  still one at a time.
 - Do not describe multi-step bundles the product cannot apply as a single action. If they need to hear alternatives, use clear **either / or** language ("You can choose A or B") but when they accept, they will confirm **one** path via **Keep my subscription**.
 
 Conversation goals:
 - Understand why they are leaving (one short, direct question if you don't know yet  not "no pressure either way", be engaged).
-- Choose the **best single** allowed offer for their situation, within the list above.
+- Choose the **best starting** incentive for their situation, within the list above. When multiple discount tiers are enabled, start with the **lowest** tier unless their reason clearly justifies starting higher (rare).
 - Be concise and warm. No guilt trips, no desperate begging, no excessive emoji.
 - Do NOT pre-announce that an offer exists before you understand the reason  it sounds salesy. Learn the reason first, then present the relevant offer.
 - If they insist on canceling after a real offer, accept graciously. Short, warm close  no lecture.
@@ -182,6 +230,10 @@ export type PendingOffer = {
   discountPct?: number;
   /** Discount duration months  only for type=discount */
   discountMonths?: number;
+  /** type=downgrade: must match merchant plan row */
+  targetPlanName?: string;
+  /** type=downgrade: that plan's monthly USD from the list */
+  targetPriceMonthly?: number;
   /** Human-readable summary for dashboard, e.g. "25% off for 3 months" */
   summary: string;
 };
@@ -195,6 +247,8 @@ type MakeOfferInput = {
   type: "discount" | "pause" | "extension" | "downgrade" | "empathy";
   discountPct?: number;
   discountMonths?: number;
+  targetPlanName?: string;
+  targetPriceMonthly?: number;
   summary: string;
 };
 
@@ -216,6 +270,16 @@ export const makeOfferTool = tool({
       discountMonths: {
         type: "number",
         description: "Duration of the discount in months. Required when type is 'discount'.",
+      },
+      targetPlanName: {
+        type: "string",
+        description:
+          "Required when type is 'downgrade': plan name exactly as in the merchant list (e.g. Starter). Not used for discount.",
+      },
+      targetPriceMonthly: {
+        type: "number",
+        description:
+          "Required when type is 'downgrade': that plan's monthly USD from the list (e.g. 40 for $40/mo). Not a percentage.",
       },
       summary: {
         type: "string",
@@ -256,23 +320,42 @@ function isValidPendingShape(p: unknown): p is PendingOffer {
   if (o.type === "discount") {
     if (typeof o.discountPct !== "number" || !Number.isFinite(o.discountPct)) return false;
   }
+  if (o.type === "downgrade") {
+    if (typeof o.targetPlanName !== "string" || !String(o.targetPlanName).trim()) return false;
+    if (typeof o.targetPriceMonthly !== "number" || !Number.isFinite(o.targetPriceMonthly) || o.targetPriceMonthly <= 0) {
+      return false;
+    }
+  }
   return true;
 }
 
 function pendingMatchesMerchantSettings(
   p: PendingOffer,
-  _mrr: number,
+  mrr: number,
   settings: MerchantOfferSettings,
 ): boolean {
   switch (p.type) {
-    case "discount":
-      return settings.maxDiscountPct > 0;
+    case "discount": {
+      const tiers = getEffectiveDiscountTiers(mrr, settings);
+      if (tiers.length === 0) return false;
+      const offered = Number(p.discountPct ?? 0);
+      const pct = tiers.filter((t) => t <= offered).pop() ?? 0;
+      return pct > 0;
+    }
     case "pause":
       return settings.allowPause;
     case "extension":
       return settings.allowFreeExtension;
-    case "downgrade":
-      return settings.allowPlanDowngrade;
+    case "downgrade": {
+      if (!settings.allowPlanDowngrade) return false;
+      const match = matchDowngradePlan(
+        settings.plans ?? [],
+        mrr,
+        String(p.targetPlanName ?? "").trim(),
+        Number(p.targetPriceMonthly),
+      );
+      return match !== null;
+    }
     case "empathy":
       return true;
     default:
@@ -298,14 +381,25 @@ export function resolveBillingOfferFromSession(params: {
   discountMonths: number;
   offerMade: string | null;
   source: "pending" | "client" | "default";
+  /** Set when offer is a validated downgrade with Stripe price on file */
+  downgradeStripePriceId?: string | null;
+  downgradeNewMrr?: number | null;
 } {
   const { saved, pendingOffer, bodyOfferType, bodyDiscountPct, bodyOfferMade, mrr, offerSettings } = params;
   if (!saved) {
-    return { offerType: null, discountPct: 0, discountMonths: 3, offerMade: null, source: "default" };
+    return {
+      offerType: null,
+      discountPct: 0,
+      discountMonths: 3,
+      offerMade: null,
+      source: "default",
+      downgradeStripePriceId: null,
+      downgradeNewMrr: null,
+    };
   }
 
   const defaultSettings: MerchantOfferSettings = {
-    maxDiscountPct: 25,
+    allowedDiscountPcts: [10, 25],
     discountDurationMonths: 3,
     allowPause: true,
     allowFreeExtension: true,
@@ -320,8 +414,9 @@ export function resolveBillingOfferFromSession(params: {
   if (isValidPendingShape(pendingOffer) && pendingMatchesMerchantSettings(pendingOffer, mrr, settings)) {
     const p = pendingOffer;
     if (p.type === "discount") {
-      const cap = getEffectiveDiscountPctCap(mrr, settings);
-      const pct = normalizeDiscountPctToTier(Number(p.discountPct ?? 0), cap);
+      const effectiveTiers = getEffectiveDiscountTiers(mrr, settings);
+      const offered = Number(p.discountPct ?? 0);
+      const pct = effectiveTiers.filter((t) => t <= offered).pop() ?? 0;
       if (pct <= 0) {
         // Invalid discount after clamp  fall through
       } else {
@@ -335,6 +430,26 @@ export function resolveBillingOfferFromSession(params: {
           discountMonths: months,
           offerMade: p.summary.trim().slice(0, 500),
           source: "pending",
+          downgradeStripePriceId: null,
+          downgradeNewMrr: null,
+        };
+      }
+    } else if (p.type === "downgrade") {
+      const match = matchDowngradePlan(
+        settings.plans ?? [],
+        mrr,
+        String(p.targetPlanName).trim(),
+        Number(p.targetPriceMonthly),
+      );
+      if (match?.stripePriceId) {
+        return {
+          offerType: "downgrade",
+          discountPct: 0,
+          discountMonths: defaultMonths,
+          offerMade: p.summary.trim().slice(0, 500),
+          source: "pending",
+          downgradeStripePriceId: match.stripePriceId,
+          downgradeNewMrr: match.priceMonthly,
         };
       }
     } else {
@@ -344,13 +459,15 @@ export function resolveBillingOfferFromSession(params: {
         discountMonths: defaultMonths,
         offerMade: p.summary.trim().slice(0, 500),
         source: "pending",
+        downgradeStripePriceId: null,
+        downgradeNewMrr: null,
       };
     }
   }
 
   const raw = (bodyOfferType ?? "").trim().toLowerCase();
   if (raw && isBillingOfferType(raw)) {
-    const cap = getEffectiveDiscountPctCap(mrr, settings);
+    const effectiveTiers = getEffectiveDiscountTiers(mrr, settings);
     const clientPct = Number(bodyDiscountPct ?? 0);
     const synthetic: PendingOffer =
       raw === "discount"
@@ -369,10 +486,15 @@ export function resolveBillingOfferFromSession(params: {
         discountMonths: defaultMonths,
         offerMade: bodyOfferMade?.trim().slice(0, 500) ?? null,
         source: "default",
+        downgradeStripePriceId: null,
+        downgradeNewMrr: null,
       };
     }
 
-    const pct = raw === "discount" ? normalizeDiscountPctToTier(clientPct, cap) : 0;
+    const merchantMaxTier =
+      raw === "discount" && effectiveTiers.length > 0 ? effectiveTiers[effectiveTiers.length - 1]! : 0;
+    const pct =
+      raw === "discount" ? normalizeDiscountPctToTier(clientPct, merchantMaxTier) : 0;
     if (raw === "discount" && pct <= 0) {
       return {
         offerType: "empathy",
@@ -380,6 +502,8 @@ export function resolveBillingOfferFromSession(params: {
         discountMonths: defaultMonths,
         offerMade: bodyOfferMade?.trim().slice(0, 500) ?? null,
         source: "default",
+        downgradeStripePriceId: null,
+        downgradeNewMrr: null,
       };
     }
 
@@ -389,6 +513,8 @@ export function resolveBillingOfferFromSession(params: {
       discountMonths: defaultMonths,
       offerMade: bodyOfferMade?.trim().slice(0, 500) ?? null,
       source: "client",
+      downgradeStripePriceId: null,
+      downgradeNewMrr: null,
     };
   }
 
@@ -398,7 +524,91 @@ export function resolveBillingOfferFromSession(params: {
     discountMonths: defaultMonths,
     offerMade: bodyOfferMade?.trim().slice(0, 500) ?? null,
     source: "default",
+    downgradeStripePriceId: null,
+    downgradeNewMrr: null,
   };
+}
+
+const STORED_DISCOUNT_TIERS = [10, 25, 40] as const;
+
+function parseTiersFromStoredArray(raw: unknown): Array<10 | 25 | 40> {
+  if (!Array.isArray(raw)) return [];
+  const set = new Set<10 | 25 | 40>();
+  for (const x of raw) {
+    const n = Number(x);
+    if ((STORED_DISCOUNT_TIERS as readonly number[]).includes(n)) set.add(n as 10 | 25 | 40);
+  }
+  return [...set].sort((a, b) => a - b);
+}
+
+/** Legacy dashboard field: all standard tiers up to this cap. */
+function tiersFromLegacyMaxDiscount(max: unknown): Array<10 | 25 | 40> | null {
+  const n = Number(max);
+  if (!([0, 10, 25, 40] as const).includes(n as 0 | 10 | 25 | 40)) return null;
+  if (n === 0) return [];
+  return STORED_DISCOUNT_TIERS.filter((t) => t <= n);
+}
+
+function parsePlansFromStoredJson(raw: unknown): PlanTier[] | undefined {
+  if (!Array.isArray(raw)) return undefined;
+  const out: PlanTier[] = [];
+  for (const p of raw) {
+    if (!p || typeof p !== "object") continue;
+    const o = p as { name?: unknown; priceMonthly?: unknown; stripePriceId?: unknown };
+    if (typeof o.name !== "string" || typeof o.priceMonthly !== "number") continue;
+    const name = o.name.trim().slice(0, 50);
+    const priceMonthly = Math.max(0, Number(o.priceMonthly));
+    if (!name || priceMonthly <= 0) continue;
+    let stripePriceId: string | undefined;
+    if (typeof o.stripePriceId === "string") {
+      const s = o.stripePriceId.trim();
+      if (/^price_[a-zA-Z0-9]+$/.test(s)) stripePriceId = s.slice(0, 64);
+    }
+    out.push(stripePriceId ? { name, priceMonthly, stripePriceId } : { name, priceMonthly });
+  }
+  return out.length ? out.slice(0, 20) : undefined;
+}
+
+/**
+ * Normalizes `tenants.offer_settings` JSON for the cancel flow.
+ * New shape uses `allowedDiscountPcts`; legacy rows use `maxDiscountPct` only.
+ */
+export function merchantOfferSettingsFromStoredJson(raw: unknown): MerchantOfferSettings {
+  const defaults: MerchantOfferSettings = {
+    allowedDiscountPcts: [10, 25],
+    discountDurationMonths: 3,
+    allowPause: true,
+    allowFreeExtension: true,
+    allowPlanDowngrade: false,
+    customMessage: "",
+  };
+  if (!raw || typeof raw !== "object") return defaults;
+  const r = raw as Record<string, unknown>;
+
+  let allowedDiscountPcts: Array<10 | 25 | 40>;
+  if (Array.isArray(r.allowedDiscountPcts)) {
+    allowedDiscountPcts = parseTiersFromStoredArray(r.allowedDiscountPcts);
+  } else {
+    const legacy = tiersFromLegacyMaxDiscount(r.maxDiscountPct);
+    allowedDiscountPcts = legacy ?? defaults.allowedDiscountPcts;
+  }
+
+  const dm = Number(r.discountDurationMonths);
+  const discountDurationMonths = VALID_DISCOUNT_MONTHS.has(dm as 1 | 2 | 3 | 6 | 12)
+    ? (dm as 1 | 2 | 3 | 6 | 12)
+    : defaults.discountDurationMonths;
+
+  const plans = parsePlansFromStoredJson(r.plans);
+  const out: MerchantOfferSettings = {
+    allowedDiscountPcts,
+    discountDurationMonths,
+    allowPause: typeof r.allowPause === "boolean" ? r.allowPause : defaults.allowPause,
+    allowFreeExtension: typeof r.allowFreeExtension === "boolean" ? r.allowFreeExtension : defaults.allowFreeExtension,
+    allowPlanDowngrade: typeof r.allowPlanDowngrade === "boolean" ? r.allowPlanDowngrade : defaults.allowPlanDowngrade,
+    customMessage: typeof r.customMessage === "string" ? r.customMessage.slice(0, 300) : defaults.customMessage,
+  };
+  if (plans?.length) out.plans = plans;
+  return out;
 }
 
 export function getCancelAgentModel() {

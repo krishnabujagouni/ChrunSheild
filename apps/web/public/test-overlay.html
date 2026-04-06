@@ -93,6 +93,8 @@
 
   <div class="note" id="test-note">
     Open <code>test-overlay.html</code> in the editor and set <code>USE_REAL_APIS</code> + <code>TEST_CONFIG</code>. With real APIs: run <code>npm run dev</code>, open this page, complete chat, then tap <strong>Keep my subscription</strong>. Verify rows in Supabase → <code>save_sessions</code>.
+    <br /><br />
+    <strong>Downgrade test:</strong> In Dashboard → Settings, enable <em>Allow plan downgrade</em> and add plans (e.g. Starter $29, Growth $49, Pro $99). Set <code>planName</code> + <code>subscriptionMrr</code> here to the <em>current</em> tier (e.g. Pro / 99). Say you want something cheaper — Aria should mention only cheaper tiers. Stripe product prices are separate; ChurnShield does not auto-switch the subscription to another price yet.
   </div>
 </div>
 
@@ -110,7 +112,14 @@
     subscriberId:     "cus_UEzw3pzU4XgKGJ",              // Must be cus_... on the connected account
     subscriptionId:   "sub_REPLACE_ME",                 // Real sub_... from Stripe (optional but recommended)
     subscriberEmail:  "test.customer@example.com",      // Dashboard shows this instead of cus_...
+    /** Must match the subscriber’s real monthly amount; Aria uses this to pick cheaper downgrade targets. */
     subscriptionMrr: 99,
+    /**
+     * Current plan label (e.g. matches a Stripe price nickname or your in-app name).
+     * Dashboard → Retention → add the same names with monthly prices under “Allow plan downgrade”.
+     * Aria only suggests plans in Settings with price **below** subscriptionMrr.
+     */
+    planName:         "Pro",
   };
 
   /** Web Crypto HMAC-SHA256 for local real-api testing only */
@@ -135,6 +144,7 @@
         : undefined,
       subscriberEmail:  TEST_CONFIG.subscriberEmail,
       subscriptionMrr:  TEST_CONFIG.subscriptionMrr,
+      planName:         TEST_CONFIG.planName || undefined,
     };
     if (USE_REAL_APIS && TEST_CONFIG.embedSecret) {
       // Option A: raw secret in TEST_CONFIG (DEV only  never ship to production)

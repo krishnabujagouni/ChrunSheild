@@ -1,7 +1,7 @@
 "use client";
 import { useState } from "react";
 
-type Plan = { name: string; priceMonthly: number };
+type Plan = { name: string; priceMonthly: number; stripePriceId?: string };
 
 export function PlansEditor({
   initialPlans,
@@ -42,7 +42,7 @@ export function PlansEditor({
           <div style={{ fontSize: 12, fontWeight: 600, color: "#0f172a", marginBottom: 8 }}>
             Your plans{" "}
             <span style={{ fontWeight: 400, color: "#94a3b8" }}>
-              (Aria will only suggest plans cheaper than the subscriber&apos;s current plan)
+              (Aria suggests cheaper tiers; add each plan&apos;s Stripe <strong>Price ID</strong> (<code style={{ fontSize: 11 }}>price_...</code>) so &quot;Keep subscription&quot; switches the sub in Stripe)
             </span>
           </div>
 
@@ -53,14 +53,16 @@ export function PlansEditor({
           )}
 
           {plans.map((plan, i) => (
-            <div key={i} style={{ display: "flex", gap: 8, marginBottom: 8, alignItems: "center" }}>
+            <div key={i} style={{ display: "flex", flexDirection: "column", gap: 6, marginBottom: 10 }}>
+              <div style={{ display: "flex", gap: 8, alignItems: "center", flexWrap: "wrap" }}>
               <input
                 type="text"
                 placeholder="Plan name (e.g. Basic)"
                 value={plan.name}
                 onChange={(e) => updatePlan(i, "name", e.target.value)}
                 style={{
-                  flex: 2,
+                  flex: "1 1 140px",
+                  minWidth: 120,
                   border: "1px solid #e2e8f0",
                   borderRadius: 6,
                   padding: "7px 10px",
@@ -105,6 +107,24 @@ export function PlansEditor({
               >
                 ×
               </button>
+              </div>
+              <input
+                type="text"
+                placeholder="Stripe Price ID (price_...)"
+                value={plan.stripePriceId ?? ""}
+                onChange={(e) => updatePlan(i, "stripePriceId", e.target.value.trim())}
+                style={{
+                  width: "100%",
+                  maxWidth: 420,
+                  border: "1px solid #e2e8f0",
+                  borderRadius: 6,
+                  padding: "7px 10px",
+                  fontSize: 12,
+                  fontFamily: "ui-monospace, monospace",
+                  color: "#0f172a",
+                  outline: "none",
+                }}
+              />
             </div>
           ))}
 

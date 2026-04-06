@@ -6,10 +6,14 @@ import { generateEmbedAppId, generateEmbedHmacSecret } from "@/lib/tenant-embed"
 import { SaveButton } from "./save-button";
 import { PlansEditor } from "./plans-editor";
 
-type PlanTier = { name: string; priceMonthly: number };
+type PlanTier = { name: string; priceMonthly: number; stripePriceId?: string };
+
+const DISCOUNT_TIER_VALUES = [10, 25, 40] as const;
+type DiscountTier = (typeof DISCOUNT_TIER_VALUES)[number];
 
 type OfferSettings = {
-  maxDiscountPct: 0 | 10 | 25 | 40;
+  /** Enabled percent-off tiers (sorted). Empty = no discount offers. */
+  allowedDiscountPcts: DiscountTier[];
   discountDurationMonths: 1 | 2 | 3 | 6 | 12;
   allowPause: boolean;
   allowFreeExtension: boolean;
@@ -20,18 +24,49 @@ type OfferSettings = {
 
 const DISCOUNT_DURATION_OPTIONS = [1, 2, 3, 6, 12] as const;
 
+/** Legacy `maxDiscountPct` → enabled tiers up to that cap. Invalid / missing → null (caller uses defaults). */
+function tiersFromLegacyMax(max: unknown): DiscountTier[] | null {
+  const n = Number(max);
+  if (!([0, 10, 25, 40] as const).includes(n as 0 | 10 | 25 | 40)) return null;
+  if (n === 0) return [];
+  return DISCOUNT_TIER_VALUES.filter((t) => t <= n);
+}
+
+function parseAllowedDiscountArray(raw: unknown): DiscountTier[] {
+  if (!Array.isArray(raw)) return [];
+  const set = new Set<DiscountTier>();
+  for (const x of raw) {
+    const n = Number(x);
+    if ((DISCOUNT_TIER_VALUES as readonly number[]).includes(n)) set.add(n as DiscountTier);
+  }
+  return [...set].sort((a, b) => a - b);
+}
+
 function parsePlans(raw: unknown): PlanTier[] {
   if (!Array.isArray(raw)) return [];
   return raw
-    .filter((p) => p && typeof p === "object" && typeof p.name === "string" && typeof p.priceMonthly === "number")
-    .map((p) => ({ name: String(p.name).trim().slice(0, 50), priceMonthly: Math.max(0, Number(p.priceMonthly)) }))
+    .filter((p) => p && typeof p === "object" && typeof (p as { name?: unknown }).name === "string" && typeof (p as { priceMonthly?: unknown }).priceMonthly === "number")
+    .map((p) => {
+      const o = p as { name: string; priceMonthly: number; stripePriceId?: unknown };
+      let stripePriceId: string | undefined;
+      if (typeof o.stripePriceId === "string") {
+        const s = o.stripePriceId.trim();
+        if (/^price_[a-zA-Z0-9]+$/.test(s)) stripePriceId = s.slice(0, 64);
+      }
+      const row: PlanTier = {
+        name: String(o.name).trim().slice(0, 50),
+        priceMonthly: Math.max(0, Number(o.priceMonthly)),
+      };
+      if (stripePriceId) row.stripePriceId = stripePriceId;
+      return row;
+    })
     .filter((p) => p.name && p.priceMonthly > 0)
     .slice(0, 20);
 }
 
 function parseOfferSettings(raw: unknown): OfferSettings {
   const defaults: OfferSettings = {
-    maxDiscountPct: 25,
+    allowedDiscountPcts: [10, 25],
     discountDurationMonths: 3,
     allowPause: true,
     allowFreeExtension: true,
@@ -41,10 +76,15 @@ function parseOfferSettings(raw: unknown): OfferSettings {
   };
   if (!raw || typeof raw !== "object") return defaults;
   const r = raw as Record<string, unknown>;
+  let allowedDiscountPcts: DiscountTier[];
+  if (Array.isArray(r.allowedDiscountPcts)) {
+    allowedDiscountPcts = parseAllowedDiscountArray(r.allowedDiscountPcts);
+  } else {
+    const legacy = tiersFromLegacyMax(r.maxDiscountPct);
+    allowedDiscountPcts = legacy ?? defaults.allowedDiscountPcts;
+  }
   return {
-    maxDiscountPct: ([0, 10, 25, 40] as const).includes(r.maxDiscountPct as 0|10|25|40)
-      ? (r.maxDiscountPct as 0|10|25|40)
-      : defaults.maxDiscountPct,
+    allowedDiscountPcts,
     discountDurationMonths: (DISCOUNT_DURATION_OPTIONS as readonly number[]).includes(Number(r.discountDurationMonths))
       ? (Number(r.discountDurationMonths) as 1|2|3|6|12)
       : defaults.discountDurationMonths,
@@ -68,8 +108,17 @@ async function updateOfferSettings(formData: FormData) {
     plans = parsePlans(JSON.parse(rawPlans ?? "[]"));
   } catch { plans = []; }
 
-  const settings: OfferSettings = {
-    maxDiscountPct: (Number(formData.get("maxDiscountPct")) as 0|10|25|40),
+  const pctSet = new Set<DiscountTier>();
+  for (const v of formData.getAll("allowedDiscountPcts")) {
+    const n = Number(v);
+    if ((DISCOUNT_TIER_VALUES as readonly number[]).includes(n)) pctSet.add(n as DiscountTier);
+  }
+  const allowedDiscountPcts = [...pctSet].sort((a, b) => a - b);
+
+  const settings: OfferSettings & { maxDiscountPct: 0 | 10 | 25 | 40 } = {
+    allowedDiscountPcts,
+    /** Kept for legacy readers / docs; highest enabled tier, or 0 if none. */
+    maxDiscountPct: allowedDiscountPcts.length === 0 ? 0 : (Math.max(...allowedDiscountPcts) as 0 | 10 | 25 | 40),
     discountDurationMonths: (DISCOUNT_DURATION_OPTIONS as readonly number[]).includes(rawDuration)
       ? (rawDuration as 1|2|3|6|12) : 3,
     allowPause:         formData.get("allowPause") === "true",
@@ -159,31 +208,40 @@ export default async function SettingsPage({
 
           <form action={updateOfferSettings}>
 
-            {/* Max discount */}
+            {/* Discount tiers (multi-select); agent escalates low → high */}
             <div style={{ marginBottom: 24 }}>
-              <div style={{ fontSize: 13, fontWeight: 600, color: "#0f172a", marginBottom: 4 }}>Maximum discount allowed</div>
+              <div style={{ fontSize: 13, fontWeight: 600, color: "#0f172a", marginBottom: 4 }}>Discount tiers Aria may offer</div>
               <div style={{ fontSize: 12, color: "#94a3b8", marginBottom: 10 }}>
-                Aria will never offer more than this. Set to "No discount" to disable price offers entirely.
+                Select every percentage she is allowed to mention. She starts with the <strong>lowest</strong> selected tier and moves to the next only if the subscriber still wants to cancel. Uncheck all to disable price offers.
               </div>
               <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
-                {([0, 10, 25, 40] as const).map(pct => (
-                  <label key={pct} style={{
-                    display: "flex", alignItems: "center", gap: 6,
-                    padding: "8px 16px", borderRadius: 8, cursor: "pointer",
-                    border: `1px solid ${offerSettings.maxDiscountPct === pct ? "#7C3AED" : "#e2e8f0"}`,
-                    background: offerSettings.maxDiscountPct === pct ? "#f5f3ff" : "#fff",
-                    fontSize: 13, fontWeight: 500,
-                    color: offerSettings.maxDiscountPct === pct ? "#7C3AED" : "#374151",
-                  }}>
-                    <input type="radio" name="maxDiscountPct" value={pct} defaultChecked={offerSettings.maxDiscountPct === pct} style={{ accentColor: "#7C3AED" }} />
-                    {pct === 0 ? "No discount" : `${pct}% off`}
-                  </label>
-                ))}
+                {DISCOUNT_TIER_VALUES.map((pct) => {
+                  const checked = offerSettings.allowedDiscountPcts.includes(pct);
+                  return (
+                    <label key={pct} style={{
+                      display: "flex", alignItems: "center", gap: 6,
+                      padding: "8px 16px", borderRadius: 8, cursor: "pointer",
+                      border: `1px solid ${checked ? "#7C3AED" : "#e2e8f0"}`,
+                      background: checked ? "#f5f3ff" : "#fff",
+                      fontSize: 13, fontWeight: 500,
+                      color: checked ? "#7C3AED" : "#374151",
+                    }}>
+                      <input
+                        type="checkbox"
+                        name="allowedDiscountPcts"
+                        value={pct}
+                        defaultChecked={checked}
+                        style={{ accentColor: "#7C3AED" }}
+                      />
+                      {pct}% off
+                    </label>
+                  );
+                })}
               </div>
             </div>
 
             {/* Discount duration */}
-            {offerSettings.maxDiscountPct > 0 && (
+            {offerSettings.allowedDiscountPcts.length > 0 && (
               <div style={{ marginBottom: 24 }}>
                 <div style={{ fontSize: 13, fontWeight: 600, color: "#0f172a", marginBottom: 4 }}>Discount duration</div>
                 <div style={{ fontSize: 12, color: "#94a3b8", marginBottom: 10 }}>

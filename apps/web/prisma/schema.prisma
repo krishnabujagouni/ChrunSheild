@@ -33,7 +33,7 @@ model Tenant {
   /// Merchant's email for weekly digest notifications
   ownerEmail      String?  @map("owner_email")
   /// Merchant-configured offer limits for the cancel chat agent
-  /// Shape: { maxDiscountPct: 0|10|25|40, allowPause: bool, allowFreeExtension: bool, allowPlanDowngrade: bool, customMessage: string }
+  /// Shape: { allowedDiscountPcts, discountDurationMonths, allowPause, allowFreeExtension, allowPlanDowngrade, customMessage, plans?: { name, priceMonthly, stripePriceId? }[] }
   offerSettings   Json?    @map("offer_settings")
   /// Slack incoming webhook URL for save + high-risk alerts (optional)
   slackWebhookUrl   String?  @map("slack_webhook_url")

@@ -7,7 +7,7 @@ import { findTenantByPublicEmbedId } from "@/lib/tenant-by-embed";
 import { checkRateLimit, MAX_ID_LEN } from "@/lib/rate-limit";
 import { setSaveSessionSubscriberEmail } from "@/lib/save-session-emails";
 import { normalizeSubscriberEmail, validateSubscriberIdForStripeConnect } from "@/lib/subscriber-stripe";
-import { resolveBillingOfferFromSession, type MerchantOfferSettings } from "@/lib/cancel-agent";
+import { resolveBillingOfferFromSession, merchantOfferSettingsFromStoredJson } from "@/lib/cancel-agent";
 import { sendSlackSaveAlert } from "@/lib/slack";
 import { sendDiscordSaveAlert } from "@/lib/discord";
 import { fireWebhooks } from "@/lib/webhooks";
@@ -189,7 +189,7 @@ async function getOrCreateRetentionCoupon(
  * - extension  → negative customer balance credit (2 weeks of MRR)
  * - pause      → pause_collection: mark_uncollectible on active subscription
  * - empathy    → no Stripe action needed (subscriber stays at full price, nothing changes)
- * - downgrade  → skipped here; requires merchant-configured plan mapping (future feature)
+ * - downgrade  → subscription item price swapped to merchant-configured Stripe Price id (single-item subs)
  *
  * Fails silently  a Stripe error never rejects the save record.
  */
@@ -202,10 +202,11 @@ async function applyStripeOffer(
   merchantDisplayName: string,
   discountDurationMonths: number,
   preferredStripeSubscriptionId: string | null,
+  downgradeStripePriceId: string | null,
 ): Promise<{ applied: boolean; detail?: string }> {
   if (!_stripe)            return { applied: false, detail: "stripe_not_configured" };
   if (!stripeConnectId)    return { applied: false, detail: "stripe_connect_not_linked" };
-  if (offerType === "empathy" || offerType === "downgrade") {
+  if (offerType === "empathy") {
     return { applied: false, detail: "no_stripe_action_for_offer_type" };
   }
 
@@ -234,6 +235,33 @@ async function applyStripeOffer(
       const first = subs.data[0];
       if (!first) return { applied: false, detail: "no_active_subscription_found" };
       subscription = first;
+    }
+
+    // ── Downgrade: swap subscription item to target Price (same currency/product expectations on merchant) ──
+    if (offerType === "downgrade") {
+      const firstItem = subscription.items?.data?.[0];
+      if (!firstItem?.id) {
+        return { applied: false, detail: "subscription_no_items" };
+      }
+      const priceId = (downgradeStripePriceId ?? "").trim();
+      if (!priceId.startsWith("price_")) {
+        return { applied: false, detail: "downgrade_no_stripe_price" };
+      }
+      const keepDiscounts = await nonChurnShieldDiscountUpdateParams(
+        _stripe,
+        subscription.id,
+        opts,
+      );
+      await _stripe.subscriptions.update(
+        subscription.id,
+        {
+          items: [{ id: firstItem.id, price: priceId }],
+          discounts: keepDiscounts,
+          proration_behavior: "create_prorations",
+        },
+        opts,
+      );
+      return { applied: true, detail: `downgrade_${priceId}` };
     }
 
     // ── Discount: shared coupon per {pct × months} on this Connect account + apply ──
@@ -393,7 +421,7 @@ export async function POST(request: Request) {
     bodyDiscountPct: body.discountPct,
     bodyOfferMade: body.offerMade,
     mrr: Number(session.subscriptionMrr),
-    offerSettings: tenant.offerSettings as MerchantOfferSettings | null,
+    offerSettings: merchantOfferSettingsFromStoredJson(tenant.offerSettings),
   });
 
   // For cancelled outcomes: still record what was offered (offered-but-rejected event).
@@ -425,8 +453,12 @@ export async function POST(request: Request) {
     const netMrr = mrr.mul(new Decimal(1).minus(new Decimal(pct).div(100)));
     savedValue = netMrr.toDecimalPlaces(2);
     feeCharged = netMrr.mul(FEE_RATE).toDecimalPlaces(2);
+  } else if (saved && offerType === "downgrade" && resolved.downgradeNewMrr != null && resolved.downgradeNewMrr > 0) {
+    const netMrr = new Decimal(resolved.downgradeNewMrr);
+    savedValue = netMrr.toDecimalPlaces(2);
+    feeCharged = netMrr.mul(FEE_RATE).toDecimalPlaces(2);
   }
-  // extension / downgrade: savedValue and feeCharged stay null until invoice.paid
+  // extension: savedValue and feeCharged stay null until invoice.paid
 
   const emailFromClient = normalizeSubscriberEmail(body.subscriberEmail);
 
@@ -478,7 +510,7 @@ export async function POST(request: Request) {
   // Runs after DB write so a Stripe failure never blocks the save record.
   let stripeApplied = false;
   let stripeDetail: string | undefined;
-  if (saved && offerType && offerType !== "empathy" && offerType !== "downgrade") {
+  if (saved && offerType && offerType !== "empathy") {
     const discountPct = Math.max(0, Math.min(100, resolved.discountPct));
     const validDurations = [1, 2, 3, 6, 12];
     const safeDuration = validDurations.includes(resolved.discountMonths) ? resolved.discountMonths : 3;
@@ -491,6 +523,7 @@ export async function POST(request: Request) {
       tenant.name,
       safeDuration,
       session.stripeSubscriptionId ?? null,
+      resolved.downgradeStripePriceId?.trim() ?? null,
     );
     stripeApplied = result.applied;
     stripeDetail  = result.detail;

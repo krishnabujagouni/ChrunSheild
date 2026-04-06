@@ -7,7 +7,7 @@ import {
   buildCancelAgentSystem,
   getCancelAgentModel,
   makeOfferTool,
-  type MerchantOfferSettings,
+  merchantOfferSettingsFromStoredJson,
   type PendingOffer,
 } from "@/lib/cancel-agent";
 import { prisma } from "@/lib/db";
@@ -189,7 +189,7 @@ export async function POST(request: Request) {
     riskClass: churnPrediction?.riskClass ?? null,
     riskScore: churnPrediction ? Number(churnPrediction.riskScore) : null,
     cancelAttempts: pastAttempts,
-    offerSettings: tenant.offerSettings as MerchantOfferSettings | null,
+    offerSettings: merchantOfferSettingsFromStoredJson(tenant.offerSettings),
     locale,
     planName,
   });

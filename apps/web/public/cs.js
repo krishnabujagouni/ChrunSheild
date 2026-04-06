@@ -3,6 +3,7 @@
  * Script: data-app-id (App ID) + data-key (snippet key). Prefer data-app-id for public API id.
  * Identify: window.ChurnShield.identify({
  *   subscriberId, subscriptionMrr, subscriberEmail?, subscriptionId?,
+ *   planName?,  // e.g. "Pro" — shown to Aria; pair with subscriptionMrr for downgrade vs your Settings plans
  *   authHash? | getAuthHash?(cus) | authHashUrl?
  * })
  * cancel-intent always requires authHash; use getAuthHash or authHashUrl to fetch from your API.
@@ -37,6 +38,7 @@
     stripeCustomerId: null,
     stripeSubscriptionId: null,
     subscriberEmail: null,
+    planName: null,
     authHash: null,
     getAuthHashFn: null,
     authHashUrl: null,
@@ -538,6 +540,7 @@
         sessionId: chatState.sessionId,
         messages: chatState.messages,
         locale: (navigator.language || "").slice(0, 20) || undefined,
+        planName: identifyState.planName || undefined,
       }),
     })
       .then(function (res) {
@@ -815,6 +818,8 @@
         }
       }
       if (opts.subscriptionMrr != null) identifyState.subscriptionMrr = Number(opts.subscriptionMrr) || 0;
+      var planOpt = (opts.planName || opts.plan_name || "").toString().trim();
+      identifyState.planName = planOpt ? planOpt.slice(0, 100) : null;
       fetchSubscriberStatus();
     },
     pauseWall: function () {
