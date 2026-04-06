@@ -22,10 +22,13 @@ export async function GET(req: NextRequest) {
 
   const session = await prisma.saveSession.findUnique({
     where: { sessionId },
-    select: { pendingOffer: true, tenant: { select: { snippetKey: true } } },
+    select: { pendingOffer: true, tenant: { select: { snippetKey: true, embedAppId: true } } },
   });
 
-  if (!session || session.tenant.snippetKey !== snippetKey) {
+  if (
+    !session ||
+    (session.tenant.snippetKey !== snippetKey && session.tenant.embedAppId !== snippetKey)
+  ) {
     return NextResponse.json({ offer: null }, { headers: corsHeaders() });
   }
 

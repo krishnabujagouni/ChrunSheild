@@ -159,7 +159,7 @@ export async function POST(request: Request) {
   }
 
   // Build personalised system prompt from subscriber context
-  const [churnPrediction, pastAttempts] = await Promise.all([
+  const [churnPrediction, pastAttempts, activeSave] = await Promise.all([
     prisma.churnPrediction.findUnique({
       where: {
         tenantId_subscriberId: {
@@ -174,6 +174,18 @@ export async function POST(request: Request) {
         subscriberId: session.subscriberId,
         triggerType: "cancel_attempt",
       },
+    }),
+    // Check for an existing accepted save that hasn't been billed yet.
+    // If one exists, lock all financial offers — prevent double-dipping.
+    prisma.saveSession.findFirst({
+      where: {
+        tenantId: tenant.id,
+        subscriberId: session.subscriberId,
+        sessionId: { not: session.sessionId },
+        offerAccepted: true,
+        feeBilledAt: null,
+      },
+      select: { sessionId: true },
     }),
   ]);
 
@@ -192,6 +204,7 @@ export async function POST(request: Request) {
     offerSettings: merchantOfferSettingsFromStoredJson(tenant.offerSettings),
     locale,
     planName,
+    offersLocked: activeSave !== null,
   });
 
   const plainForTranscript = messages.map((m) => ({

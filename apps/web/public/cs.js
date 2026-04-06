@@ -515,11 +515,17 @@
   function buildOfferLabel(offer) {
     if (!offer || !offer.type) return null;
     if (offer.type === "discount" && offer.discountPct) {
-      var months = offer.discountMonths ? " for " + offer.discountMonths + " month" + (offer.discountMonths > 1 ? "s" : "") : "";
-      return "Claim " + offer.discountPct + "% off" + months + "  stay subscribed";
+      var months = offer.discountMonths ? " for " + offer.discountMonths + " mo" : "";
+      var mrr = identifyState.subscriptionMrr;
+      var discounted = mrr > 0 ? " \u2192 $" + (mrr * (1 - offer.discountPct / 100)).toFixed(2) + "/mo" : "";
+      return "Claim " + offer.discountPct + "% off" + months + discounted + "  stay subscribed";
     }
     if (offer.type === "pause") return "Pause my subscription  stay subscribed";
     if (offer.type === "extension") return "Claim free extension  stay subscribed";
+    if (offer.type === "downgrade" && offer.targetPriceMonthly) {
+      var price = "$" + (Number(offer.targetPriceMonthly) % 1 === 0 ? Number(offer.targetPriceMonthly).toFixed(0) : Number(offer.targetPriceMonthly).toFixed(2)) + "/mo";
+      return "Activate " + price + (offer.targetPlanName ? " \u00b7 " + offer.targetPlanName : "") + "  stay subscribed";
+    }
     if (offer.type === "downgrade") return "Switch to a smaller plan  stay subscribed";
     return null;
   }

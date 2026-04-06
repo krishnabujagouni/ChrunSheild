@@ -258,10 +258,33 @@ async function applyStripeOffer(
         {
           items: [{ id: firstItem.id, price: priceId }],
           discounts: keepDiscounts,
-          proration_behavior: "create_prorations",
+          proration_behavior: "none",
         },
         opts,
       );
+      // Belt-and-suspenders: remove ChurnShield coupons from both the legacy
+      // subscription.discount field and the customer.discount field — the new-style
+      // subscription.discounts array is already cleared by discounts: keepDiscounts above.
+      try {
+        // 1) Legacy subscription-level discount (singular field, pre-2020 API style)
+        await _stripe.subscriptions.deleteDiscount(subscription.id, opts);
+      } catch { /* no-op if not present */ }
+      try {
+        // 2) Customer-level discount — expand coupon so isChurnShieldRetentionCoupon works
+        const cust = await _stripe.customers.retrieve(
+          customerId,
+          { expand: ["discount.coupon"] } as Stripe.CustomerRetrieveParams,
+          opts,
+        );
+        if (!("deleted" in cust) && cust.discount?.coupon) {
+          const cpn = typeof cust.discount.coupon === "string"
+            ? await _stripe.coupons.retrieve(cust.discount.coupon, opts)
+            : cust.discount.coupon;
+          if (isChurnShieldRetentionCoupon(cpn)) {
+            await _stripe.customers.deleteDiscount(customerId, opts);
+          }
+        }
+      } catch { /* best-effort */ }
       return { applied: true, detail: `downgrade_${priceId}` };
     }
 
@@ -320,7 +343,12 @@ async function applyStripeOffer(
     return { applied: false, detail: "unhandled_offer_type" };
   } catch (err) {
     // Never let a Stripe error block the save record  log and continue
-    console.error("[ChurnShield] applyStripeOffer failed", offerType, err);
+    const isNotFound = err instanceof Stripe.errors.StripeInvalidRequestError && err.code === "resource_missing";
+    if (isNotFound) {
+      console.warn("[ChurnShield] applyStripeOffer: Stripe resource not found (stale test data?)", offerType, err.message);
+    } else {
+      console.error("[ChurnShield] applyStripeOffer failed", offerType, err);
+    }
     return { applied: false, detail: err instanceof Error ? err.message : String(err) };
   }
 }

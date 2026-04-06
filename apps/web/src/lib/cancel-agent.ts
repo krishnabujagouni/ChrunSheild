@@ -51,6 +51,11 @@ export type CancelAgentContext = {
   locale?: string;
   /** Current plan name the subscriber is on — passed from embed identify() call */
   planName?: string;
+  /**
+   * True when the subscriber already has an active retention offer (accepted but not yet
+   * billed). All financial incentives are locked — empathy and product support only.
+   */
+  offersLocked?: boolean;
 };
 
 /** MRR-based cap on the maximum discount tier this subscriber can receive. */
@@ -144,7 +149,7 @@ function buildMerchantAllowlist(mrr: number, settings: MerchantOfferSettings): s
 }
 
 export function buildCancelAgentSystem(ctx: CancelAgentContext): string {
-  const { mrr, riskClass, cancelAttempts = 0, offerSettings, locale, planName } = ctx;
+  const { mrr, riskClass, cancelAttempts = 0, offerSettings, locale, planName, offersLocked } = ctx;
 
   const defaultSettings: MerchantOfferSettings = {
     allowedDiscountPcts: [10, 25],
@@ -156,7 +161,9 @@ export function buildCancelAgentSystem(ctx: CancelAgentContext): string {
   };
 
   const settings = offerSettings ?? defaultSettings;
-  const allowlist = buildMerchantAllowlist(mrr, settings);
+  const allowlist = offersLocked
+    ? "- **No promotional incentives available.** This subscriber already has an active retention offer (discount or plan change) that has not yet expired. Do NOT offer any new discounts, pauses, extensions, or downgrades. Offer empathy and product support only. Do NOT call `makeOffer` for any financial incentive."
+    : buildMerchantAllowlist(mrr, settings);
 
   const riskNote =
     riskClass === "high"
