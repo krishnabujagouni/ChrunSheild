@@ -1,0 +1,274 @@
+// ChurnShield  Supabase/Postgres. Python agents use the same tables via asyncpg.
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum TriggerType {
+  cancel_attempt
+  payment_failed
+  prediction_outreach
+}
+
+model Tenant {
+  id              String   @id @default(uuid()) @db.Uuid
+  name            String
+  clerkUserId     String?  @unique @map("clerk_user_id")
+  clerkOrgId      String?  @unique @map("clerk_org_id")
+  /// Stripe Connect account id (acct_...) for this merchant
+  stripeConnectId String?  @unique @map("stripe_connect_id")
+  /// Public snippet key shown in dashboard (cs_live_...)
+  snippetKey      String?  @unique @map("snippet_key")
+  /// Public app id (cs_app_...)  use data-app-id in snippet; cancel APIs accept this or snippetKey
+  embedAppId      String   @unique @map("embed_app_id") @db.VarChar(32)
+  /// HMAC secret  always set; cancel-intent requires authHash = HMAC-SHA256(secret, subscriberId) hex
+  embedHmacSecret String   @map("embed_hmac_secret") @db.VarChar(128)
+  /// False until merchant explicitly rotates/reveals secret. While false, cancel-intent allows unsigned requests (grace mode) with a warning header.
+  embedSecretActivated Boolean @default(false) @map("embed_secret_activated")
+  /// Merchant's email for weekly digest notifications
+  ownerEmail      String?  @map("owner_email")
+  /// Merchant-configured offer limits for the cancel chat agent
+  /// Shape: { maxDiscountPct: 0|10|25|40, allowPause: bool, allowFreeExtension: bool, allowPlanDowngrade: bool, customMessage: string }
+  offerSettings   Json?    @map("offer_settings")
+  /// Slack incoming webhook URL for save + high-risk alerts (optional)
+  slackWebhookUrl   String?  @map("slack_webhook_url")
+  /// Slack channel name shown in the UI after OAuth (e.g. #churn-alerts)
+  slackChannelName  String?  @map("slack_channel_name")
+  /// Discord incoming webhook URL for save + high-risk alerts (optional)
+  discordWebhookUrl  String?  @map("discord_webhook_url")
+  /// Discord channel name shown in the UI after OAuth (e.g. churnshield-alerts)
+  discordChannelName String?  @map("discord_channel_name")
+  createdAt       DateTime @default(now()) @map("created_at")
+  updatedAt       DateTime @updatedAt @map("updated_at")
+
+  stripeEvents      StripeEvent[]
+  saveSessions      SaveSession[]
+  churnPredictions  ChurnPrediction[]
+  feedbackDigests   FeedbackDigest[]
+  paymentRetries    PaymentRetry[]
+  subscriberFlags   SubscriberFlag[]
+  webhookEndpoints  WebhookEndpoint[]
+  oauthAuthCodes    IntegrationOAuthAuthCode[]
+  oauthAccessTokens IntegrationOAuthAccessToken[]
+
+  @@map("tenants")
+}
+
+/// Short-lived authorization codes for integration OAuth (Zapier / Make / custom apps)
+model IntegrationOAuthAuthCode {
+  id           String    @id @default(uuid()) @db.Uuid
+  tenantId     String    @map("tenant_id") @db.Uuid
+  codeHash     String    @unique @map("code_hash") @db.VarChar(64)
+  clientId     String    @map("client_id") @db.VarChar(128)
+  redirectUri  String    @map("redirect_uri") @db.VarChar(2048)
+  scope        String    @db.VarChar(256)
+  expiresAt    DateTime  @map("expires_at")
+  usedAt       DateTime? @map("used_at")
+  createdAt    DateTime  @default(now()) @map("created_at")
+
+  tenant Tenant @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+
+  @@index([expiresAt])
+  @@map("integration_oauth_auth_codes")
+}
+
+/// Access + refresh tokens issued to automation tools after OAuth consent
+model IntegrationOAuthAccessToken {
+  id               String    @id @default(uuid()) @db.Uuid
+  tenantId         String    @map("tenant_id") @db.Uuid
+  tokenHash        String    @unique @map("token_hash") @db.VarChar(64)
+  refreshTokenHash String?   @unique @map("refresh_token_hash") @db.VarChar(64)
+  clientId         String    @map("client_id") @db.VarChar(128)
+  scope            String    @db.VarChar(256)
+  expiresAt        DateTime  @map("expires_at")
+  refreshExpiresAt DateTime? @map("refresh_expires_at")
+  revokedAt        DateTime? @map("revoked_at")
+  createdAt        DateTime  @default(now()) @map("created_at")
+
+  tenant Tenant @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+
+  @@index([tenantId])
+  @@index([expiresAt])
+  @@map("integration_oauth_access_tokens")
+}
+
+model StripeEvent {
+  id            String   @id @default(uuid()) @db.Uuid
+  tenantId      String?  @map("tenant_id") @db.Uuid
+  stripeEventId String   @unique @map("stripe_event_id")
+  type          String
+  payload       Json
+  livemode      Boolean  @default(false)
+  processed     Boolean  @default(false)
+  receivedAt    DateTime @default(now()) @map("received_at")
+
+  tenant Tenant? @relation(fields: [tenantId], references: [id], onDelete: SetNull)
+
+  @@index([type])
+  @@index([tenantId])
+  @@index([receivedAt])
+  @@map("stripe_events")
+}
+
+/// Save session ledger  billing attribution (product doc §7.3)
+model SaveSession {
+  sessionId          String      @id @default(uuid()) @map("session_id") @db.Uuid
+  tenantId           String      @map("tenant_id") @db.Uuid
+  triggerType        TriggerType @map("trigger_type")
+  subscriberId       String      @map("subscriber_id")
+  /// Stripe Subscription id (sub_...) when passed from embed  targets the correct sub for offers if customer has several.
+  stripeSubscriptionId String?   @map("stripe_subscription_id") @db.VarChar(64)
+  /// Merchant-facing display; optional. Pass from embed as subscriberEmail (Stripe customer id stays in subscriberId).
+  subscriberEmail    String?     @map("subscriber_email") @db.VarChar(320)
+  subscriptionMrr    Decimal     @map("subscription_mrr") @db.Decimal(12, 2)
+  offerMade          String?     @map("offer_made")
+  /// pause | extension | discount | downgrade | empathy
+  offerType          String?     @map("offer_type")
+  offerAccepted      Boolean     @default(false) @map("offer_accepted")
+  outcomeConfirmedAt DateTime?   @map("outcome_confirmed_at")
+  savedValue         Decimal?    @map("saved_value") @db.Decimal(12, 2)
+  feeCharged         Decimal?    @map("fee_charged") @db.Decimal(12, 2)
+  /// Set when fee is actually charged via Stripe Connect (after 30-day window)
+  feeBilledAt        DateTime?   @map("fee_billed_at")
+  stripeChargeId     String?     @map("stripe_charge_id")
+  /// Structured offer captured by makeOffer tool call during chat  authoritative source for cancel-outcome
+  pendingOffer       Json?       @map("pending_offer")
+  transcript         Json?
+  createdAt          DateTime    @default(now()) @map("created_at")
+
+  tenant Tenant @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+
+  @@index([tenantId, createdAt])
+  @@index([subscriberId])
+  @@map("save_sessions")
+}
+
+/// Daily churn risk scores per subscriber, upserted by the Python prediction agent
+model ChurnPrediction {
+  id           String   @id @default(uuid()) @db.Uuid
+  tenantId     String   @map("tenant_id") @db.Uuid
+  subscriberId String   @map("subscriber_id")
+  riskScore    Decimal  @map("risk_score") @db.Decimal(5, 4)
+  riskClass    String   @map("risk_class")
+  features     Json?
+  predictedAt  DateTime @default(now()) @map("predicted_at")
+
+  tenant Tenant @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+
+  @@unique([tenantId, subscriberId])
+  @@index([tenantId, riskClass])
+  @@map("churn_predictions")
+}
+
+/// Weekly AI-generated digest of cancellation feedback themes
+model FeedbackDigest {
+  id              String   @id @default(uuid()) @db.Uuid
+  tenantId        String   @map("tenant_id") @db.Uuid
+  periodDays      Int      @map("period_days")
+  transcriptCount Int      @map("transcript_count")
+  clusters        Json?
+  digestText      String   @map("digest_text")
+  /// pgvector embedding of digestText  populated by feedback_analyser.py via voyage-3-lite (512 dims)
+  /// Run in Supabase SQL editor to enable:
+  ///   CREATE EXTENSION IF NOT EXISTS vector;
+  ///   ALTER TABLE feedback_digests ADD COLUMN IF NOT EXISTS embedding vector(512);
+  ///   CREATE INDEX ON feedback_digests USING ivfflat (embedding vector_cosine_ops);
+  embedding       Unsupported("vector(512)")?  @map("embedding")
+  createdAt       DateTime @default(now()) @map("created_at")
+
+  tenant Tenant @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+
+  @@index([tenantId, createdAt])
+  @@map("feedback_digests")
+}
+
+/// Per-subscriber wall flags  set by Python agents, read by cs.js via subscriber-status API
+model SubscriberFlag {
+  id                String   @id @default(uuid()) @db.Uuid
+  tenantId          String   @map("tenant_id") @db.Uuid
+  subscriberId      String   @map("subscriber_id")
+  paymentWallActive Boolean  @default(false) @map("payment_wall_active")
+  pauseWallActive   Boolean  @default(false) @map("pause_wall_active")
+  updatedAt         DateTime @updatedAt @map("updated_at")
+
+  tenant Tenant @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+
+  @@unique([tenantId, subscriberId])
+  @@map("subscriber_flags")
+}
+
+/// Tenant-configured webhook endpoints — ChurnShield POSTs signed events to these URLs
+model WebhookEndpoint {
+  id        String   @id @default(uuid()) @db.Uuid
+  tenantId  String   @map("tenant_id") @db.Uuid
+  url       String   @db.VarChar(2048)
+  /// Subset of ["save.created","high_risk.detected"] the tenant subscribed to
+  events    String[]
+  /// HMAC-SHA256 signing secret (whsec_...) — sent as X-ChurnShield-Signature header
+  secret    String   @db.VarChar(128)
+  enabled   Boolean  @default(true)
+  /// Optional label to identify source (e.g. "zapier", "make") — used by UI to show connected state
+  label     String?  @db.VarChar(32)
+  createdAt DateTime @default(now()) @map("created_at")
+
+  tenant Tenant @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  deliveries WebhookDelivery[]
+
+  @@index([tenantId])
+  @@map("webhook_endpoints")
+}
+
+/// One row per POST attempt outcome (after retries) for tenant-configured webhook URLs
+model WebhookDelivery {
+  id                String   @id @default(uuid()) @db.Uuid
+  webhookEndpointId String   @map("webhook_endpoint_id") @db.Uuid
+  tenantId          String   @map("tenant_id") @db.Uuid
+  event             String   @db.VarChar(64)
+  /// delivered | failed
+  status            String   @db.VarChar(32)
+  httpStatus        Int?     @map("http_status")
+  errorMessage      String?  @map("error_message") @db.Text
+  responsePreview   String?  @map("response_preview") @db.VarChar(512)
+  /// Full JSON body sent (event + timestamp + data)
+  payload           String   @db.Text
+  attempts          Int      @default(1)
+  durationMs        Int?     @map("duration_ms")
+  isTest            Boolean  @default(false) @map("is_test")
+  createdAt         DateTime @default(now()) @map("created_at")
+
+  endpoint WebhookEndpoint @relation(fields: [webhookEndpointId], references: [id], onDelete: Cascade)
+
+  @@index([webhookEndpointId, createdAt(sort: Desc)])
+  @@index([tenantId])
+  @@map("webhook_deliveries")
+}
+
+/// Scheduled payment retry attempts for failed invoices
+model PaymentRetry {
+  id             String    @id @default(uuid()) @db.Uuid
+  tenantId       String?   @map("tenant_id") @db.Uuid
+  stripeEventId  String    @unique @map("stripe_event_id")
+  invoiceId      String?   @map("invoice_id")
+  customerId     String?   @map("customer_id")
+  customerEmail  String?   @map("customer_email")
+  failureClass   String    @map("failure_class")
+  delayHours     Int[]     @map("delay_hours")
+  nextRetryAt    DateTime? @map("next_retry_at")
+  attempts       Int       @default(0)
+  maxAttempts    Int       @map("max_attempts") @default(0)
+  status         String    @default("pending")
+  lastError      String?   @map("last_error")
+  createdAt      DateTime  @default(now()) @map("created_at")
+  updatedAt      DateTime  @updatedAt @map("updated_at")
+
+  tenant Tenant? @relation(fields: [tenantId], references: [id], onDelete: SetNull)
+
+  @@index([status, nextRetryAt])
+  @@index([tenantId])
+  @@map("payment_retries")
+}

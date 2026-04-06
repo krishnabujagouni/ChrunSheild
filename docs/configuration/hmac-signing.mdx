@@ -1,0 +1,200 @@
+---
+title: "HMAC Signing"
+description: "Verify that webhook payloads are genuinely from ChurnShield."
+---
+
+## Overview
+
+Every webhook request ChurnShield sends includes an `X-ChurnShield-Signature` header. The value is an HMAC-SHA256 digest of the raw request body, signed with your endpoint's secret. Verifying this signature confirms the request was not tampered with and originated from ChurnShield.
+
+<Warning>
+  Always verify the signature in production. Skipping verification means any party that knows your webhook URL can send fake events to your system.
+</Warning>
+
+---
+
+## How signing works
+
+1. ChurnShield serialises the event payload to JSON.
+2. It computes `HMAC-SHA256(secret, body)` where `secret` is the signing secret for that endpoint.
+3. It sends the hex-encoded digest as `X-ChurnShield-Signature: sha256=<hex>`.
+
+Your server recomputes the same digest and compares it to the header value using a constant-time comparison to prevent timing attacks.
+
+---
+
+## Finding your signing secret
+
+1. Go to [ChurnShield → Connections](https://app.churnshield.ai/dashboard/connections).
+2. Expand the **Webhooks** section.
+3. Click the **eye** icon next to your endpoint to reveal the signing secret.
+
+The secret is prefixed with `whsec_` and is unique per endpoint.
+
+---
+
+## Verification code
+
+<CodeGroup>
+```typescript Node.js / TypeScript
+import crypto from "crypto";
+
+function verifySignature(
+  rawBody: string,
+  signatureHeader: string,
+  secret: string
+): boolean {
+  const expected = crypto
+    .createHmac("sha256", secret)
+    .update(rawBody)
+    .digest("hex");
+
+  const received = signatureHeader.replace("sha256=", "");
+
+  return crypto.timingSafeEqual(
+    Buffer.from(expected, "hex"),
+    Buffer.from(received, "hex")
+  );
+}
+
+// Express example
+app.post("/webhook", express.raw({ type: "application/json" }), (req, res) => {
+  const sig = req.headers["x-churnshield-signature"] as string;
+  const secret = process.env.CHURNSHIELD_WEBHOOK_SECRET!;
+
+  if (!verifySignature(req.body.toString(), sig, secret)) {
+    return res.status(401).json({ error: "Invalid signature" });
+  }
+
+  const event = JSON.parse(req.body.toString());
+  // handle event...
+  res.json({ ok: true });
+});
+```
+
+```python Python
+import hashlib
+import hmac
+
+def verify_signature(raw_body: str, signature_header: str, secret: str) -> bool:
+    expected = hmac.new(
+        secret.encode("utf-8"),
+        raw_body.encode("utf-8"),
+        hashlib.sha256,
+    ).hexdigest()
+
+    received = signature_header.replace("sha256=", "")
+
+    return hmac.compare_digest(expected, received)
+
+
+# Flask example
+from flask import Flask, request, abort
+import json
+
+app = Flask(__name__)
+
+@app.route("/webhook", methods=["POST"])
+def webhook():
+    sig = request.headers.get("X-ChurnShield-Signature", "")
+    secret = os.environ["CHURNSHIELD_WEBHOOK_SECRET"]
+
+    if not verify_signature(request.get_data(as_text=True), sig, secret):
+        abort(401)
+
+    event = request.get_json()
+    # handle event...
+    return {"ok": True}
+```
+
+```go Go
+package main
+
+import (
+  "crypto/hmac"
+  "crypto/sha256"
+  "encoding/hex"
+  "net/http"
+  "os"
+  "strings"
+)
+
+func verifySignature(body []byte, sigHeader, secret string) bool {
+  mac := hmac.New(sha256.New, []byte(secret))
+  mac.Write(body)
+  expected := hex.EncodeToString(mac.Sum(nil))
+  received := strings.TrimPrefix(sigHeader, "sha256=")
+  return hmac.Equal([]byte(expected), []byte(received))
+}
+
+func webhookHandler(w http.ResponseWriter, r *http.Request) {
+  body, _ := io.ReadAll(r.Body)
+  sig := r.Header.Get("X-ChurnShield-Signature")
+  secret := os.Getenv("CHURNSHIELD_WEBHOOK_SECRET")
+
+  if !verifySignature(body, sig, secret) {
+    http.Error(w, "Invalid signature", http.StatusUnauthorized)
+    return
+  }
+  // handle event...
+  w.Write([]byte(`{"ok":true}`))
+}
+```
+
+```php PHP
+<?php
+function verifySignature(string $rawBody, string $sigHeader, string $secret): bool {
+    $expected = hash_hmac("sha256", $rawBody, $secret);
+    $received = str_replace("sha256=", "", $sigHeader);
+    return hash_equals($expected, $received);
+}
+
+$rawBody = file_get_contents("php://input");
+$sigHeader = $_SERVER["HTTP_X_CHURNSHIELD_SIGNATURE"] ?? "";
+$secret = $_ENV["CHURNSHIELD_WEBHOOK_SECRET"];
+
+if (!verifySignature($rawBody, $sigHeader, $secret)) {
+    http_response_code(401);
+    echo json_encode(["error" => "Invalid signature"]);
+    exit;
+}
+
+$event = json_decode($rawBody, true);
+// handle event...
+echo json_encode(["ok" => true]);
+```
+</CodeGroup>
+
+---
+
+## Important implementation notes
+
+<AccordionGroup>
+  <Accordion title="Use the raw body, not parsed JSON">
+    The signature is computed over the **raw bytes** of the request body. If you parse the JSON and re-serialise it before verifying, the byte order may differ and verification will fail.
+
+    In Express, use `express.raw({ type: 'application/json' })` instead of `express.json()` on the webhook route. In Flask, use `request.get_data(as_text=True)` not `request.json`.
+  </Accordion>
+
+  <Accordion title="Use constant-time comparison">
+    Always compare signatures with a constant-time function (`crypto.timingSafeEqual` in Node.js, `hmac.compare_digest` in Python, `hash_equals` in PHP). Standard string equality (`===`, `==`) leaks timing information that attackers can exploit.
+  </Accordion>
+
+  <Accordion title="Each endpoint has its own secret">
+    The signing secret is per-endpoint, not per-tenant. If you have multiple webhook endpoints, each has its own secret. Make sure you use the correct secret for each endpoint.
+  </Accordion>
+
+  <Accordion title="Rotating the secret">
+    To rotate a secret, delete the existing endpoint in ChurnShield and add a new one with the same URL. A new secret is generated automatically. Update your environment variable before deleting the old endpoint to avoid downtime.
+  </Accordion>
+</AccordionGroup>
+
+---
+
+## Headers reference
+
+| Header | Example value |
+|--------|--------------|
+| `X-ChurnShield-Signature` | `sha256=a1b2c3d4e5f6...` |
+| `X-ChurnShield-Event` | `cancel_intent.created` |
+| `Content-Type` | `application/json` |

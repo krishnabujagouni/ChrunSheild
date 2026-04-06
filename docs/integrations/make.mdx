@@ -1,0 +1,152 @@
+---
+title: "Make (formerly Integromat)"
+description: "Trigger Make scenarios automatically from ChurnShield events."
+---
+
+## Overview
+
+Make does not have a native ChurnShield module, but every Make scenario can expose a **custom webhook URL**. Paste that URL into ChurnShield and events flow into your scenario in real time.
+
+<Info>
+  Make's free plan includes 1,000 operations per month. A single ChurnShield event that triggers one action counts as 2 operations (one for receiving the webhook, one for the action).
+</Info>
+
+---
+
+## Connect Make
+
+<Steps>
+  <Step title="Create a new scenario">
+    Go to [make.com](https://www.make.com/en/login) and click **Create a new scenario**.
+  </Step>
+
+  <Step title="Add a Webhooks trigger">
+    Click the empty module bubble and search for **Webhooks**.
+
+    Select **Custom webhook** as the trigger, then click **Add** to create a new webhook.
+
+    Give it a name (e.g. `ChurnShield`) and click **Save**. Make will generate a unique URL — copy it.
+  </Step>
+
+  <Step title="Paste the URL into ChurnShield">
+    Open [ChurnShield → Connections](https://app.churnshield.ai/dashboard/connections).
+
+    Find the **Make** card and paste the URL into the input field, then click **Save**.
+
+    ChurnShield stores the URL and creates a signed webhook endpoint labelled `make`.
+  </Step>
+
+  <Step title="Test the connection">
+    In Make, click **Run once** — the scenario enters "waiting for data" mode.
+
+    Back in ChurnShield, click the **Test** button (play icon) next to the Make endpoint.
+
+    Make will receive the `webhook.test` payload and show the data structure. Click **OK** to accept it as the schema.
+  </Step>
+
+  <Step title="Add actions to your scenario">
+    With the schema loaded, add action modules to your scenario — for example:
+    - **Google Sheets** — append a row
+    - **Slack** — send a message
+    - **Gmail** — send an email
+    - **HTTP** — call any external API
+
+    Click **Save** and turn the scenario **On**.
+  </Step>
+</Steps>
+
+---
+
+## Events
+
+| Event | When it fires |
+|-------|--------------|
+| `cancel_intent.created` | A subscriber opens the cancellation flow |
+| `cancel_intent.accepted` | A subscriber accepts the retention offer |
+| `cancel_intent.declined` | A subscriber declines the offer and cancels |
+| `high_risk.detected` | AI flags a subscriber as high churn risk |
+| `webhook.test` | Fired manually from the Connections page |
+
+---
+
+## Example payload
+
+```json
+{
+  "event": "cancel_intent.created",
+  "tenantId": "ten_abc123",
+  "timestamp": "2026-04-06T14:22:01.000Z",
+  "data": {
+    "customerId": "cus_Abc123",
+    "subscriptionId": "sub_Xyz789",
+    "cancelReason": "too_expensive",
+    "mrr": 49
+  }
+}
+```
+
+All requests include two headers:
+
+| Header | Value |
+|--------|-------|
+| `X-ChurnShield-Event` | Event name, e.g. `cancel_intent.created` |
+| `X-ChurnShield-Signature` | `sha256=<hmac-hex>` — used to verify authenticity |
+
+See [HMAC Signing](/configuration/hmac-signing) for verification details.
+
+---
+
+## Checking received payloads
+
+To view payloads Make has received:
+
+1. Open your scenario in Make.
+2. Click **History** (clock icon in the top bar).
+3. Select any run to see the full input and output of each module.
+
+The webhook module shows the raw JSON body ChurnShield sent.
+
+---
+
+## Use cases
+
+<CardGroup cols={2}>
+  <Card title="Data pipeline" icon="database">
+    Route every cancellation event into Google Sheets or Airtable for reporting.
+  </Card>
+  <Card title="Customer success alerts" icon="bell">
+    Notify your CS team in Slack when a high-MRR subscriber declines the offer.
+  </Card>
+  <Card title="Winback campaigns" icon="rotate-left">
+    Add declined subscribers to a Mailchimp audience and trigger a winback sequence.
+  </Card>
+  <Card title="CRM updates" icon="address-book">
+    Update a HubSpot deal or Pipedrive lead when a subscriber accepts the retention offer.
+  </Card>
+</CardGroup>
+
+---
+
+## Troubleshooting
+
+<AccordionGroup>
+  <Accordion title="Make says 'Waiting for data' and nothing arrives">
+    Make sure you clicked **Run once** in Make **before** sending the test from ChurnShield. The scenario must be actively listening when the test payload is sent.
+  </Accordion>
+
+  <Accordion title="My scenario is not triggering on live events">
+    Check that the scenario is **turned on** (toggle is green in Make). If it is on, open **History** and check for any failed runs — the error message will indicate what went wrong.
+  </Accordion>
+
+  <Accordion title="How do I verify the signature in Make?">
+    Add an **HTTP → Get a response body** module or a **Tools → Set variable** module to capture the `X-ChurnShield-Signature` header, then use a **custom function** or a **Webhooks → Custom webhook** response router to validate it. See [HMAC Signing](/configuration/hmac-signing) for the exact algorithm.
+  </Accordion>
+
+  <Accordion title="Can I have multiple Make scenarios receive the same events?">
+    Yes. Add each scenario's webhook URL as a separate endpoint in ChurnShield. All enabled endpoints receive every event simultaneously.
+  </Accordion>
+
+  <Accordion title="Make shows 'Error 413 Payload Too Large'">
+    This is uncommon but can happen with large subscriber datasets. ChurnShield's payloads are typically under 2 KB. If you see this error, check for any Make middleware or proxy that might be adding size limits.
+  </Accordion>
+</AccordionGroup>

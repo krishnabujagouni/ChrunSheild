@@ -1,0 +1,98 @@
+{
+  "$schema": "https://mintlify.com/docs.json",
+  "theme": "mint",
+  "name": "ChurnShield",
+  "colors": {
+    "primary": "#18181b",
+    "light": "#71717a",
+    "dark": "#18181b"
+  },
+  "favicon": "/favicon.svg",
+  "navigation": {
+    "anchors": [
+      {
+        "anchor": "Documentation",
+        "icon": "book-open",
+        "tabs": [
+          {
+            "tab": "Documentation",
+            "groups": [
+              {
+                "group": "Getting Started",
+                "pages": [
+                  "introduction",
+                  "quickstart",
+                  "how-it-works"
+                ]
+              },
+              {
+                "group": "Integrations",
+                "pages": [
+                  "integrations/stripe",
+                  "integrations/slack",
+                  "integrations/discord",
+                  "integrations/webhooks",
+                  "integrations/zapier",
+                  "integrations/make"
+                ]
+              },
+              {
+                "group": "Configuration",
+                "pages": [
+                  "configuration/embed",
+                  "configuration/hmac-signing",
+                  "configuration/offer-settings"
+                ]
+              }
+            ]
+          },
+          {
+            "tab": "API Reference",
+            "groups": [
+              {
+                "group": "API Reference",
+                "pages": [
+                  "api-reference/cancel-intent",
+                  "api-reference/cancel-outcome",
+                  "api-reference/webhooks"
+                ]
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "anchor": "Connections",
+        "href": "https://app.churnshield.ai/dashboard/connections",
+        "icon": "plug"
+      },
+      {
+        "anchor": "Support",
+        "href": "mailto:hello@churnshield.ai",
+        "icon": "envelope"
+      }
+    ]
+  },
+  "logo": {
+    "light": "/logo/light.svg",
+    "dark": "/logo/dark.svg"
+  },
+  "navbar": {
+    "links": [
+      {
+        "label": "Dashboard",
+        "href": "https://app.churnshield.ai/dashboard"
+      }
+    ],
+    "primary": {
+      "type": "button",
+      "label": "Get Started",
+      "href": "https://app.churnshield.ai"
+    }
+  },
+  "footer": {
+    "socials": {
+      "website": "https://churnshield.ai"
+    }
+  }
+}

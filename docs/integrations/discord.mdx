@@ -1,0 +1,84 @@
+---
+title: Discord
+description: Get notified in Discord when a subscriber is saved or flagged as high-risk.
+---
+
+## What you'll get
+
+ChurnShield sends two types of alerts to Discord as rich embeds:
+
+| Alert | When it fires |
+|---|---|
+| **Subscriber retained** | Real-time — when a subscriber accepts an offer | Green embed |
+| **High-risk subscriber** | Daily — when the churn prediction job flags a subscriber | Amber embed |
+
+---
+
+## Before you connect
+
+Create a dedicated channel in your Discord server first — we recommend `churnshield-alerts`. During the OAuth flow, Discord will ask which server and channel to post to.
+
+<Tip>
+  ChurnShield cannot create Discord channels automatically. Create the channel before clicking Connect.
+</Tip>
+
+---
+
+## Connect Discord
+
+<Steps>
+  <Step title="Go to Connections">
+    Open **Dashboard → Connections** and click **Authorize** next to Discord.
+  </Step>
+  <Step title="Authorize in Discord">
+    You'll be redirected to Discord. Select your server, choose the channel (e.g. `churnshield-alerts`), and click **Authorize**.
+  </Step>
+  <Step title="You're redirected back">
+    ChurnShield saves your Discord webhook URL. The Discord row shows **● Connected**.
+  </Step>
+</Steps>
+
+---
+
+## What the alerts look like
+
+### Subscriber retained (green embed)
+```
+✅ Subscriber retained — YourCompany
+─────────────────────────────────────
+Customer        cus_abc123
+Email           user@example.com
+Offer type      discount
+Discount        25% off
+MRR saved       $36.75
+```
+
+### High-risk subscriber (amber embed)
+```
+⚠️ High-risk subscriber — YourCompany
+─────────────────────────────────────
+Customer        cus_xyz789
+Risk score      82% (high)
+Cancel attempts 2
+Failed payments 1
+Days inactive   18d
+```
+
+---
+
+## Disconnect Discord
+
+Go to **Dashboard → Connections** → click **Disconnect Discord**. ChurnShield removes the webhook URL and no more alerts will be sent.
+
+---
+
+## Troubleshooting
+
+<AccordionGroup>
+  <Accordion title="I'm not receiving alerts">
+    Check the Discord row shows ● Connected. If not, click Authorize and reconnect. Also verify the webhook hasn't been deleted from Discord — go to Server Settings → Integrations → Webhooks.
+  </Accordion>
+  <Accordion title="Alerts are going to the wrong channel">
+    Disconnect and reconnect — during the OAuth flow, select the correct server and channel.
+  </Accordion>
+</AccordionGroup>

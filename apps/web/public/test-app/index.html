@@ -1,0 +1,49 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>ChurnShield  Manual test app</title>
+    <style>
+      body {
+        font-family: system-ui, sans-serif;
+        max-width: 32rem;
+        margin: 3rem auto;
+        padding: 0 1rem;
+      }
+      button {
+        margin-top: 1rem;
+        padding: 0.5rem 1rem;
+      }
+    </style>
+  </head>
+  <body>
+    <h1>Fake SaaS  cancel test</h1>
+    <p>Click cancel to exercise the cancel-flow snippet (wire <code>data-key</code> when ready).</p>
+    <button type="button" id="cancel-subscription" data-churnshield-cancel>
+      Cancel subscription
+    </button>
+    <!-- Set data-api-base if testing snippet against another origin (e.g. http://localhost:3000) -->
+    <!-- Replace YOUR_SNIPPET_KEY with the cs_live_... key from /dashboard/settings → Embed snippet -->
+    <!-- Replace YOUR_CUS_ID with a real Stripe customer id (cus_...) from your connected Stripe account -->
+    <script src="/cs.js" data-key="cs_live_wyi11fd1pghkihq3ilsgk1td" defer></script>
+    <script>
+      window.ChurnShield.identify({
+        subscriberId: "cus_UEzw3pzU4XgKGJ",
+        subscriptionMrr: 49,
+        getAuthHash: function (subscriberId) {
+          return fetch("/api/dashboard/dev/auth-hash", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+              subscriberId: subscriberId,
+              snippetKey: "cs_live_wyi11fd1pghkihq3ilsgk1td",
+            }),
+          })
+            .then(function (r) { return r.json(); })
+            .then(function (j) { return j.authHash || null; });
+        },
+      });
+    </script>
+  </body>
+</html>

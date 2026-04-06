@@ -1,0 +1,136 @@
+---
+title: "Zapier"
+description: "Send ChurnShield events to 7,000+ apps via Zapier Webhooks."
+---
+
+## Overview
+
+Zapier does not offer a native ChurnShield app, but you can connect ChurnShield to any Zapier workflow using **Webhooks by Zapier** — a built-in Zapier trigger that gives you a unique URL. Paste that URL into ChurnShield and events flow automatically.
+
+<Info>
+  Each Zapier Zap gets its own webhook URL. If you want to send events to multiple Zaps, add each URL as a separate webhook endpoint inside ChurnShield.
+</Info>
+
+---
+
+## Connect Zapier
+
+<Steps>
+  <Step title="Create a new Zap">
+    Go to [zapier.com](https://zapier.com) and click **+ Create** → **Zap**.
+  </Step>
+
+  <Step title="Add the Webhooks trigger">
+    Search for **Webhooks by Zapier** and select it as the trigger app.
+
+    Choose **Catch Hook** as the trigger event, then click **Continue**.
+
+    Zapier will generate a unique webhook URL — copy it.
+  </Step>
+
+  <Step title="Paste the URL into ChurnShield">
+    Open [ChurnShield → Connections](https://app.churnshield.ai/dashboard/connections).
+
+    Find the **Zapier** card and paste the URL into the input field, then click **Save**.
+
+    ChurnShield stores the URL and creates a signed webhook endpoint labelled `zapier`.
+  </Step>
+
+  <Step title="Test the connection">
+    Click the **Test** button (play icon) next to the Zapier endpoint.
+
+    ChurnShield sends a `webhook.test` event. Switch back to Zapier and click **Test trigger** — you should see the payload arrive.
+  </Step>
+
+  <Step title="Build your Zap action">
+    With the test data loaded, add an **Action** step in Zapier — for example:
+    - Send a Slack message
+    - Add a row to Google Sheets
+    - Create a HubSpot contact
+    - Send an email via Gmail
+
+    Turn the Zap on when you're done.
+  </Step>
+</Steps>
+
+---
+
+## Events
+
+ChurnShield sends the following events to your Zapier URL:
+
+| Event | When it fires |
+|-------|--------------|
+| `cancel_intent.created` | A subscriber opens the cancellation flow |
+| `cancel_intent.accepted` | A subscriber accepts the retention offer |
+| `cancel_intent.declined` | A subscriber declines the offer and cancels |
+| `high_risk.detected` | AI flags a subscriber as high churn risk |
+| `webhook.test` | Fired manually from the Connections page |
+
+---
+
+## Example payload
+
+```json
+{
+  "event": "cancel_intent.created",
+  "tenantId": "ten_abc123",
+  "timestamp": "2026-04-06T14:22:01.000Z",
+  "data": {
+    "customerId": "cus_Abc123",
+    "subscriptionId": "sub_Xyz789",
+    "cancelReason": "too_expensive",
+    "mrr": 49
+  }
+}
+```
+
+All requests include two headers:
+
+| Header | Value |
+|--------|-------|
+| `X-ChurnShield-Event` | Event name, e.g. `cancel_intent.created` |
+| `X-ChurnShield-Signature` | `sha256=<hmac-hex>` — used to verify authenticity |
+
+See [HMAC Signing](/configuration/hmac-signing) for verification details.
+
+---
+
+## Use cases
+
+<CardGroup cols={2}>
+  <Card title="CRM sync" icon="address-book">
+    Create or update a HubSpot / Salesforce contact whenever a subscriber enters the cancellation flow.
+  </Card>
+  <Card title="Team alerts" icon="bell">
+    Post a message to a Slack channel when a high-value subscriber declines the retention offer.
+  </Card>
+  <Card title="Spreadsheet logging" icon="table">
+    Append every cancellation outcome to Google Sheets for manual review.
+  </Card>
+  <Card title="Email sequences" icon="envelope">
+    Enrol declined subscribers into a winback email sequence via Mailchimp or ActiveCampaign.
+  </Card>
+</CardGroup>
+
+---
+
+## Troubleshooting
+
+<AccordionGroup>
+  <Accordion title="Zapier says 'No data found for this step'">
+    You need to send a test event from ChurnShield **while** the Zapier editor is open and waiting. Click the **Test** (play) button on the Zapier endpoint in ChurnShield, then immediately click **Test trigger** in Zapier.
+  </Accordion>
+
+  <Accordion title="My Zap is not triggering on live events">
+    Make sure the Zap is **turned on** (toggle is blue in Zapier). Also check that the events you want are enabled on the endpoint inside ChurnShield (click the endpoint to expand and review selected events).
+  </Accordion>
+
+  <Accordion title="How do I verify the webhook signature in Zapier?">
+    Zapier's built-in tools cannot run custom code, but you can add a **Code by Zapier** step (Python or JavaScript) before your action to verify the `X-ChurnShield-Signature` header. See [HMAC Signing](/configuration/hmac-signing) for the verification snippet.
+  </Accordion>
+
+  <Accordion title="Can I connect more than one Zap?">
+    Yes. Each Zap has its own webhook URL. Add each URL as a separate endpoint in ChurnShield — there is no limit on the number of Zapier endpoints you can add.
+  </Accordion>
+</AccordionGroup>

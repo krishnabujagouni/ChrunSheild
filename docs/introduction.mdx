@@ -1,0 +1,61 @@
+---
+title: Introduction
+description: ChurnShield saves cancelling subscribers automatically — no engineering required after setup.
+---
+
+## What is ChurnShield?
+
+ChurnShield sits between your subscriber and their cancel button. When someone tries to cancel, ChurnShield intercepts that click, opens an AI-powered retention chat, and offers a personalized incentive — a discount, pause, or extension — to keep them subscribed.
+
+When a subscriber accepts, ChurnShield automatically applies the offer to their Stripe subscription and charges you a 15% success fee on the MRR saved. You only pay when it works.
+
+---
+
+## How it works
+
+<Steps>
+  <Step title="Subscriber clicks cancel">
+    Your existing cancel button is intercepted by the ChurnShield snippet (`cs.js`).
+  </Step>
+  <Step title="Aria opens a chat">
+    ChurnShield's AI retention assistant — Aria — starts a conversation, understands why they want to cancel, and offers the right incentive.
+  </Step>
+  <Step title="Subscriber accepts the offer">
+    The offer is applied to their Stripe subscription automatically. No manual work.
+  </Step>
+  <Step title="You get notified">
+    A save alert fires to Slack, Discord, or any webhook you've connected.
+  </Step>
+  <Step title="ChurnShield charges 15%">
+    A 15% fee on the retained MRR is charged via Stripe Connect — only on successful saves.
+  </Step>
+</Steps>
+
+---
+
+## What you need to get started
+
+| Requirement | Why |
+|---|---|
+| A Stripe account | ChurnShield applies offers and charges fees via Stripe Connect |
+| A website or web app | The `cs.js` snippet needs to be installed |
+| A cancel button | ChurnShield intercepts it — any HTML element works |
+
+---
+
+## Next steps
+
+<CardGroup cols={2}>
+  <Card title="Quickstart" icon="rocket" href="/quickstart">
+    Install the snippet and save your first subscriber in under 15 minutes.
+  </Card>
+  <Card title="Connect Stripe" icon="stripe" href="/integrations/stripe">
+    Link your Stripe account so ChurnShield can apply offers automatically.
+  </Card>
+  <Card title="Set up notifications" icon="bell" href="/integrations/slack">
+    Get alerted in Slack or Discord when a subscriber is saved.
+  </Card>
+  <Card title="Webhooks" icon="webhook" href="/integrations/webhooks">
+    Send save events to any system — HubSpot, Notion, your own server.
+  </Card>
+</CardGroup>

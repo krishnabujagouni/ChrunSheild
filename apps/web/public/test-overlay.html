@@ -1,0 +1,299 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>ChurnShield Chat UI  Test</title>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      font-family: system-ui, -apple-system, sans-serif;
+      background: linear-gradient(135deg, #f0f4ff 0%, #faf5ff 100%);
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 24px;
+    }
+    .card {
+      background: #fff;
+      border-radius: 16px;
+      padding: 40px 32px;
+      max-width: 420px;
+      width: 100%;
+      box-shadow: 0 4px 24px rgba(0,0,0,0.08);
+      text-align: center;
+    }
+    .card h1 { font-size: 20px; font-weight: 700; color: #0f172a; margin-bottom: 8px; }
+    .card p  { font-size: 14px; color: #64748b; margin-bottom: 28px; line-height: 1.6; }
+    .badge {
+      display: inline-block;
+      background: #eff6ff;
+      color: #2563eb;
+      font-size: 11px;
+      font-weight: 600;
+      padding: 3px 10px;
+      border-radius: 20px;
+      margin-bottom: 20px;
+      letter-spacing: 0.04em;
+      text-transform: uppercase;
+    }
+    .plan-card {
+      background: #f8fafc;
+      border: 1px solid #e2e8f0;
+      border-radius: 12px;
+      padding: 16px;
+      margin-bottom: 24px;
+      text-align: left;
+    }
+    .plan-name { font-size: 13px; font-weight: 600; color: #0f172a; }
+    .plan-price { font-size: 24px; font-weight: 700; color: #0f172a; margin: 4px 0 2px; }
+    .plan-price span { font-size: 14px; font-weight: 400; color: #64748b; }
+    .plan-features { font-size: 12px; color: #64748b; }
+    .cancel-btn {
+      width: 100%;
+      padding: 12px;
+      border-radius: 10px;
+      border: 1px solid #fca5a5;
+      background: #fff;
+      color: #dc2626;
+      font-size: 14px;
+      font-weight: 500;
+      cursor: pointer;
+      transition: background 150ms;
+    }
+    .cancel-btn:hover { background: #fef2f2; }
+    .note {
+      margin-top: 20px;
+      font-size: 12px;
+      color: #94a3b8;
+      padding: 10px;
+      background: #f8fafc;
+      border-radius: 8px;
+      line-height: 1.5;
+    }
+  </style>
+</head>
+<body>
+
+<div class="card">
+  <span class="badge">Mock Merchant App</span>
+  <h1>My SaaS Product</h1>
+  <p>This simulates what a subscriber sees on your merchant's app. Click cancel to trigger the ChurnShield overlay.</p>
+
+  <div class="plan-card">
+    <div class="plan-name">Pro Plan</div>
+    <div class="plan-price">$99 <span>/ month</span></div>
+    <div class="plan-features">Unlimited projects · Priority support · Advanced analytics</div>
+  </div>
+
+  <button class="cancel-btn" data-churnshield-cancel>
+    Cancel subscription
+  </button>
+
+  <div class="note" id="test-note">
+    Open <code>test-overlay.html</code> in the editor and set <code>USE_REAL_APIS</code> + <code>TEST_CONFIG</code>. With real APIs: run <code>npm run dev</code>, open this page, complete chat, then tap <strong>Keep my subscription</strong>. Verify rows in Supabase → <code>save_sessions</code>.
+  </div>
+</div>
+
+<!-- ── Test config ───────────────────────────────────────────────────────────── -->
+<script>
+  /** Set true to hit your local Next.js APIs + Prisma/Supabase (real DB rows). False = offline mock chat only. */
+  var USE_REAL_APIS = true;
+
+  var TEST_CONFIG = {
+    /** App ID  Settings → Embed (data-app-id). */
+    embedAppId:       "cs_app_REPLACE_WITH_YOUR_APP_ID",
+    snippetKey:       "cs_live_wyi11fd1pghkihq3ilsgk1td", // data-key (same workspace as embedAppId)
+    /** Same secret as CHURNSHIELD_EMBED_SECRET / last rotated secret in Settings (DEV ONLY  never ship). */
+    embedSecret:      "",
+    subscriberId:     "cus_UEzw3pzU4XgKGJ",              // Must be cus_... on the connected account
+    subscriptionId:   "sub_REPLACE_ME",                 // Real sub_... from Stripe (optional but recommended)
+    subscriberEmail:  "test.customer@example.com",      // Dashboard shows this instead of cus_...
+    subscriptionMrr: 99,
+  };
+
+  /** Web Crypto HMAC-SHA256 for local real-api testing only */
+  function churnshieldLocalAuthHash(secret, cus) {
+    var enc = new TextEncoder();
+    return crypto.subtle
+      .importKey("raw", enc.encode(secret), { name: "HMAC", hash: "SHA-256" }, false, ["sign"])
+      .then(function (key) { return crypto.subtle.sign("HMAC", key, enc.encode(cus)); })
+      .then(function (buf) {
+        var bytes = new Uint8Array(buf);
+        var hex = "";
+        for (var i = 0; i < bytes.length; i++) hex += bytes[i].toString(16).padStart(2, "0");
+        return hex;
+      });
+  }
+
+  function churnshieldIdentifyOpts() {
+    var opts = {
+      subscriberId:     TEST_CONFIG.subscriberId,
+      subscriptionId:   TEST_CONFIG.subscriptionId && TEST_CONFIG.subscriptionId.indexOf("REPLACE") === -1
+        ? TEST_CONFIG.subscriptionId
+        : undefined,
+      subscriberEmail:  TEST_CONFIG.subscriberEmail,
+      subscriptionMrr:  TEST_CONFIG.subscriptionMrr,
+    };
+    if (USE_REAL_APIS && TEST_CONFIG.embedSecret) {
+      // Option A: raw secret in TEST_CONFIG (DEV only  never ship to production)
+      var sec = TEST_CONFIG.embedSecret;
+      opts.getAuthHash = function (cus) { return churnshieldLocalAuthHash(sec, cus); };
+    } else if (USE_REAL_APIS) {
+      // Option B: dev signing endpoint (no secret needed in HTML  localhost only)
+      var key = TEST_CONFIG.snippetKey || TEST_CONFIG.embedAppId;
+      opts.getAuthHash = function (cus) {
+        return fetch("/api/dashboard/dev/auth-hash", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ subscriberId: cus, snippetKey: key }),
+        })
+          .then(function (r) { return r.json(); })
+          .then(function (j) { return j.authHash || null; });
+      };
+    }
+    return opts;
+  }
+</script>
+
+<!-- Mock fetch ONLY when not using real APIs (must run BEFORE cs.js) -->
+<script>
+  if (!USE_REAL_APIS) {
+  // ── Mock API responses ──────────────────────────────────────────────────────
+  var _realFetch = window.fetch.bind(window);
+
+  var _replyIndex = 0;
+
+  function mockStream(text) {
+    var words = text.split(" ");
+    var i = 0;
+    return new ReadableStream({
+      start: function(controller) {
+        var enc = new TextEncoder();
+        function push() {
+          if (i >= words.length) {
+            controller.close();
+            return;
+          }
+          var chunk = (i === 0 ? "" : " ") + words[i++];
+          controller.enqueue(enc.encode(chunk));
+          setTimeout(push, 40 + Math.random() * 30);
+        }
+        setTimeout(push, 600); // Initial "thinking" delay
+      }
+    });
+  }
+
+  window.fetch = function(url, opts) {
+    var path = typeof url === "string" ? url : (url.url || "");
+
+    // cancel-intent
+    if (path.includes("cancel-intent")) {
+      return Promise.resolve(new Response(JSON.stringify({
+        ok: true,
+        sessionId: "test-session-" + Date.now(),
+        subscriberId: TEST_CONFIG.subscriberId,
+      }), { status: 200, headers: { "Content-Type": "application/json" } }));
+    }
+
+    // cancel-chat  context-aware mock replies
+    if (path.includes("cancel-chat")) {
+      var body = opts && opts.body ? JSON.parse(opts.body) : {};
+      var msgs = body.messages || [];
+      var lastUser = "";
+      for (var m = msgs.length - 1; m >= 0; m--) {
+        if (msgs[m].role === "user") { lastUser = msgs[m].content.toLowerCase(); break; }
+      }
+
+      var reply;
+      // Track what the last assistant offer was
+      var lastAssistant = "";
+      for (var m2 = msgs.length - 1; m2 >= 0; m2--) {
+        if (msgs[m2].role === "assistant") { lastAssistant = msgs[m2].content.toLowerCase(); break; }
+      }
+      var offeredDiscount = /25%|discount/.test(lastAssistant);
+      var offeredPause    = /pause/.test(lastAssistant);
+
+      // Detect user accepting any offer
+      var accepting = /yes|okay|ok|sure|works|accept|deal|take|go ahead|sounds good|that'?s? (fine|great|good)|i (want|take|accept|ll go)|let'?s? do|25%|discount|pause/.test(lastUser);
+      // Detect explicit cancellation
+      var cancelling = /^(no|nope|cancel|i (still|want to)|not interested)/.test(lastUser.trim());
+
+      if (_replyIndex === 0) {
+        reply = "I'm sorry to hear you're thinking of cancelling! Before you go, could you tell me what's not working for you  is it pricing, a missing feature, or something else?";
+      } else if (/cost|expensive|price|cheap|afford|money|budget|high|too much/.test(lastUser)) {
+        reply = "I completely understand  every dollar counts. Since you're on the **Pro plan at $99/month**, I can offer you **25% off for the next 3 months**, bringing it down to just **$74/month**. Would that work for you?";
+      } else if (accepting && offeredDiscount) {
+        reply = "That's great! I've applied the **25% discount** to your account  your next invoice will be **$74.25**. You'll keep all your Pro features. Welcome back! 🎉";
+      } else if (accepting && offeredPause) {
+        reply = "Done! Your subscription is **paused for 1 month**  no charges during that time. It will automatically resume on the same date next month. See you then!";
+      } else if (/pause|break|rest|later|not now/.test(lastUser)) {
+        reply = "Absolutely  I can set up a **free 1-month pause** for your account. No charges, no cancellation. Your data stays intact and you resume automatically. Want me to go ahead?";
+      } else if (/feature|missing|doesn.t|doesn't|can.t|can't|bug|slow|issue|problem/.test(lastUser)) {
+        reply = "I'm sorry to hear that's been frustrating. Could you tell me more about what's not working? I'd love to flag this to our team  and in the meantime, I can offer you a **free extension** while we sort it out.";
+      } else if (cancelling) {
+        reply = "I completely respect your decision. I'm sorry we couldn't find the right solution today. If you ever want to come back, your data will be here. Is there anything we could have done better?";
+      } else {
+        reply = "I want to make sure you get the best value from us. I can offer you a **25% discount for 3 months** ($74/month) or a **free 1-month pause** if you need a break. Which would help most?";
+      }
+      _replyIndex++;
+      return Promise.resolve(new Response(mockStream(reply), {
+        status: 200,
+        headers: { "Content-Type": "text/plain" },
+      }));
+    }
+
+    // cancel-outcome
+    if (path.includes("cancel-outcome")) {
+      return Promise.resolve(new Response(JSON.stringify({ ok: true }), {
+        status: 200,
+        headers: { "Content-Type": "application/json" },
+      }));
+    }
+
+    // subscriber-status
+    if (path.includes("subscriber-status")) {
+      return Promise.resolve(new Response(JSON.stringify({
+        paymentWallActive: false,
+        pauseWallActive: false,
+      }), { status: 200, headers: { "Content-Type": "application/json" } }));
+    }
+
+    return _realFetch(url, opts);
+  };
+  } // end if (!USE_REAL_APIS)
+
+  // Pre-identify the subscriber
+  window.addEventListener("DOMContentLoaded", function () {
+    if (window.ChurnShield) {
+      window.ChurnShield.identify(churnshieldIdentifyOpts());
+    }
+  });
+</script>
+
+<!--
+  defer (not async): async can execute before this inline runs, so data-key stayed empty when
+  cs.js initialized  cancel-intent never posted and no save_sessions row appeared.
+-->
+<script src="/cs.js" id="cs-script" defer></script>
+<script>
+  (function () {
+    var sc = document.getElementById("cs-script");
+    if (TEST_CONFIG.embedAppId && TEST_CONFIG.embedAppId.indexOf("REPLACE") === -1) {
+      sc.setAttribute("data-app-id", TEST_CONFIG.embedAppId);
+    }
+    sc.setAttribute("data-key", TEST_CONFIG.snippetKey);
+  })();
+
+  window.addEventListener("load", function () {
+    setTimeout(function () {
+      if (window.ChurnShield) {
+        window.ChurnShield.identify(churnshieldIdentifyOpts());
+      }
+    }, 200);
+  });
+</script>
+
+</body>
+</html>

@@ -1,0 +1,174 @@
+---
+title: Webhooks
+description: Receive real-time HTTP POST events from ChurnShield to any URL.
+---
+
+## Overview
+
+Webhooks let ChurnShield send events to your own server, internal tools, or automation platforms the moment something happens — a subscriber is saved, or a subscriber is flagged as high-risk.
+
+Every request is signed with HMAC-SHA256 so you can verify it genuinely came from ChurnShield.
+
+---
+
+## Events
+
+| Event | When it fires |
+|---|---|
+| `save.created` | A subscriber accepted an offer and clicked "Keep my subscription" |
+| `high_risk.detected` | The daily churn prediction job flagged a subscriber as high-risk |
+
+---
+
+## Add an endpoint
+
+<Steps>
+  <Step title="Go to Connections">
+    Open **Dashboard → Connections** and click **Connect** next to Webhooks.
+  </Step>
+  <Step title="Enter your URL">
+    Paste the URL of your server endpoint. Must be `https://`.
+  </Step>
+  <Step title="Select events">
+    Choose which events to receive — `Subscriber retained`, `High-risk detected`, or both.
+  </Step>
+  <Step title="Click Add endpoint">
+    ChurnShield creates the endpoint and generates a signing secret (`whsec_...`).
+  </Step>
+  <Step title="Save your signing secret">
+    Copy the signing secret — use it to verify incoming requests. It's shown once but you can reveal it anytime from the endpoint row.
+  </Step>
+</Steps>
+
+---
+
+## Payload format
+
+Every webhook POST has the same envelope:
+
+```json
+{
+  "event": "save.created",
+  "timestamp": "2026-04-06T12:00:00.000Z",
+  "data": { ... }
+}
+```
+
+### save.created
+
+```json
+{
+  "event": "save.created",
+  "timestamp": "2026-04-06T12:00:00.000Z",
+  "data": {
+    "tenant_id": "uuid",
+    "subscriber_id": "cus_abc123",
+    "subscriber_email": "user@example.com",
+    "offer_type": "discount",
+    "discount_pct": 25,
+    "mrr_saved": 36.75
+  }
+}
+```
+
+### high_risk.detected
+
+```json
+{
+  "event": "high_risk.detected",
+  "timestamp": "2026-04-06T06:00:00.000Z",
+  "data": {
+    "tenant_id": "uuid",
+    "subscriber_id": "cus_xyz789",
+    "risk_score": 0.82,
+    "risk_class": "high",
+    "cancel_attempts": 2,
+    "failed_payments": 1,
+    "days_since_activity": 18.5
+  }
+}
+```
+
+---
+
+## Verifying signatures
+
+Every request includes an `X-ChurnShield-Signature` header:
+
+```
+X-ChurnShield-Signature: sha256=<hex>
+X-ChurnShield-Event: save.created
+```
+
+Verify it by computing `HMAC-SHA256(signing_secret, raw_request_body)` and comparing:
+
+<CodeGroup>
+```javascript Node.js
+const crypto = require("crypto");
+
+function verifySignature(secret, rawBody, signatureHeader) {
+  const expected = "sha256=" + crypto
+    .createHmac("sha256", secret)
+    .update(rawBody)
+    .digest("hex");
+  return crypto.timingSafeEqual(
+    Buffer.from(expected),
+    Buffer.from(signatureHeader)
+  );
+}
+```
+
+```python Python
+import hmac
+import hashlib
+
+def verify_signature(secret: str, raw_body: bytes, signature_header: str) -> bool:
+    expected = "sha256=" + hmac.new(
+        secret.encode(), raw_body, hashlib.sha256
+    ).hexdigest()
+    return hmac.compare_digest(expected, signature_header)
+```
+</CodeGroup>
+
+<Warning>
+  Always verify the signature before processing the payload. Reject requests with invalid or missing signatures.
+</Warning>
+
+---
+
+## Retries
+
+If your endpoint returns a non-2xx response or times out, ChurnShield retries up to **3 times** with backoff (1.5s, 3s). After 3 failures the delivery is marked as failed and logged.
+
+- Timeout per attempt: **5 seconds**
+- Redirects: **not followed** — use the direct URL
+- Max endpoints per account: **10**
+
+---
+
+## Testing
+
+Click the **play button** on any endpoint row to send a `webhook.test` event:
+
+```json
+{
+  "event": "webhook.test",
+  "timestamp": "2026-04-06T12:00:00.000Z",
+  "data": {
+    "test": true,
+    "source": "churnshield_dashboard"
+  }
+}
+```
+
+---
+
+## Delivery logs
+
+Click the **eye icon** on any endpoint row to open the delivery log drawer. You can see every attempt — status, HTTP response code, response body preview, and duration. Failed deliveries can be resent individually.
+
+---
+
+## Disable / enable an endpoint
+
+Toggle the green switch on any endpoint row to pause delivery without deleting the endpoint.

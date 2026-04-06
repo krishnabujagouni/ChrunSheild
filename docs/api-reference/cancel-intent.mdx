@@ -1,0 +1,178 @@
+---
+title: "POST /api/cancel-intent"
+description: "Create a cancellation intent and get a hosted offer page URL."
+---
+
+## Endpoint
+
+```
+POST https://app.churnshield.ai/api/cancel-intent
+```
+
+## Authentication
+
+Pass your API key in the `Authorization` header:
+
+```
+Authorization: Bearer YOUR_API_KEY
+```
+
+Your API key is available in [Settings → API](https://app.churnshield.ai/dashboard/settings).
+
+---
+
+## Request
+
+### Headers
+
+| Header | Value |
+|--------|-------|
+| `Authorization` | `Bearer <api_key>` |
+| `Content-Type` | `application/json` |
+
+### Body
+
+```json
+{
+  "customerId": "cus_Abc123",
+  "subscriptionId": "sub_Xyz789",
+  "returnUrl": "https://yourapp.com/account"
+}
+```
+
+| Field | Type | Required | Description |
+|-------|------|----------|-------------|
+| `customerId` | `string` | Yes | Stripe customer ID |
+| `subscriptionId` | `string` | Yes | Stripe subscription ID |
+| `returnUrl` | `string` | Yes | Absolute URL to redirect the subscriber after the offer is accepted or declined |
+| `cancelReason` | `string` | No | Pre-fill the cancellation reason. See [reason codes](#reason-codes) below |
+| `metadata` | `object` | No | Any additional key-value pairs to attach to the intent (max 10 keys) |
+
+### Reason codes
+
+If you already know why the subscriber is cancelling (e.g. they selected a reason on your own cancel page), pass it as `cancelReason` to skip ChurnShield's reason-selection step:
+
+| Code | Meaning |
+|------|---------|
+| `too_expensive` | Price is too high |
+| `not_using_it` | Not getting enough value |
+| `missing_features` | Missing a specific feature |
+| `switching_competitor` | Moving to a competitor |
+| `technical_issues` | Experiencing bugs or performance problems |
+| `other` | None of the above |
+
+---
+
+## Response
+
+### 200 OK
+
+```json
+{
+  "id": "ci_abc123xyz",
+  "url": "https://app.churnshield.ai/offer/ci_abc123xyz",
+  "expiresAt": "2026-04-06T15:22:01.000Z"
+}
+```
+
+| Field | Type | Description |
+|-------|------|-------------|
+| `id` | `string` | Unique ID of the cancel intent |
+| `url` | `string` | Redirect the subscriber to this URL to show the offer page |
+| `expiresAt` | `string` | ISO 8601 timestamp — the URL expires after 30 minutes |
+
+### Error responses
+
+| Status | Code | Meaning |
+|--------|------|---------|
+| `400` | `invalid_body` | Missing required field or invalid value |
+| `401` | `unauthorized` | Missing or invalid API key |
+| `404` | `subscription_not_found` | The subscription ID does not exist in the connected Stripe account |
+| `409` | `already_cancelled` | The subscription is already cancelled |
+| `429` | `rate_limited` | Too many requests — max 100/min per tenant |
+
+Error body:
+
+```json
+{
+  "error": "subscription_not_found",
+  "message": "No active subscription found with ID sub_Xyz789"
+}
+```
+
+---
+
+## Example
+
+<CodeGroup>
+```bash cURL
+curl -X POST https://app.churnshield.ai/api/cancel-intent \
+  -H "Authorization: Bearer YOUR_API_KEY" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "customerId": "cus_Abc123",
+    "subscriptionId": "sub_Xyz789",
+    "returnUrl": "https://yourapp.com/account",
+    "cancelReason": "too_expensive"
+  }'
+```
+
+```typescript TypeScript
+const res = await fetch("https://app.churnshield.ai/api/cancel-intent", {
+  method: "POST",
+  headers: {
+    "Authorization": `Bearer ${process.env.CHURNSHIELD_API_KEY}`,
+    "Content-Type": "application/json",
+  },
+  body: JSON.stringify({
+    customerId: "cus_Abc123",
+    subscriptionId: "sub_Xyz789",
+    returnUrl: "https://yourapp.com/account",
+    cancelReason: "too_expensive",
+  }),
+});
+
+if (!res.ok) {
+  const err = await res.json();
+  throw new Error(err.message);
+}
+
+const { url } = await res.json();
+window.location.href = url;
+```
+
+```python Python
+import httpx
+
+res = httpx.post(
+    "https://app.churnshield.ai/api/cancel-intent",
+    headers={
+        "Authorization": f"Bearer {CHURNSHIELD_API_KEY}",
+        "Content-Type": "application/json",
+    },
+    json={
+        "customerId": "cus_Abc123",
+        "subscriptionId": "sub_Xyz789",
+        "returnUrl": "https://yourapp.com/account",
+        "cancelReason": "too_expensive",
+    },
+)
+res.raise_for_status()
+url = res.json()["url"]
+# redirect to url
+```
+</CodeGroup>
+
+---
+
+## Webhooks
+
+Creating a cancel intent fires the `cancel_intent.created` event to all enabled webhook endpoints. See [Webhooks](/integrations/webhooks) for the payload structure.
+
+---
+
+## Notes
+
+- The offer URL is **single-use** and expires after **30 minutes**. If the subscriber does not visit it in time, call this endpoint again to generate a new one.
+- ChurnShield uses the subscriber's Stripe data (plan name, MRR, subscription age) to personalise the offer — no additional data is needed.
+- Passing the same `subscriptionId` twice within the expiry window returns the existing intent rather than creating a duplicate.

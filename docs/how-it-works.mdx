@@ -1,0 +1,82 @@
+---
+title: How it works
+description: A deeper look at what happens from cancel click to saved subscriber.
+---
+
+## The full flow
+
+```
+Subscriber clicks cancel
+        ↓
+cs.js intercepts the click
+        ↓
+POST /api/public/cancel-intent  ← creates a SaveSession in the DB
+        ↓
+Aria retention chat opens
+        ↓
+Subscriber chats with Aria (streaming AI responses)
+        ↓
+Aria makes an offer (discount / pause / extension / empathy)
+        ↓
+Subscriber clicks "Keep my subscription"
+        ↓
+POST /api/public/cancel-outcome ← records offer accepted
+        ↓
+Stripe offer applied automatically (coupon / pause / credit)
+        ↓
+Slack + Discord + Webhooks fire
+        ↓
+15% fee charged via Stripe Connect (after first payment confirms)
+```
+
+---
+
+## Offer types
+
+| Type | What happens in Stripe | Fee charged |
+|---|---|---|
+| **Discount** | Repeating coupon applied for 3 months | After first discounted invoice pays |
+| **Pause** | Subscription pause_collection set | Immediately on save |
+| **Extension** | Negative customer balance credit (2 weeks) | After next invoice pays |
+| **Empathy** | No Stripe action — conversation alone worked | Immediately on save |
+| **Downgrade** | No Stripe action (requires plan mapping) | Not yet implemented |
+
+---
+
+## Sessions and billing
+
+Every cancel attempt creates a `SaveSession` row. The session tracks:
+
+- Which subscriber tried to cancel
+- What offer was made
+- Whether they accepted
+- The MRR value saved
+- The ChurnShield fee (15% of saved MRR)
+
+For **discount** and **extension** offers, the fee is confirmed after Stripe sends `invoice.paid` — this is how ChurnShield verifies the subscriber actually paid at the new rate before charging you.
+
+---
+
+## The 15% fee
+
+ChurnShield charges 15% of the MRR retained, per save. Examples:
+
+| Plan price | Offer | MRR saved | ChurnShield fee |
+|---|---|---|---|
+| $49/mo | 25% discount | $36.75 | $5.51 |
+| $99/mo | Pause (full MRR) | $99.00 | $14.85 |
+| $199/mo | Empathy only | $199.00 | $29.85 |
+
+Fees are charged to your Stripe account automatically — no invoices, no manual billing.
+
+---
+
+## Grace mode vs secured mode
+
+When you first install the snippet, it runs in **grace mode** — ChurnShield accepts cancel intents without requiring an HMAC signature. This lets you test quickly.
+
+Before going live, you must **activate signing** in Dashboard → Integration. Once activated, every cancel intent requires a valid HMAC-SHA256 signature. See the [HMAC signing guide](/configuration/hmac-signing).
+
+<Warning>
+  Running in grace mode in production means anyone can trigger the retention chat for any subscriber ID. Always activate signing before going live.
+</Warning>

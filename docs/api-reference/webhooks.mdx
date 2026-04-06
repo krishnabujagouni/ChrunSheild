@@ -1,0 +1,265 @@
+---
+title: "Webhooks API"
+description: "Manage webhook endpoints programmatically via the ChurnShield REST API."
+---
+
+## Overview
+
+You can manage webhook endpoints through the ChurnShield dashboard or via these REST endpoints. The API is useful for automated provisioning (e.g. creating an endpoint per customer in a multi-tenant setup).
+
+---
+
+## Authentication
+
+All requests require an API key:
+
+```
+Authorization: Bearer YOUR_API_KEY
+```
+
+---
+
+## List endpoints
+
+```
+GET /api/webhooks
+```
+
+Returns all webhook endpoints for your tenant.
+
+### Response
+
+```json
+[
+  {
+    "id": "whe_abc123",
+    "url": "https://yourserver.com/webhook",
+    "events": ["cancel_intent.created", "cancel_intent.declined"],
+    "enabled": true,
+    "label": null,
+    "createdAt": "2026-04-01T10:00:00.000Z"
+  }
+]
+```
+
+| Field | Type | Description |
+|-------|------|-------------|
+| `id` | `string` | Unique endpoint ID |
+| `url` | `string` | The destination URL |
+| `events` | `string[]` | Array of subscribed event names |
+| `enabled` | `boolean` | Whether the endpoint is active |
+| `label` | `string` \| `null` | Internal label (`zapier`, `make`, or `null` for custom endpoints) |
+| `createdAt` | `string` | ISO 8601 creation timestamp |
+
+<Note>
+  The signing secret is **not** returned in list responses for security reasons. Reveal it in the dashboard by clicking the eye icon next to the endpoint.
+</Note>
+
+---
+
+## Create endpoint
+
+```
+POST /api/webhooks
+```
+
+### Body
+
+```json
+{
+  "url": "https://yourserver.com/webhook",
+  "events": ["cancel_intent.created", "cancel_intent.declined"],
+  "label": "my-endpoint"
+}
+```
+
+| Field | Type | Required | Description |
+|-------|------|----------|-------------|
+| `url` | `string` | Yes | The destination URL. Must be `https://` |
+| `events` | `string[]` | Yes | One or more event names to subscribe to |
+| `label` | `string` | No | Optional internal label (max 32 characters) |
+
+### Available events
+
+| Event | Description |
+|-------|-------------|
+| `cancel_intent.created` | Subscriber opens cancellation flow |
+| `cancel_intent.accepted` | Subscriber accepts the retention offer |
+| `cancel_intent.declined` | Subscriber declines and cancels |
+| `high_risk.detected` | AI flags subscriber as high churn risk |
+| `webhook.test` | Manual test ping |
+
+### Response — 201 Created
+
+```json
+{
+  "id": "whe_abc123",
+  "url": "https://yourserver.com/webhook",
+  "events": ["cancel_intent.created", "cancel_intent.declined"],
+  "enabled": true,
+  "label": "my-endpoint",
+  "secret": "whsec_a1b2c3d4...",
+  "createdAt": "2026-04-06T14:22:01.000Z"
+}
+```
+
+The `secret` field is **only returned at creation time**. Store it securely — it cannot be retrieved again.
+
+### Error responses
+
+| Status | Code | Description |
+|--------|------|-------------|
+| `400` | `invalid_url` | URL does not start with `https://` |
+| `400` | `invalid_events` | One or more event names are not valid |
+| `400` | `missing_fields` | Required fields not provided |
+| `429` | `limit_reached` | Maximum of 10 endpoints per tenant |
+
+---
+
+## Update endpoint
+
+```
+PATCH /api/webhooks/{id}
+```
+
+Partially update an endpoint. Only the fields you include are changed.
+
+### Body
+
+```json
+{
+  "enabled": false
+}
+```
+
+| Field | Type | Description |
+|-------|------|-------------|
+| `enabled` | `boolean` | Enable or disable the endpoint |
+| `events` | `string[]` | Replace the subscribed events list |
+
+### Response — 200 OK
+
+```json
+{
+  "id": "whe_abc123",
+  "enabled": false,
+  "url": "https://yourserver.com/webhook",
+  "events": ["cancel_intent.created"],
+  "label": null,
+  "createdAt": "2026-04-01T10:00:00.000Z"
+}
+```
+
+---
+
+## Delete endpoint
+
+```
+DELETE /api/webhooks/{id}
+```
+
+Permanently deletes the endpoint and all its delivery logs.
+
+### Response — 200 OK
+
+```json
+{ "ok": true }
+```
+
+### Error responses
+
+| Status | Code | Description |
+|--------|------|-------------|
+| `404` | `not_found` | Endpoint does not exist or belongs to a different tenant |
+
+---
+
+## Send a test event
+
+```
+POST /api/webhooks/{id}/test
+```
+
+Fires a `webhook.test` event to the endpoint immediately. Rate-limited to **5 requests per minute** per endpoint.
+
+### Response — 200 OK
+
+```json
+{
+  "ok": true,
+  "deliveryId": "whd_xyz789",
+  "httpStatus": 200,
+  "durationMs": 142
+}
+```
+
+### Error responses
+
+| Status | Code | Description |
+|--------|------|-------------|
+| `404` | `not_found` | Endpoint does not exist |
+| `400` | `endpoint_disabled` | Endpoint is disabled — enable it before testing |
+| `429` | `rate_limited` | More than 5 test requests in the last minute |
+
+---
+
+## Delivery logs
+
+Delivery logs are viewable in the **Connections → Webhooks → Delivery Logs** drawer in the dashboard. Logs are retained for **15 days** and then automatically purged.
+
+Each log entry includes:
+
+| Field | Description |
+|-------|-------------|
+| `event` | The event name |
+| `status` | `delivered`, `failed`, or `error` |
+| `httpStatus` | HTTP status code returned by your server |
+| `attempts` | Number of delivery attempts (max 3 with exponential backoff) |
+| `durationMs` | Round-trip time in milliseconds |
+| `isTest` | `true` if triggered by the test button |
+| `responsePreview` | First 200 characters of your server's response body |
+
+---
+
+## Examples
+
+<CodeGroup>
+```typescript List and toggle all endpoints
+const listRes = await fetch("https://app.churnshield.ai/api/webhooks", {
+  headers: { "Authorization": `Bearer ${API_KEY}` },
+});
+const endpoints = await listRes.json();
+
+// Disable all endpoints
+for (const ep of endpoints) {
+  await fetch(`https://app.churnshield.ai/api/webhooks/${ep.id}`, {
+    method: "PATCH",
+    headers: {
+      "Authorization": `Bearer ${API_KEY}`,
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify({ enabled: false }),
+  });
+}
+```
+
+```python Create an endpoint
+import httpx
+
+res = httpx.post(
+    "https://app.churnshield.ai/api/webhooks",
+    headers={
+        "Authorization": f"Bearer {API_KEY}",
+        "Content-Type": "application/json",
+    },
+    json={
+        "url": "https://yourserver.com/webhook",
+        "events": ["cancel_intent.created", "cancel_intent.declined", "high_risk.detected"],
+    },
+)
+res.raise_for_status()
+data = res.json()
+print(f"Endpoint ID: {data['id']}")
+print(f"Secret: {data['secret']}")  # save this!
+```
+</CodeGroup>

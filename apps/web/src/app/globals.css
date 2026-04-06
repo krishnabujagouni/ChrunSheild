@@ -1,0 +1,210 @@
+@import "tailwindcss";
+@config "../../tailwind.config.ts";
+
+/* ─── shadcn/ui CSS vars ─────────────────────────────────────────────────── */
+@layer base {
+  :root {
+    --background: 0 0% 98%;
+    --foreground: 240 6% 10%;
+    --card: 0 0% 100%;
+    --card-foreground: 240 6% 10%;
+    --popover: 0 0% 100%;
+    --popover-foreground: 240 6% 10%;
+    --primary: 240 6% 10%;
+    --primary-foreground: 0 0% 100%;
+    --secondary: 240 5% 96%;
+    --secondary-foreground: 240 6% 10%;
+    --muted: 240 5% 96%;
+    --muted-foreground: 240 4% 46%;
+    --accent: 240 5% 96%;
+    --accent-foreground: 240 6% 10%;
+    --destructive: 0 84% 60%;
+    --destructive-foreground: 0 0% 98%;
+    --border: 240 6% 90%;
+    --input: 240 6% 90%;
+    --ring: 240 6% 10%;
+    --radius: 0.5rem;
+    --brand: 240 6% 10%;
+    --brand-foreground: 240 5% 35%;
+    /* shadcn sidebar */
+    --sidebar-background: 0 0% 98%;
+    --sidebar-foreground: 240 5.3% 26.1%;
+    --sidebar-primary: 240 5.9% 10%;
+    --sidebar-primary-foreground: 0 0% 98%;
+    --sidebar-accent: 240 4.8% 95.9%;
+    --sidebar-accent-foreground: 240 5.9% 10%;
+    --sidebar-border: 220 13% 91%;
+    --sidebar-ring: 217.2 91.2% 59.8%;
+  }
+  .dark {
+    --background: 240 6% 4%;
+    --foreground: 0 0% 98%;
+    --card: 240 6% 6%;
+    --card-foreground: 0 0% 98%;
+    --primary: 0 0% 98%;
+    --primary-foreground: 240 6% 10%;
+    --muted: 240 4% 16%;
+    --muted-foreground: 240 5% 65%;
+    --accent: 240 4% 16%;
+    --accent-foreground: 0 0% 98%;
+    --border: 240 4% 16%;
+    --input: 240 4% 16%;
+    --brand: 0 0% 98%;
+    --brand-foreground: 240 6% 10%;
+    --sidebar-background: 240 5.9% 10%;
+    --sidebar-foreground: 240 4.8% 95.9%;
+    --sidebar-primary: 224.3 76.3% 48%;
+    --sidebar-primary-foreground: 0 0% 100%;
+    --sidebar-accent: 240 3.7% 15.9%;
+    --sidebar-accent-foreground: 240 4.8% 95.9%;
+    --sidebar-border: 240 3.7% 15.9%;
+    --sidebar-ring: 217.2 91.2% 59.8%;
+  }
+}
+
+/* ─── Utility: fade-bottom mask ─────────────────────────────────────────── */
+@layer utilities {
+  .fade-bottom {
+    -webkit-mask-image: linear-gradient(to bottom, black 60%, transparent 100%);
+    mask-image: linear-gradient(to bottom, black 60%, transparent 100%);
+  }
+  .delay-100 { animation-delay: 100ms; }
+  .delay-300 { animation-delay: 300ms; }
+  .delay-700 { animation-delay: 700ms; }
+  .delay-1000 { animation-delay: 1000ms; }
+}
+
+/* ─── ChurnShield design tokens ─────────────────────────────────────────── */
+:root {
+  --cs-bg: #fafafa;
+  --cs-surface: #ffffff;
+  --cs-surface-elevated: #ffffff;
+  --cs-border: #e4e4e7;
+  --cs-border-strong: #d4d4d8;
+  --cs-text: #18181b;
+  --cs-text-secondary: #52525b;
+  --cs-text-muted: #71717a;
+  --cs-accent: #18181b;
+  --cs-accent-hover: #09090b;
+  --cs-accent-soft: #f4f4f5;
+  --cs-accent-ring: rgba(24, 24, 27, 0.15);
+  --cs-success: #059669;
+  --cs-success-soft: #ecfdf5;
+  --cs-radius: 12px;
+  --cs-radius-lg: 16px;
+  --cs-shadow-sm: 0 1px 2px rgba(24, 24, 27, 0.05);
+  --cs-shadow: 0 4px 24px rgba(24, 24, 27, 0.06);
+  --cs-shadow-md: 0 12px 40px rgba(24, 24, 27, 0.08);
+  --cs-font: var(--font-inter, "Inter", system-ui, -apple-system, sans-serif);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+}
+
+html {
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+body {
+  margin: 0;
+  font-family: var(--cs-font);
+  background: var(--cs-bg);
+  color: var(--cs-text);
+}
+
+/* Landing: responsive nav */
+.lnd-desktop {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.lnd-mobile-toggle {
+  display: none;
+  align-items: center;
+  justify-content: center;
+  width: 44px;
+  height: 44px;
+  border: 1px solid var(--cs-border);
+  border-radius: 10px;
+  background: var(--cs-surface);
+  cursor: pointer;
+  color: var(--cs-text-secondary);
+}
+
+.lnd-mobile-panel {
+  display: none;
+  flex-direction: column;
+  gap: 4px;
+  padding: 12px 5vw 16px;
+  border-bottom: 1px solid var(--cs-border);
+  background: var(--cs-surface);
+}
+
+.lnd-mobile-panel[data-open="true"] {
+  display: flex;
+}
+
+@media (max-width: 768px) {
+  .lnd-desktop {
+    display: none;
+  }
+
+  .lnd-mobile-toggle {
+    display: flex;
+  }
+}
+
+.lnd-link {
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--cs-text-secondary);
+  padding: 10px 12px;
+  border-radius: 8px;
+  text-decoration: none;
+  transition: background 0.15s ease, color 0.15s ease;
+}
+
+.lnd-link:hover {
+  background: var(--cs-bg);
+  color: var(--cs-text);
+}
+
+.lnd-link:focus-visible {
+  outline: 2px solid var(--cs-accent);
+  outline-offset: 2px;
+}
+
+/* Landing: shared layout (Particl-style width + rhythm) */
+.lnd-shell {
+  max-width: 1120px;
+  margin-left: auto;
+  margin-right: auto;
+  padding-left: max(24px, 5vw);
+  padding-right: max(24px, 5vw);
+}
+
+.lnd-h1 {
+  font-size: clamp(2.25rem, 4.5vw, 3.25rem);
+  font-weight: 700;
+  line-height: 1.08;
+  letter-spacing: -0.035em;
+  color: var(--cs-text);
+  margin: 0;
+}
+
+.lnd-lead {
+  font-size: clamp(1.05rem, 2vw, 1.2rem);
+  line-height: 1.6;
+  color: var(--cs-text-secondary);
+  margin: 0;
+  max-width: 38rem;
+}

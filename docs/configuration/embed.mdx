@@ -1,0 +1,233 @@
+---
+title: "Embed the Cancellation Flow"
+description: "Install the ChurnShield cancel intercept in your app with two lines of code."
+---
+
+## Overview
+
+ChurnShield works by intercepting your Stripe cancel button. When a subscriber clicks cancel, your app calls ChurnShield's API instead of directly cancelling the Stripe subscription. ChurnShield presents a personalised retention offer; if the subscriber declines, ChurnShield cancels via Stripe on your behalf.
+
+---
+
+## Prerequisites
+
+- Stripe is connected in [ChurnShield → Connections](https://app.churnshield.ai/dashboard/connections)
+- You have your **API key** from [Settings → API](https://app.churnshield.ai/dashboard/settings)
+- You know the Stripe `subscriptionId` of the customer trying to cancel
+
+---
+
+## How it works
+
+```
+User clicks "Cancel"
+        ↓
+Your app → POST /api/cancel-intent  (ChurnShield)
+        ↓
+ChurnShield returns { url }  (hosted offer page)
+        ↓
+Your app redirects user to url
+        ↓
+User sees personalised offer
+        ↓
+Accepted → subscription saved, redirect to returnUrl
+Declined → Stripe cancel executed, redirect to returnUrl
+```
+
+---
+
+## Integration
+
+### 1. Handle the cancel button
+
+Replace your existing cancel handler with a call to ChurnShield:
+
+<CodeGroup>
+```typescript Node.js / TypeScript
+const res = await fetch("https://app.churnshield.ai/api/cancel-intent", {
+  method: "POST",
+  headers: {
+    "Content-Type": "application/json",
+    "Authorization": `Bearer ${process.env.CHURNSHIELD_API_KEY}`,
+  },
+  body: JSON.stringify({
+    customerId: "cus_Abc123",          // Stripe customer ID
+    subscriptionId: "sub_Xyz789",      // Stripe subscription ID
+    returnUrl: "https://yourapp.com/account", // where to redirect after
+  }),
+});
+
+const { url } = await res.json();
+window.location.href = url;            // redirect to ChurnShield offer page
+```
+
+```python Python
+import httpx
+
+res = httpx.post(
+    "https://app.churnshield.ai/api/cancel-intent",
+    headers={
+        "Authorization": f"Bearer {CHURNSHIELD_API_KEY}",
+        "Content-Type": "application/json",
+    },
+    json={
+        "customerId": "cus_Abc123",
+        "subscriptionId": "sub_Xyz789",
+        "returnUrl": "https://yourapp.com/account",
+    },
+)
+url = res.json()["url"]
+# redirect the user to `url`
+```
+
+```bash cURL
+curl -X POST https://app.churnshield.ai/api/cancel-intent \
+  -H "Authorization: Bearer YOUR_API_KEY" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "customerId": "cus_Abc123",
+    "subscriptionId": "sub_Xyz789",
+    "returnUrl": "https://yourapp.com/account"
+  }'
+```
+</CodeGroup>
+
+### 2. Handle the return
+
+When ChurnShield redirects back to your `returnUrl`, it appends a query parameter:
+
+| Parameter | Value | Meaning |
+|-----------|-------|---------|
+| `cs_result` | `accepted` | Subscriber accepted the offer — subscription saved |
+| `cs_result` | `declined` | Subscriber declined — subscription cancelled |
+
+Use this to show a confirmation message:
+
+```typescript
+const url = new URL(window.location.href);
+const result = url.searchParams.get("cs_result");
+
+if (result === "accepted") {
+  showToast("Great! Your subscription has been saved.");
+} else if (result === "declined") {
+  showToast("Your subscription has been cancelled.");
+}
+```
+
+---
+
+## HMAC verification (optional but recommended)
+
+If you want to verify that cancellation outcome webhooks are genuinely from ChurnShield, enable HMAC signing. See [HMAC Signing](/configuration/hmac-signing).
+
+---
+
+## Testing
+
+ChurnShield has a **test mode** that works with Stripe's test-mode customers and subscriptions.
+
+1. Use a Stripe test customer (`cus_...`) and subscription (`sub_...`).
+2. Call `/api/cancel-intent` with your API key.
+3. The ChurnShield offer page will display — accepting or declining will exercise the full flow without charging real money.
+
+<Tip>
+  Keep a Stripe test subscription handy during development. You can create one in the [Stripe Dashboard → Subscriptions](https://dashboard.stripe.com/test/subscriptions).
+</Tip>
+
+---
+
+## Framework examples
+
+<AccordionGroup>
+  <Accordion title="Next.js (App Router)">
+    Create a server action or API route to avoid exposing your API key on the client:
+
+    ```typescript
+    // app/api/cancel/route.ts
+    import { auth } from "@/lib/auth";
+    import { NextResponse } from "next/server";
+
+    export async function POST(req: Request) {
+      const session = await auth();
+      if (!session) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+
+      const { subscriptionId } = await req.json();
+
+      const res = await fetch("https://app.churnshield.ai/api/cancel-intent", {
+        method: "POST",
+        headers: {
+          "Authorization": `Bearer ${process.env.CHURNSHIELD_API_KEY}`,
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          customerId: session.user.stripeCustomerId,
+          subscriptionId,
+          returnUrl: `${process.env.NEXT_PUBLIC_URL}/account`,
+        }),
+      });
+
+      const { url } = await res.json();
+      return NextResponse.json({ url });
+    }
+    ```
+  </Accordion>
+
+  <Accordion title="React (client-side button)">
+    ```tsx
+    async function handleCancelClick() {
+      const res = await fetch("/api/cancel", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ subscriptionId: props.subscriptionId }),
+      });
+      const { url } = await res.json();
+      window.location.href = url;
+    }
+
+    return (
+      <button onClick={handleCancelClick}>
+        Cancel subscription
+      </button>
+    );
+    ```
+  </Accordion>
+
+  <Accordion title="Ruby on Rails">
+    ```ruby
+    # app/controllers/subscriptions_controller.rb
+    def cancel
+      res = Faraday.post(
+        "https://app.churnshield.ai/api/cancel-intent",
+        {
+          customerId: current_user.stripe_customer_id,
+          subscriptionId: current_user.stripe_subscription_id,
+          returnUrl: account_url,
+        }.to_json,
+        "Authorization" => "Bearer #{ENV['CHURNSHIELD_API_KEY']}",
+        "Content-Type" => "application/json"
+      )
+
+      data = JSON.parse(res.body)
+      redirect_to data["url"], allow_other_host: true
+    end
+    ```
+  </Accordion>
+</AccordionGroup>
+
+---
+
+## Troubleshooting
+
+<AccordionGroup>
+  <Accordion title="I get a 401 Unauthorized error">
+    Check that you are passing the correct API key in the `Authorization: Bearer <key>` header. You can find your key in [Settings → API](https://app.churnshield.ai/dashboard/settings).
+  </Accordion>
+
+  <Accordion title="The offer page shows 'Subscription not found'">
+    Verify that the `subscriptionId` you pass belongs to the Stripe account connected to your ChurnShield tenant. Also ensure the subscription is in `active` or `trialing` state — ChurnShield does not intercept already-cancelled subscriptions.
+  </Accordion>
+
+  <Accordion title="The user is sent back to the wrong URL">
+    Make sure `returnUrl` is an absolute URL (starts with `https://`). Relative URLs are not supported.
+  </Accordion>
+</AccordionGroup>

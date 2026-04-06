@@ -1,0 +1,95 @@
+---
+title: Quickstart
+description: Install ChurnShield and save your first subscriber in under 15 minutes.
+---
+
+## Step 1 — Create your account
+
+Go to [app.churnshield.ai](https://app.churnshield.ai) and sign up. Once you're in, you'll land on the dashboard.
+
+---
+
+## Step 2 — Connect Stripe
+
+ChurnShield needs Stripe Connect to apply discounts, pauses, and extensions to your subscribers' subscriptions.
+
+1. Go to **Dashboard → Connections**
+2. Click **Connect** next to Stripe
+3. Complete the Stripe OAuth flow — you'll be redirected back automatically
+
+<Info>
+  Stripe Connect is required. ChurnShield cannot apply offers or charge the 15% success fee without it.
+</Info>
+
+---
+
+## Step 3 — Install the snippet
+
+Go to **Dashboard → Integration** and copy your snippet tag. It looks like this:
+
+```html
+<script
+  src="https://cdn.churnshield.ai/cs.js"
+  data-app-id="cs_app_YOUR_APP_ID"
+  defer
+></script>
+```
+
+Paste it into the `<head>` of every page where your cancel button lives. Use `defer` — not `async`.
+
+<Warning>
+  Do not use `async`. The snippet must finish loading before your cancel button renders, otherwise the intercept won't fire.
+</Warning>
+
+---
+
+## Step 4 — Identify the subscriber
+
+Before the cancel button is shown, call `ChurnShield.identify()` with the subscriber's details:
+
+```javascript
+ChurnShield.identify({
+  subscriberId: "cus_abc123",          // Stripe customer ID
+  subscriptionId: "sub_xyz789",        // Stripe subscription ID (recommended)
+  subscriberEmail: "user@example.com", // shown in your dashboard
+  subscriptionMrr: 49.00,              // monthly value in USD
+  authHash: await getAuthHash("cus_abc123"), // HMAC signature — see Signing guide
+});
+```
+
+<Tip>
+  `subscriptionId` is recommended but not required. Without it, ChurnShield picks the customer's first active subscription.
+</Tip>
+
+---
+
+## Step 5 — Point to your cancel button
+
+Add `data-cs-cancel` to your cancel button or link:
+
+```html
+<button data-cs-cancel>Cancel my subscription</button>
+```
+
+That's it. ChurnShield intercepts clicks on that element and opens the retention chat.
+
+---
+
+## Step 6 — Test it
+
+1. Open your test page in a browser
+2. Click the cancel button — the ChurnShield chat should appear
+3. Go through the flow and click **Keep my subscription**
+4. Check **Dashboard → Recent Sessions** — you should see the session logged
+
+<Check>
+  If the chat opens and the session appears in your dashboard, you're set up correctly.
+</Check>
+
+---
+
+## Next steps
+
+- [Set up HMAC signing](/configuration/hmac-signing) — secure your embed (required before going live)
+- [Configure offer settings](/configuration/offer-settings) — control what discounts and offers Aria can make
+- [Connect Slack or Discord](/integrations/slack) — get notified when subscribers are saved

@@ -1,0 +1,12 @@
+{
+  "framework": "nextjs",
+  "buildCommand": "cd ../.. && npx turbo run build --filter=web",
+  "installCommand": "cd ../.. && npm install",
+  "outputDirectory": ".next",
+  "crons": [
+    {
+      "path": "/api/cron/webhook-cleanup",
+      "schedule": "0 3 * * *"
+    }
+  ]
+}

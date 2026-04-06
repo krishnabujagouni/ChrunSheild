@@ -1,0 +1,86 @@
+{
+  "$schema": "https://mintlify.com/schema.json",
+  "name": "ChurnShield",
+  "logo": {
+    "dark": "/logo/dark.svg",
+    "light": "/logo/light.svg"
+  },
+  "favicon": "/favicon.svg",
+  "colors": {
+    "primary": "#18181b",
+    "light": "#71717a",
+    "dark": "#18181b",
+    "anchors": {
+      "from": "#18181b",
+      "to": "#52525b"
+    }
+  },
+  "topbarLinks": [
+    {
+      "name": "Dashboard",
+      "url": "https://app.churnshield.ai/dashboard"
+    }
+  ],
+  "topbarCtaButton": {
+    "name": "Get Started",
+    "url": "https://app.churnshield.ai"
+  },
+  "tabs": [
+    {
+      "name": "API Reference",
+      "url": "api-reference"
+    }
+  ],
+  "anchors": [
+    {
+      "name": "Connections",
+      "icon": "plug",
+      "url": "https://app.churnshield.ai/dashboard/connections"
+    },
+    {
+      "name": "Support",
+      "icon": "envelope",
+      "url": "mailto:hello@churnshield.ai"
+    }
+  ],
+  "navigation": [
+    {
+      "group": "Getting Started",
+      "pages": [
+        "introduction",
+        "quickstart",
+        "how-it-works"
+      ]
+    },
+    {
+      "group": "Integrations",
+      "pages": [
+        "integrations/stripe",
+        "integrations/slack",
+        "integrations/discord",
+        "integrations/webhooks",
+        "integrations/zapier",
+        "integrations/make"
+      ]
+    },
+    {
+      "group": "Configuration",
+      "pages": [
+        "configuration/embed",
+        "configuration/hmac-signing",
+        "configuration/offer-settings"
+      ]
+    },
+    {
+      "group": "API Reference",
+      "pages": [
+        "api-reference/cancel-intent",
+        "api-reference/cancel-outcome",
+        "api-reference/webhooks"
+      ]
+    }
+  ],
+  "footerSocials": {
+    "website": "https://churnshield.ai"
+  }
+}

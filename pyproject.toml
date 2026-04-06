@@ -1,0 +1,10 @@
+[project]
+name = "chrun"
+version = "0.1.0"
+description = "ChurnShield monorepo  AI-native churn retention (Next.js + Python agents)."
+readme = "README.md"
+requires-python = ">=3.12"
+dependencies = []
+
+[tool.uv.workspace]
+members = ["apps/agents"]
