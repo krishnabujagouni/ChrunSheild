@@ -4,6 +4,9 @@ import { prisma } from "@/lib/db";
 import { revalidatePath } from "next/cache";
 import { generateEmbedAppId, generateEmbedHmacSecret } from "@/lib/tenant-embed";
 import { SaveButton } from "./save-button";
+import { PlansEditor } from "./plans-editor";
+
+type PlanTier = { name: string; priceMonthly: number };
 
 type OfferSettings = {
   maxDiscountPct: 0 | 10 | 25 | 40;
@@ -12,9 +15,19 @@ type OfferSettings = {
   allowFreeExtension: boolean;
   allowPlanDowngrade: boolean;
   customMessage: string;
+  plans: PlanTier[];
 };
 
 const DISCOUNT_DURATION_OPTIONS = [1, 2, 3, 6, 12] as const;
+
+function parsePlans(raw: unknown): PlanTier[] {
+  if (!Array.isArray(raw)) return [];
+  return raw
+    .filter((p) => p && typeof p === "object" && typeof p.name === "string" && typeof p.priceMonthly === "number")
+    .map((p) => ({ name: String(p.name).trim().slice(0, 50), priceMonthly: Math.max(0, Number(p.priceMonthly)) }))
+    .filter((p) => p.name && p.priceMonthly > 0)
+    .slice(0, 20);
+}
 
 function parseOfferSettings(raw: unknown): OfferSettings {
   const defaults: OfferSettings = {
@@ -24,6 +37,7 @@ function parseOfferSettings(raw: unknown): OfferSettings {
     allowFreeExtension: true,
     allowPlanDowngrade: false,
     customMessage: "",
+    plans: [],
   };
   if (!raw || typeof raw !== "object") return defaults;
   const r = raw as Record<string, unknown>;
@@ -38,6 +52,7 @@ function parseOfferSettings(raw: unknown): OfferSettings {
     allowFreeExtension: typeof r.allowFreeExtension === "boolean" ? r.allowFreeExtension : defaults.allowFreeExtension,
     allowPlanDowngrade: typeof r.allowPlanDowngrade === "boolean" ? r.allowPlanDowngrade : defaults.allowPlanDowngrade,
     customMessage:      typeof r.customMessage === "string"       ? r.customMessage.slice(0, 300) : defaults.customMessage,
+    plans: parsePlans(r.plans),
   };
 }
 
@@ -47,6 +62,12 @@ async function updateOfferSettings(formData: FormData) {
   const { userId, orgId } = auth();
   if (!userId) return;
   const rawDuration = Number(formData.get("discountDurationMonths"));
+  const rawPlans = formData.get("plans") as string | null;
+  let plans: PlanTier[] = [];
+  try {
+    plans = parsePlans(JSON.parse(rawPlans ?? "[]"));
+  } catch { plans = []; }
+
   const settings: OfferSettings = {
     maxDiscountPct: (Number(formData.get("maxDiscountPct")) as 0|10|25|40),
     discountDurationMonths: (DISCOUNT_DURATION_OPTIONS as readonly number[]).includes(rawDuration)
@@ -55,6 +76,7 @@ async function updateOfferSettings(formData: FormData) {
     allowFreeExtension: formData.get("allowFreeExtension") === "true",
     allowPlanDowngrade: formData.get("allowPlanDowngrade") === "true",
     customMessage:      ((formData.get("customMessage") as string) ?? "").trim().slice(0, 300),
+    plans,
   };
   const where = orgId ? { clerkOrgId: orgId } : { clerkUserId: userId };
   await prisma.tenant.update({ where, data: { offerSettings: settings } });
@@ -196,7 +218,6 @@ export default async function SettingsPage({
               {([
                 { key: "allowPause",         label: "Allow subscription pause",  desc: "Offer a 1-month pause instead of cancelling" },
                 { key: "allowFreeExtension", label: "Allow free extension",       desc: "Offer 1–2 weeks free before cancelling" },
-                { key: "allowPlanDowngrade", label: "Allow plan downgrade",       desc: "Suggest a cheaper plan as an alternative" },
               ] as const).map(({ key, label, desc }, i, arr) => (
                 <label key={key} style={{
                   display: "flex", alignItems: "flex-start", gap: 14,
@@ -215,6 +236,12 @@ export default async function SettingsPage({
                   </div>
                 </label>
               ))}
+              <div style={{ borderTop: "1px solid #f1f5f9" }}>
+                <PlansEditor
+                  initialPlans={offerSettings.plans}
+                  initialAllowDowngrade={offerSettings.allowPlanDowngrade}
+                />
+              </div>
             </div>
 
             {/* Divider */}

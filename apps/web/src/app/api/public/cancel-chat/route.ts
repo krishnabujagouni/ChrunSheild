@@ -109,6 +109,8 @@ type Body = {
   sessionId?: string;
   messages?: unknown;
   locale?: string;
+  /** Subscriber's current plan name — passed from embed identify() */
+  planName?: string;
 };
 
 export async function POST(request: Request) {
@@ -179,6 +181,9 @@ export async function POST(request: Request) {
   const rawLocale = (body.locale ?? "").trim().slice(0, 20);
   const locale = /^[a-zA-Z0-9-]+$/.test(rawLocale) ? rawLocale : undefined;
 
+  const rawPlanName = (body.planName ?? "").trim().slice(0, 100);
+  const planName = rawPlanName || undefined;
+
   const systemPrompt = buildCancelAgentSystem({
     mrr: Number(session.subscriptionMrr),
     riskClass: churnPrediction?.riskClass ?? null,
@@ -186,6 +191,7 @@ export async function POST(request: Request) {
     cancelAttempts: pastAttempts,
     offerSettings: tenant.offerSettings as MerchantOfferSettings | null,
     locale,
+    planName,
   });
 
   const plainForTranscript = messages.map((m) => ({
