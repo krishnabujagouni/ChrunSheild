@@ -122,7 +122,7 @@ function ChatCard() {
           <HugeiconsIcon icon={Shield01Icon} size={18} strokeWidth={1.5} aria-hidden />
         </div>
         <div>
-          <div style={{ fontSize: 13, fontWeight: 700, color: "#09090b" }}>ChurnShield AI</div>
+          <div style={{ fontSize: 13, fontWeight: 700, color: "#09090b" }}>Aria · Retention Assistant</div>
           <div style={{ fontSize: 11, color: "#059669", fontWeight: 600, display: "flex", alignItems: "center", gap: 5 }}>
             <span style={{ width: 6, height: 6, borderRadius: "50%", background: "#059669" }} aria-hidden /> Active
           </div>
@@ -310,7 +310,7 @@ export default function LandingPage() {
                 title: "Turn cancellations into conversations  not dead ends.",
                 description: "Most cancel buttons fire a blunt form and lose the customer forever. ChurnShield intercepts the moment of intent with a calm, on-brand dialogue: understand the reason, offer what fits, and honour a clean exit when that's what they want.",
                 bullets: [
-                  "Claude-powered flows that adapt to price, missing features, seasonality, or competitor switches.",
+                  "AI-powered flows that adapt to price, missing features, seasonality, or competitor switches.",
                   "You set guardrails: offer types, limits, segments, and tone  so it feels like your product.",
                   "Full transcripts and outcomes in the dashboard for product, support, and growth.",
                 ],
@@ -402,10 +402,10 @@ export default function LandingPage() {
               {
                 title: "AI Cancel Agent",
                 meta: "40%+ save rate",
-                description: "Claude-powered conversation intercepts every cancel click. Detects the subscriber's reason and presents a personalised offer  discount, pause, or plan change  in seconds.",
+                description: "Aria — our AI retention agent — intercepts every cancel click. Detects the subscriber's reason and presents a personalised offer  discount, pause, or plan change  in seconds.",
                 icon: <HugeiconsIcon icon={BubbleChatIcon} size={16} strokeWidth={1.5} style={{ color: "#18181b" }} />,
                 status: "Core",
-                tags: ["Cancel flow", "Claude AI", "Personalised"],
+                tags: ["Cancel flow", "Aria AI Agent", "Personalised"],
                 cta: "See it live →",
                 colSpan: 2,
                 hasPersistentHover: true,
@@ -495,7 +495,7 @@ export default function LandingPage() {
                 ],
               },
             ]}
-            buttonText="Start free  pay only when you save"
+            buttonText="Start free — pay only when you save"
             onButtonClick={() => router.push("/sign-up")}
           />
 
@@ -646,16 +646,11 @@ export default function LandingPage() {
           { href: "#", label: "Terms" },
         ]}
         brandIcon={
-          <>
-            <style>{`
-              @keyframes cs-footer-tri-spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
-              .cs-footer-logo-tri { animation: cs-footer-tri-spin 2.4s cubic-bezier(0.37, 0, 0.63, 1) infinite; }
-            `}</style>
-            <svg className="cs-footer-logo-tri" width="48" height="48" viewBox="0 0 28 28" fill="none" aria-hidden>
-              <polygon points="14,2 26,24 2,24" fill="none" stroke="rgba(255,255,255,0.2)" strokeWidth="2.5" strokeLinejoin="round" />
-              <polygon points="14,2 26,24 2,24" fill="none" stroke="#ffffff" strokeWidth="2.5" strokeLinejoin="round" strokeLinecap="round" strokeDasharray="24 60" strokeDashoffset="0" />
-            </svg>
-          </>
+          <svg width="48" height="48" viewBox="0 0 512 512" fill="none" aria-hidden>
+            <line x1="68" y1="400" x2="256" y2="88" stroke="rgba(255,255,255,0.3)" strokeWidth="28" strokeLinecap="round"/>
+            <line x1="68" y1="400" x2="444" y2="400" stroke="rgba(255,255,255,0.3)" strokeWidth="28" strokeLinecap="round"/>
+            <line x1="256" y1="88" x2="444" y2="400" stroke="#ffffff" strokeWidth="28" strokeLinecap="round"/>
+          </svg>
         }
       />
     </div>

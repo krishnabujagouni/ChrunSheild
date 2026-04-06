@@ -139,7 +139,7 @@ export function PricingCard({
               </motion.div>
             </div>
             <motion.div className="mt-8" variants={itemVariants}>
-              <Button className="w-full" size="lg" type="button" onClick={onButtonClick}>
+              <Button className="w-full text-center leading-tight py-3 h-auto" size="lg" type="button" onClick={onButtonClick}>
                 {buttonText}
               </Button>
             </motion.div>

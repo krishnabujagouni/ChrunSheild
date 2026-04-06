@@ -36,7 +36,7 @@ const STEPS: Step[] = [
     accentBg: "#eff6ff",
     title: "AI handles the cancel",
     description:
-      "Our Claude-powered agent opens a conversation, understands the subscriber's reason, and makes a personalised offer in seconds.",
+      "Aria, our AI retention agent, opens a conversation, understands the subscriber's reason, and makes a personalised offer in seconds.",
     detail: "You set the guardrails: offer types, limits, tone.",
   },
   {

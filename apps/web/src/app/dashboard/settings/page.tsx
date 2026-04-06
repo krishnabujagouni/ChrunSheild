@@ -141,7 +141,7 @@ export default async function SettingsPage({
             <div style={{ marginBottom: 24 }}>
               <div style={{ fontSize: 13, fontWeight: 600, color: "#0f172a", marginBottom: 4 }}>Maximum discount allowed</div>
               <div style={{ fontSize: 12, color: "#94a3b8", marginBottom: 10 }}>
-                Claude will never offer more than this. Set to "No discount" to disable price offers entirely.
+                Aria will never offer more than this. Set to "No discount" to disable price offers entirely.
               </div>
               <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
                 {([0, 10, 25, 40] as const).map(pct => (
@@ -165,7 +165,7 @@ export default async function SettingsPage({
               <div style={{ marginBottom: 24 }}>
                 <div style={{ fontSize: 13, fontWeight: 600, color: "#0f172a", marginBottom: 4 }}>Discount duration</div>
                 <div style={{ fontSize: 12, color: "#94a3b8", marginBottom: 10 }}>
-                  How many months the discount applies before billing returns to full price. Claude will quote this exact number.
+                  How many months the discount applies before billing returns to full price. Aria will quote this exact number.
                 </div>
                 <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
                   {DISCOUNT_DURATION_OPTIONS.map(mo => (
@@ -223,10 +223,10 @@ export default async function SettingsPage({
             {/* Custom message */}
             <div style={{ marginBottom: 24 }}>
               <div style={{ fontSize: 13, fontWeight: 600, color: "#0f172a", marginBottom: 4 }}>
-                Custom message for Claude <span style={{ fontWeight: 400, color: "#94a3b8" }}>(optional)</span>
+                Custom message for Aria <span style={{ fontWeight: 400, color: "#94a3b8" }}>(optional)</span>
               </div>
               <div style={{ fontSize: 12, color: "#94a3b8", marginBottom: 10 }}>
-                Added verbatim to Claude&apos;s instructions. Max 300 characters.
+                Added verbatim to Aria&apos;s instructions. Max 300 characters.
               </div>
               <textarea
                 name="customMessage"
