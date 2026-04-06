@@ -233,7 +233,7 @@ export async function POST(request: Request) {
 
   log("step=F generateText start", { promptCharCount: prompt.length });
   const tGen = Date.now();
-  const result = await generateText({ model, prompt, maxTokens: 200 });
+  const result = await generateText({ model, prompt, maxOutputTokens: 200 });
   log("step=G generateText OK", { ms: Date.now() - tGen, answerCharCount: result.text?.length ?? 0 });
 
   return NextResponse.json({ answer: result.text.trim(), question: query, traceId });

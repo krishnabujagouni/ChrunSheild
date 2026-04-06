@@ -1,9 +1,11 @@
-import { Prisma, PrismaClientKnownRequestError } from "@prisma/client";
+import { Prisma } from "@prisma/client";
 import { prisma } from "@/lib/db";
 
 function subscriberEmailColumnMissing(e: unknown): boolean {
-  if (!(e instanceof PrismaClientKnownRequestError) || e.code !== "P2010") return false;
-  const blob = `${e.message}${e.meta?.message ?? ""}`;
+  if (typeof e !== "object" || e === null) return false;
+  const err = e as { code?: string; message?: string; meta?: { message?: string } };
+  if (err.code !== "P2010") return false;
+  const blob = `${err.message ?? ""}${err.meta?.message ?? ""}`;
   return blob.includes("subscriber_email") && (blob.includes("42703") || blob.includes("does not exist"));
 }
 

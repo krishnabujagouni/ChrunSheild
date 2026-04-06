@@ -146,8 +146,8 @@ export default function OfferAnalyticsPage() {
                 <XAxis dataKey="offerType" tickFormatter={label} tick={{ fontSize: 12, fill: "#64748b" }} axisLine={false} tickLine={false} />
                 <YAxis tickFormatter={(v) => `${v}%`} tick={{ fontSize: 12, fill: "#94a3b8" }} axisLine={false} tickLine={false} domain={[0, 100]} />
                 <Tooltip
-                  formatter={(v: number) => [`${v}%`, "Save rate"]}
-                  labelFormatter={label}
+                  formatter={(v: unknown) => [`${v}%`, "Save rate"]}
+                  labelFormatter={(v: unknown) => label(String(v))}
                   contentStyle={{ borderRadius: 8, border: "1px solid #e2e8f0", fontSize: 12 }}
                 />
                 <Bar dataKey="saveRate" radius={[6, 6, 0, 0]}>
