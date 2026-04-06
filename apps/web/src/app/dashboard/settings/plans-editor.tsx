@@ -96,9 +96,7 @@ export function PlansEditor({
                     <span style={{ fontSize: 13, fontWeight: 600, color: "#0f172a" }}>{plan.name}</span>
                     <span style={{ fontSize: 13, color: "#64748b", marginLeft: 8 }}>${plan.priceMonthly}/mo</span>
                     {plan.stripePriceId && (
-                      <span style={{ fontSize: 11, color: "#94a3b8", marginLeft: 8, fontFamily: "ui-monospace, monospace" }}>
-                        {plan.stripePriceId}
-                      </span>
+                      <span style={{ fontSize: 11, color: "#22c55e", marginLeft: 8, fontWeight: 500 }}>● Stripe linked</span>
                     )}
                   </div>
                   <button
