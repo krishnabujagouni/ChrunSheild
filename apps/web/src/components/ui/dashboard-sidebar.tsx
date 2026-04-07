@@ -217,56 +217,59 @@ export function DashboardSidebar() {
         )}
       </div>
 
-      {/* Main nav */}
-      <div style={{ display: "flex", flexDirection: "column", gap: 2, flex: 1 }}>
-        {mainNav.map(item => (
-          <NavOption key={item.href + item.title} item={item} selected={isSelected(item.href)} open={open} />
-        ))}
-      </div>
-
-      {/* Info card  dismissible tip, only shown when sidebar is expanded */}
-      {open && (
-        <div style={{ padding: "0 4px 8px" }}>
-          <InfoCard
-            storageKey="sidebar-integration-tip"
-            dismissType="forever"
-            className="border-[var(--cs-border,#e4e4e7)] bg-[var(--cs-bg,#fafafa)] text-[var(--cs-text,#18181b)]"
-          >
-            <InfoCardContent className="text-xs">
-              <InfoCardTitle className="text-xs font-semibold text-[var(--cs-text,#18181b)]">
-                Connect your billing
-              </InfoCardTitle>
-              <InfoCardDescription className="text-[var(--cs-text-muted,#71717a)]">
-                Link Stripe or Paddle to start saving subscribers automatically.
-              </InfoCardDescription>
-              <InfoCardFooter className="mt-1 text-[var(--cs-text-muted,#71717a)]">
-                <InfoCardDismiss className="hover:text-[var(--cs-text,#18181b)] transition-colors">
-                  Dismiss
-                </InfoCardDismiss>
-                <InfoCardAction>
-                  <Link
-                    href="/dashboard/integration"
-                    className="flex items-center gap-1 underline hover:text-[var(--cs-accent,#18181b)] transition-colors"
-                  >
-                    Set up <ExternalLink size={10} />
-                  </Link>
-                </InfoCardAction>
-              </InfoCardFooter>
-            </InfoCardContent>
-          </InfoCard>
+      {/* Scrollable middle: main nav + info card + bottom nav */}
+      <div style={{ flex: 1, overflowY: "auto", overflowX: "hidden", display: "flex", flexDirection: "column", paddingBottom: 48 }}>
+        {/* Main nav */}
+        <div style={{ display: "flex", flexDirection: "column", gap: 2, flex: 1 }}>
+          {mainNav.map(item => (
+            <NavOption key={item.href + item.title} item={item} selected={isSelected(item.href)} open={open} />
+          ))}
         </div>
-      )}
 
-      {/* Bottom nav */}
-      <div style={{ borderTop: "1px solid var(--cs-border, #e4e4e7)", paddingTop: 8, marginBottom: 48, display: "flex", flexDirection: "column", gap: 2 }}>
+        {/* Info card  dismissible tip, only shown when sidebar is expanded */}
         {open && (
-          <div style={{ padding: "4px 12px 4px", fontSize: 10, fontWeight: 600, color: "var(--cs-text-muted, #71717a)", letterSpacing: "0.06em", textTransform: "uppercase" }}>
-            Account
+          <div style={{ padding: "0 4px 8px" }}>
+            <InfoCard
+              storageKey="sidebar-integration-tip"
+              dismissType="forever"
+              className="border-[var(--cs-border,#e4e4e7)] bg-[var(--cs-bg,#fafafa)] text-[var(--cs-text,#18181b)]"
+            >
+              <InfoCardContent className="text-xs">
+                <InfoCardTitle className="text-xs font-semibold text-[var(--cs-text,#18181b)]">
+                  Connect your billing
+                </InfoCardTitle>
+                <InfoCardDescription className="text-[var(--cs-text-muted,#71717a)]">
+                  Link Stripe or Paddle to start saving subscribers automatically.
+                </InfoCardDescription>
+                <InfoCardFooter className="mt-1 text-[var(--cs-text-muted,#71717a)]">
+                  <InfoCardDismiss className="hover:text-[var(--cs-text,#18181b)] transition-colors">
+                    Dismiss
+                  </InfoCardDismiss>
+                  <InfoCardAction>
+                    <Link
+                      href="/dashboard/integration"
+                      className="flex items-center gap-1 underline hover:text-[var(--cs-accent,#18181b)] transition-colors"
+                    >
+                      Set up <ExternalLink size={10} />
+                    </Link>
+                  </InfoCardAction>
+                </InfoCardFooter>
+              </InfoCardContent>
+            </InfoCard>
           </div>
         )}
-        {bottomNav.map(item => (
-          <NavOption key={item.href + item.title} item={item} selected={isSelected(item.href)} open={open} />
-        ))}
+
+        {/* Bottom nav */}
+        <div style={{ borderTop: "1px solid var(--cs-border, #e4e4e7)", paddingTop: 8, display: "flex", flexDirection: "column", gap: 2 }}>
+          {open && (
+            <div style={{ padding: "4px 12px 4px", fontSize: 10, fontWeight: 600, color: "var(--cs-text-muted, #71717a)", letterSpacing: "0.06em", textTransform: "uppercase" }}>
+              Account
+            </div>
+          )}
+          {bottomNav.map(item => (
+            <NavOption key={item.href + item.title} item={item} selected={isSelected(item.href)} open={open} />
+          ))}
+        </div>
       </div>
 
       {/* Collapse toggle */}
