@@ -1,3 +1,6 @@
 html, body { overflow: hidden; scrollbar-width: none; -ms-overflow-style: none; }
 html::-webkit-scrollbar, body::-webkit-scrollbar { display: none; }
 main::-webkit-scrollbar { display: none; }
+/* Hide sidebar scrollbar */
+nav::-webkit-scrollbar { display: none; }
+nav { scrollbar-width: none; -ms-overflow-style: none; }

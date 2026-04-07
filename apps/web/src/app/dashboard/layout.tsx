@@ -11,10 +11,20 @@ export default async function DashboardLayout({ children }: { children: React.Re
   return (
     <div style={{
       display: "flex",
+      alignItems: "center",
+      justifyContent: "center",
       height: "100vh",
+      background: "#e4e4e7",
+      fontFamily: "var(--cs-font, var(--font-inter, 'Inter', system-ui, sans-serif))",
+    }}>
+    <div style={{
+      display: "flex",
+      width: "90vw",
+      height: "90vh",
       background: "var(--cs-bg, #fafafa)",
       overflow: "hidden",
-      fontFamily: "var(--cs-font, var(--font-inter, 'Inter', system-ui, sans-serif))",
+      borderRadius: 16,
+      boxShadow: "0 8px 40px rgba(0,0,0,0.12)",
     }}>
       <DashboardSidebar />
 
@@ -35,6 +45,7 @@ export default async function DashboardLayout({ children }: { children: React.Re
           {children}
         </main>
       </div>
+    </div>
     </div>
   );
 }
