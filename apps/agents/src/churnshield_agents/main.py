@@ -18,10 +18,20 @@ from churnshield_agents.jobs import queue
 async def lifespan(app: FastAPI):
     settings = get_settings()
     if settings.database_url:
-        await db.connect()
-    queue.start_scheduler()
+        try:
+            await db.connect()
+            logging.info("Database connected")
+        except Exception as e:
+            logging.error("Database connection failed (non-fatal): %s", e)
+    try:
+        queue.start_scheduler()
+    except Exception as e:
+        logging.error("Scheduler start failed (non-fatal): %s", e)
     yield
-    queue.stop_scheduler()
+    try:
+        queue.stop_scheduler()
+    except Exception:
+        pass
     await db.disconnect()
 
 
