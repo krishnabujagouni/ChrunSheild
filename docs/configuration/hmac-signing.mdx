@@ -28,7 +28,7 @@ The `CHURNSHIELD_EMBED_SECRET` is a private key that never leaves your server.
 ## Finding your embed secret
 
 1. Go to **Dashboard → Integration**
-2. Your embed secret is shown in the **Step 3 — Secure your embed** section
+2. Your embed secret is shown in the **Step 3  Secure your embed** section
 3. Click **Rotate embed secret** to generate a new one (invalidates all existing hashes)
 
 <Warning>
@@ -113,7 +113,7 @@ func ChurnShieldAuthHash(subscriberID string) string {
 Compute the hash server-side and pass it to your frontend. Never compute it in the browser.
 
 <AccordionGroup>
-  <Accordion title="Next.js — server component or server action">
+  <Accordion title="Next.js  server component or server action">
     ```tsx
     // app/account/page.tsx (server component)
     import crypto from "crypto";
@@ -149,7 +149,7 @@ Compute the hash server-side and pass it to your frontend. Never compute it in t
     ```
   </Accordion>
 
-  <Accordion title="Express — inject into page template">
+  <Accordion title="Express  inject into page template">
     ```javascript
     const crypto = require("crypto");
 
@@ -211,7 +211,7 @@ Compute the hash server-side and pass it to your frontend. Never compute it in t
 Once your backend is computing and passing the `authHash`, activate signing to enforce it:
 
 1. Go to **Dashboard → Integration**
-2. Click **Rotate embed secret** — this generates a new secret and locks the embed
+2. Click **Rotate embed secret**  this generates a new secret and locks the embed
 3. Update `CHURNSHIELD_EMBED_SECRET` in your server's environment variables with the new secret
 
 After activation, any request without a valid `authHash` is rejected. Test your integration before activating to avoid disrupting live users.
@@ -222,7 +222,7 @@ After activation, any request without a valid `authHash` is rejected. Test your 
 
 To rotate the secret:
 1. Click **Rotate embed secret** in Dashboard → Integration
-2. A new secret is generated immediately — the old one is invalidated
+2. A new secret is generated immediately  the old one is invalidated
 3. Update `CHURNSHIELD_EMBED_SECRET` in your environment and redeploy
 
 <Warning>

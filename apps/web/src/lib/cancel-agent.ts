@@ -11,7 +11,7 @@ export type PlanTier = {
 /**
  * Match agent's targetPlanName + targetPriceMonthly to a configured cheaper plan.
  * Returns the plan if name + price match and it's cheaper than current MRR.
- * stripePriceId may be absent — caller decides whether to apply in Stripe.
+ * stripePriceId may be absent  caller decides whether to apply in Stripe.
  */
 export function matchDowngradePlan(
   plans: PlanTier[],
@@ -26,7 +26,7 @@ export function matchDowngradePlan(
     if (pl.name.trim().toLowerCase().replace(/\s+/g, " ") !== key) continue;
     if (Math.abs(pl.priceMonthly - targetPriceMonthly) > 0.02) continue;
     if (pl.priceMonthly >= subscriberMrr - 0.02) continue;
-    return pl; // matched — stripePriceId presence checked by caller
+    return pl; // matched  stripePriceId presence checked by caller
   }
   return null;
 }
@@ -49,11 +49,11 @@ export type CancelAgentContext = {
   cancelAttempts?: number;
   offerSettings?: MerchantOfferSettings | null;
   locale?: string;
-  /** Current plan name the subscriber is on — passed from embed identify() call */
+  /** Current plan name the subscriber is on  passed from embed identify() call */
   planName?: string;
   /**
    * True when the subscriber already has an active retention offer (accepted but not yet
-   * billed). All financial incentives are locked — empathy and product support only.
+   * billed). All financial incentives are locked  empathy and product support only.
    */
   offersLocked?: boolean;
 };
@@ -119,7 +119,7 @@ function buildMerchantAllowlist(mrr: number, settings: MerchantOfferSettings): s
       .sort((a, b) => a.priceMonthly - b.priceMonthly);
     if (plans.length > 0) {
       const planList = plans
-        .map((p) => `  • **${p.name}** — **$${p.priceMonthly}/mo** (fixed recurring price, not a percent off)`)
+        .map((p) => `  • **${p.name}**  **$${p.priceMonthly}/mo** (fixed recurring price, not a percent off)`)
         .join("\n");
       lines.push(
         `- **Downgrade (fixed lower price):** Only suggest rows below that are **cheaper** than the subscriber's current **$${mrr}/mo**. ` +
@@ -129,7 +129,7 @@ function buildMerchantAllowlist(mrr: number, settings: MerchantOfferSettings): s
       );
     } else {
       lines.push(
-        "- **Downgrade:** you may suggest moving to a cheaper plan (merchant has not listed specific plans — use general language about a lower tier, do not invent prices).",
+        "- **Downgrade:** you may suggest moving to a cheaper plan (merchant has not listed specific plans  use general language about a lower tier, do not invent prices).",
       );
     }
   } else {
@@ -450,7 +450,7 @@ export function resolveBillingOfferFromSession(params: {
         String(p.targetPlanName ?? "").trim(),
         Number(p.targetPriceMonthly ?? 0),
       );
-      // Always return downgrade — Stripe execution only happens when stripePriceId is present.
+      // Always return downgrade  Stripe execution only happens when stripePriceId is present.
       // Fall-through to empathy was silently swallowing valid downgrade offers.
       return {
         offerType: "downgrade",

@@ -46,7 +46,7 @@ export default function SignInPage() {
               "AI agent intercepts every cancel click",
               "Personalised retention offers in seconds",
               "15% fee only when we save a subscriber",
-              "Zero flat fee — no risk to start",
+              "Zero flat fee  no risk to start",
             ].map((item) => (
               <div key={item} style={{ display: "flex", alignItems: "center", gap: 12 }}>
                 <div style={{ width: 20, height: 20, borderRadius: "50%", background: "#f4f4f5", border: "1px solid #e4e4e7", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
@@ -65,7 +65,7 @@ export default function SignInPage() {
           <p style={{ color: "#71717a", fontSize: 13, lineHeight: 1.6 }}>
             "Performance-only pricing sealed it. No flat fee meant we could try it with zero risk."
           </p>
-          <p style={{ color: "#a1a1aa", fontSize: 12, marginTop: 8 }}>— Early access founder</p>
+          <p style={{ color: "#a1a1aa", fontSize: 12, marginTop: 8 }}> Early access founder</p>
         </div>
       </div>
 

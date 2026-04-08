@@ -61,7 +61,7 @@ Fired immediately when the subscriber accepts an offer. If you have webhooks con
 | `subscriber_id` | `string` | Stripe customer ID |
 | `subscriber_email` | `string` \| `null` | Subscriber email if provided during identify |
 | `offer_type` | `string` | `discount`, `pause`, `extension`, `downgrade`, or `empathy` |
-| `discount_pct` | `number` \| `null` | Discount percentage — only present when `offer_type` is `discount` |
+| `discount_pct` | `number` \| `null` | Discount percentage  only present when `offer_type` is `discount` |
 | `mrr_saved` | `number` | MRR retained (full MRR for pause/empathy, discounted amount for discount) |
 
 ---
@@ -74,23 +74,25 @@ Fired immediately when the subscriber accepts an offer. If you have webhooks con
 | `pause` | `pause_collection: { behavior: "mark_uncollectible" }` set on subscription |
 | `extension` | Negative customer balance credit (2 weeks of MRR) |
 | `downgrade` | Subscription price swapped to the target plan at next billing cycle |
-| `empathy` | No Stripe action — conversation alone retained the subscriber |
+| `empathy` | No Stripe action  conversation alone retained the subscriber |
 
 ---
 
 ## Fee billing
 
-ChurnShield charges 15% of the MRR saved per successful save. Fee timing depends on offer type:
+ChurnShield charges **15%** of the MRR saved per successful save. **Money movement** is **once per month** (1st of the month, UTC): one Stripe payment per workspace that bundles all eligible saves. Your dashboard **Billing** page shows **one row per charge** (Stripe payment ref).
 
-| Offer type | Fee timing |
-|------------|-----------|
-| `pause` | Immediately on save |
-| `empathy` | Immediately on save |
-| `discount` | After `invoice.paid` fires from Stripe (confirms subscriber paid at discounted rate) |
-| `extension` | After next `invoice.paid` fires |
+**When the fee amount is finalized** (before that monthly charge):
+
+| Offer type | When `fee` / outcome is finalized |
+|------------|-----------------------------------|
+| `empathy` | When the save is recorded (conversation retained the subscriber) |
+| `pause` | Pre-calculated at save time; **outcome** confirmed on `invoice.paid` after pause ends |
+| `discount` | Pre-calculated at save time; **outcome** and exact fee updated on `invoice.paid` at the discounted rate |
+| `extension` | After next `invoice.paid` |
 | `downgrade` | After first `invoice.paid` at the new plan price |
 
-The fee is charged via Stripe Connect to your connected Stripe account automatically.
+If the subscriber never pays (e.g. accepts a discount then cancels before a confirming invoice), **no fee is collected** — the save is not confirmed for billing.
 
 ---
 
@@ -98,6 +100,6 @@ The fee is charged via Stripe Connect to your connected Stripe account automatic
 
 To get notified when a subscriber is saved:
 
-- **Slack / Discord** — connect in Dashboard → Connections. Alerts fire in real-time.
-- **Webhooks** — add any HTTPS endpoint in Dashboard → Connections → Webhooks. See [Webhooks](/integrations/webhooks).
-- **Zapier / Make** — paste your Catch Hook URL into the Zapier or Make card. See [Zapier](/integrations/zapier) or [Make](/integrations/make).
+- **Slack / Discord**  connect in Dashboard → Connections. Alerts fire in real-time.
+- **Webhooks**  add any HTTPS endpoint in Dashboard → Connections → Webhooks. See [Webhooks](/integrations/webhooks).
+- **Zapier / Make**  paste your Catch Hook URL into the Zapier or Make card. See [Zapier](/integrations/zapier) or [Make](/integrations/make).

@@ -1,5 +1,5 @@
 # ChurnShield  Project Status
-*Last updated: April 7, 2026 (Production deployment — Vercel + Railway)*
+*Last updated: April 7, 2026 (Production deployment  Vercel + Railway)*
 
 ---
 
@@ -17,7 +17,7 @@
 #### Vercel (Next.js web app)
 - Root directory: `apps/web`
 - All env vars set in Vercel dashboard (Production + Preview + Development)
-- `DATABASE_URL` uses Supabase **transaction pooler** URL (port 6543, `?pgbouncer=true&connection_limit=1`) — direct port 5432 does not work on Vercel serverless
+- `DATABASE_URL` uses Supabase **transaction pooler** URL (port 6543, `?pgbouncer=true&connection_limit=1`)  direct port 5432 does not work on Vercel serverless
 - `STRIPE_CONNECT_REDIRECT_URI` set to production URL
 - `NEXT_PUBLIC_APP_URL` set to production URL
 - Auto-deploys on every push to `main`
@@ -25,7 +25,7 @@
 #### Railway (Python agents)
 - Root directory: `apps/agents`
 - Dockerfile detected automatically (`railway.toml` sets `builder = "dockerfile"`)
-- Start command hardcoded to port 8000 in `railway.toml` — Railway `$PORT` injection was unreliable
+- Start command hardcoded to port 8000 in `railway.toml`  Railway `$PORT` injection was unreliable
 - All env vars set: `DATABASE_URL`, `STRIPE_SECRET_KEY`, `STRIPE_WEBHOOK_SECRET`, `ANTHROPIC_API_KEY`, `RESEND_API_KEY`, `RESEND_FROM_EMAIL`, `ENVIRONMENT=production`
 
 #### Stripe Webhook
@@ -41,42 +41,42 @@
 - `flex: 1` removed from main nav div so bottom nav doesn't get pushed out of view
 
 #### Known pending
-~~- Slack/Discord OAuth redirect URIs still point to ngrok (local dev) — update to production URLs in Vercel env vars + Slack/Discord developer portals when ready~~ ✅ Fixed in Vercel production
+~~- Slack/Discord OAuth redirect URIs still point to ngrok (local dev)  update to production URLs in Vercel env vars + Slack/Discord developer portals when ready~~ ✅ Fixed in Vercel production
 ~~- `STRIPE_CLIENT_ID` needs full `ca_...` value confirmed in Vercel~~ ✅ Fixed in Vercel production
-~~- `ANTHROPIC_MODEL` was accidentally added as `ANTHROPIC_MODE` in Vercel — fix spelling~~ ✅ Fixed in Vercel production
+~~- `ANTHROPIC_MODEL` was accidentally added as `ANTHROPIC_MODE` in Vercel  fix spelling~~ ✅ Fixed in Vercel production
 
 ---
 
 ### Stripe Connect + retention offer fixes (April 6, 2026)
 
 #### Stripe Connect setup
-- **`stripeConnectId` is set via OAuth flow** — Dashboard → Connections → "Connect Stripe" → `/api/stripe/connect/start` → Stripe OAuth → `/api/stripe/connect/callback` saves `token.stripe_user_id` as `tenant.stripeConnectId`. Manually-seeded tenants (direct DB insert) will have `stripeConnectId = ""` and must go through this flow or update the field directly.
+- **`stripeConnectId` is set via OAuth flow**  Dashboard → Connections → "Connect Stripe" → `/api/stripe/connect/start` → Stripe OAuth → `/api/stripe/connect/callback` saves `token.stripe_user_id` as `tenant.stripeConnectId`. Manually-seeded tenants (direct DB insert) will have `stripeConnectId = ""` and must go through this flow or update the field directly.
 - **`STRIPE_CLIENT_ID`** must be set to the `ca_...` value from Stripe Dashboard → Connect → Settings (test mode client ID). Without it the Connect flow returns `"No application matches the supplied client identifier"`.
 - **`STRIPE_CONNECT_REDIRECT_URI`** must be added to the allowed redirect list in the same Stripe Connect Settings page.
-- **`applyStripeOffer` account routing**: when `stripeConnectId` is empty the platform `STRIPE_SECRET_KEY` is used directly (no `stripeAccount` header). If the subscription lives on a different Stripe account than the key's owner, Stripe returns `resource_missing`. Fix: either go through the Connect OAuth flow or manually set `stripeConnectId` to the correct `acct_...` value. The account ID is embedded in resource IDs — e.g. `sub_1TJLOS1o8oT6sd4n` → account `acct_1TG6OH1o8oT6sd4n`.
+- **`applyStripeOffer` account routing**: when `stripeConnectId` is empty the platform `STRIPE_SECRET_KEY` is used directly (no `stripeAccount` header). If the subscription lives on a different Stripe account than the key's owner, Stripe returns `resource_missing`. Fix: either go through the Connect OAuth flow or manually set `stripeConnectId` to the correct `acct_...` value. The account ID is embedded in resource IDs  e.g. `sub_1TJLOS1o8oT6sd4n` → account `acct_1TG6OH1o8oT6sd4n`.
 
-#### Downgrade — apply at next billing cycle
-- **`proration_behavior` changed from `"create_prorations"` to `"none"`** in `cancel-outcome/route.ts` downgrade path. Previously the price swap triggered immediate proration credits/charges on the current invoice. Now the switch takes effect cleanly at the next renewal — no proration line items.
+#### Downgrade  apply at next billing cycle
+- **`proration_behavior` changed from `"create_prorations"` to `"none"`** in `cancel-outcome/route.ts` downgrade path. Previously the price swap triggered immediate proration credits/charges on the current invoice. Now the switch takes effect cleanly at the next renewal  no proration line items.
 
-#### Downgrade — remove prior ChurnShield coupon
+#### Downgrade  remove prior ChurnShield coupon
 - **Belt-and-suspenders coupon cleanup** added to the downgrade path in `cancel-outcome/route.ts`:
-  1. `stripe.subscriptions.deleteDiscount(subscription.id)` — removes legacy singular `subscription.discount` field.
-  2. `stripe.customers.retrieve(customerId, { expand: ["discount.coupon"] })` + `stripe.customers.deleteDiscount(customerId)` — removes any ChurnShield coupon at the customer level (identified by `isChurnShieldRetentionCoupon`).
+  1. `stripe.subscriptions.deleteDiscount(subscription.id)`  removes legacy singular `subscription.discount` field.
+  2. `stripe.customers.retrieve(customerId, { expand: ["discount.coupon"] })` + `stripe.customers.deleteDiscount(customerId)`  removes any ChurnShield coupon at the customer level (identified by `isChurnShieldRetentionCoupon`).
 - Both calls are best-effort (wrapped in `try/catch`) and never block the save record.
 - **Why**: customer-level Stripe coupons don't appear in `subscription.discounts`, so `nonChurnShieldDiscountUpdateParams` alone didn't catch them. Without this fix a prior 25% off coupon persisted through the plan downgrade, stacking both benefits.
 
-#### Double-dipping prevention — offer lock
-- **`offersLocked` flag** added to `CancelAgentContext` and `buildCancelAgentSystem` in `cancel-agent.ts`. When `true`, the system prompt replaces the merchant allowlist with a hard block: "No promotional incentives available — this subscriber already has an active retention offer. Empathy and product support only."
+#### Double-dipping prevention  offer lock
+- **`offersLocked` flag** added to `CancelAgentContext` and `buildCancelAgentSystem` in `cancel-agent.ts`. When `true`, the system prompt replaces the merchant allowlist with a hard block: "No promotional incentives available  this subscriber already has an active retention offer. Empathy and product support only."
 - **Check in `cancel-chat/route.ts`**: before building the system prompt, queries `SaveSession` for any row where `subscriberId` matches + `offerAccepted = true` + `feeBilledAt = null` (prior session, not current). If found → `offersLocked: true`.
 - **Effect**: a customer who already accepted a discount or downgrade (and the fee hasn't been billed yet) cannot stack a second financial offer in a new cancel flow. Lock lifts automatically once `feeBilledAt` is set by the stripe worker.
 
-#### Keep my subscription — shows actual price
+#### Keep my subscription  shows actual price
 - **`buildOfferLabel(offer)`** in `cs.js` updated:
-  - `discount`: now computes discounted price from `identifyState.subscriptionMrr` — label becomes e.g. `"Claim 25% off for 3 mo → $74.25/mo — stay subscribed"`.
-  - `downgrade`: uses `offer.targetPriceMonthly` + `offer.targetPlanName` — label becomes e.g. `"Activate $49/mo · medium — stay subscribed"`. Previously both showed generic text with no price.
+  - `discount`: now computes discounted price from `identifyState.subscriptionMrr`  label becomes e.g. `"Claim 25% off for 3 mo → $74.25/mo  stay subscribed"`.
+  - `downgrade`: uses `offer.targetPriceMonthly` + `offer.targetPlanName`  label becomes e.g. `"Activate $49/mo · medium  stay subscribed"`. Previously both showed generic text with no price.
 
 #### Offer endpoint key mismatch fix
-- **`GET /api/public/cancel-chat/offer`** now checks both `tenant.snippetKey` and `tenant.embedAppId` against the `key` query param. Previously only checked `snippetKey`, so when `cs.js` used `data-app-id` (`cs_app_...`) as the key the check always failed and returned `{ offer: null }` — causing the Keep button to never update its label.
+- **`GET /api/public/cancel-chat/offer`** now checks both `tenant.snippetKey` and `tenant.embedAppId` against the `key` query param. Previously only checked `snippetKey`, so when `cs.js` used `data-app-id` (`cs_app_...`) as the key the check always failed and returned `{ offer: null }`  causing the Keep button to never update its label.
 
 #### Stripe error logging improvement
 - **`applyStripeOffer`** in `cancel-outcome/route.ts`: `resource_missing` Stripe errors (stale/wrong-account subscription IDs) now log as `console.warn` instead of `console.error`, reducing noise during testing. All other Stripe errors still use `console.error`.

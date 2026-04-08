@@ -3,7 +3,7 @@
  * Script: data-app-id (App ID) + data-key (snippet key). Prefer data-app-id for public API id.
  * Identify: window.ChurnShield.identify({
  *   subscriberId, subscriptionMrr, subscriberEmail?, subscriptionId?,
- *   planName?,  // e.g. "Pro" — shown to Aria; pair with subscriptionMrr for downgrade vs your Settings plans
+ *   planName?,  // e.g. "Pro"  shown to Aria; pair with subscriptionMrr for downgrade vs your Settings plans
  *   authHash? | getAuthHash?(cus) | authHashUrl?
  * })
  * cancel-intent always requires authHash; use getAuthHash or authHashUrl to fetch from your API.

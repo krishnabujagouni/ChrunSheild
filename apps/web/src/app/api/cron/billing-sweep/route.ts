@@ -3,7 +3,7 @@ import { prisma } from "@/lib/db";
 import Stripe from "stripe";
 
 /**
- * Monthly billing sweep — runs on the 1st of every month at 6am UTC.
+ * Monthly billing sweep  runs on the 1st of every month at 6am UTC.
  *
  * Collects all SaveSessions from the previous calendar month where:
  *   - offerAccepted = true
@@ -48,7 +48,7 @@ export async function GET(req: Request) {
 
   const label = `${periodStart.toISOString().slice(0, 7)}`; // "2026-03"
 
-  // All unbilled confirmed saves — confirmed (outcomeConfirmedAt set) before end of last month.
+  // All unbilled confirmed saves  confirmed (outcomeConfirmedAt set) before end of last month.
   // createdAt filter removed: a Jan pause confirmed in March still bills on April 1st.
   const sessions = await prisma.saveSession.findMany({
     where: {
@@ -137,7 +137,7 @@ export async function GET(req: Request) {
           currency:    "usd",
           confirm:     true,
           automatic_payment_methods: { enabled: true, allow_redirects: "never" },
-          description: `ChurnShield saves — ${label} (${sessionIds.length} save${sessionIds.length !== 1 ? "s" : ""})`,
+          description: `ChurnShield saves  ${label} (${sessionIds.length} save${sessionIds.length !== 1 ? "s" : ""})`,
           metadata: {
             period:           label,
             session_count:    String(sessionIds.length),
@@ -167,7 +167,7 @@ export async function GET(req: Request) {
   }
 
   console.log(
-    `[billing-sweep] ${label} done — tenants=${results.length} sessions=${sessions.length} total=$${(grandTotalCharged / 100).toFixed(2)}`,
+    `[billing-sweep] ${label} done  tenants=${results.length} sessions=${sessions.length} total=$${(grandTotalCharged / 100).toFixed(2)}`,
   );
 
   return NextResponse.json({

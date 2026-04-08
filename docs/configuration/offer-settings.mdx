@@ -24,7 +24,7 @@ Discount offers apply a percentage coupon to the subscriber's Stripe subscriptio
 Select which percentages Aria is allowed to offer: **10% off**, **25% off**, and/or **40% off**. Uncheck all three to disable price-reduction offers entirely.
 
 <Info>
-  Aria always starts with the lowest tier. She only offers higher discounts if the subscriber continues to push back — she won't lead with the maximum discount.
+  Aria always starts with the lowest tier. She only offers higher discounts if the subscriber continues to push back  she won't lead with the maximum discount.
 </Info>
 
 ### Discount duration
@@ -34,7 +34,7 @@ Choose how many months the discount applies before billing returns to full price
 ChurnShield creates a Stripe coupon automatically when the offer is accepted:
 - Coupon ID format: `churnshield_ret_{pct}p_{months}m` (e.g. `churnshield_ret_25p_3m`)
 - Duration: repeating for the selected number of months
-- ChurnShield coupons never stack — a new save replaces the previous retention coupon
+- ChurnShield coupons never stack  a new save replaces the previous retention coupon
 
 ---
 
@@ -61,14 +61,14 @@ When enabled, Aria can offer to switch the subscriber to a cheaper plan as an al
     Toggle **Allow plan downgrade** on in Settings.
   </Step>
   <Step title="Connect Stripe (if not already)">
-    Stripe must be connected — ChurnShield imports your active prices automatically.
+    Stripe must be connected  ChurnShield imports your active prices automatically.
   </Step>
   <Step title="Select downgrade plans">
     Use the dropdown to add one or more Stripe prices as downgrade options. Each plan shows its name and monthly amount.
   </Step>
 </Steps>
 
-When accepted, ChurnShield swaps the subscription to the selected plan at the **next billing cycle** — no proration is applied.
+When accepted, ChurnShield swaps the subscription to the selected plan at the **next billing cycle**  no proration is applied.
 
 <Warning>
   Downgrade requires Stripe Connect. The plan switch is applied at the next renewal, not immediately.
@@ -82,7 +82,7 @@ Add a custom instruction (up to 300 characters) that Aria follows verbatim in ev
 
 - Tell Aria to mention an upcoming feature: *"Always mention that feature X is launching next month"*
 - Restrict what she can discuss: *"Never mention competitors by name"*
-- Adjust her tone: *"Keep responses very brief — subscribers prefer short answers"*
+- Adjust her tone: *"Keep responses very brief  subscribers prefer short answers"*
 
 ---
 
@@ -99,7 +99,7 @@ Aria uses the subscriber's cancellation reason, MRR, and subscription age to pic
 | Over-subscribed | Plan downgrade |
 | Other | Discount (default) |
 
-Aria will not offer something you have disabled — if only pause is enabled, she only offers a pause.
+Aria will not offer something you have disabled  if only pause is enabled, she only offers a pause.
 
 ---
 

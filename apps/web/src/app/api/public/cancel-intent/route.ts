@@ -58,7 +58,7 @@ export async function POST(request: Request) {
     );
   }
 
-  // Accept any non-empty subscriber id — tenants may use internal ids, not just cus_...
+  // Accept any non-empty subscriber id  tenants may use internal ids, not just cus_...
   // Stripe customer id format is only required when actually calling Stripe (cancel-outcome).
   if (subscriberId.length > MAX_ID_LEN) {
     return NextResponse.json(

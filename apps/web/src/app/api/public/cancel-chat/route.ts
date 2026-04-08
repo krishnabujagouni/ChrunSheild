@@ -109,7 +109,7 @@ type Body = {
   sessionId?: string;
   messages?: unknown;
   locale?: string;
-  /** Subscriber's current plan name — passed from embed identify() */
+  /** Subscriber's current plan name  passed from embed identify() */
   planName?: string;
 };
 
@@ -176,7 +176,7 @@ export async function POST(request: Request) {
       },
     }),
     // Check for an existing accepted save that hasn't been billed yet.
-    // If one exists, lock all financial offers — prevent double-dipping.
+    // If one exists, lock all financial offers  prevent double-dipping.
     prisma.saveSession.findFirst({
       where: {
         tenantId: tenant.id,

@@ -37,7 +37,7 @@ async def handle_invoice_paid(payload: dict[str, Any], tenant_id: str | None) ->
     Confirm deferred saves when a subscriber's invoice is paid.
 
     ONLY confirms the save (sets outcome_confirmed_at + actual fee amount).
-    Does NOT charge the tenant — all charging is done by the monthly billing
+    Does NOT charge the tenant  all charging is done by the monthly billing
     cron on the 1st of the month so tenants receive one clean invoice per month.
     """
     if not tenant_id:
@@ -78,7 +78,7 @@ async def handle_invoice_paid(payload: dict[str, Any], tenant_id: str | None) ->
         session_id: str = row["session_id"]
         offer_type: str = row["offer_type"] or ""
 
-        # Stamp confirmation + actual fee amount — monthly cron does the Stripe charge
+        # Stamp confirmation + actual fee amount  monthly cron does the Stripe charge
         await conn.execute(
             """
             UPDATE save_sessions
@@ -93,7 +93,7 @@ async def handle_invoice_paid(payload: dict[str, Any], tenant_id: str | None) ->
             session_id,
         )
         logger.info(
-            "stripe_worker.confirmed session=%s offer=%s mrr=%.2f fee=%.2f — billing deferred to monthly cron",
+            "stripe_worker.confirmed session=%s offer=%s mrr=%.2f fee=%.2f  billing deferred to monthly cron",
             session_id, offer_type, invoice_mrr, fee,
         )
 

@@ -215,7 +215,7 @@ async function applyStripeOffer(
   }
 
   // When no Connect account is linked (e.g. during testing), operate on the
-  // platform's own Stripe account directly — no stripeAccount header.
+  // platform's own Stripe account directly  no stripeAccount header.
   const opts: Stripe.RequestOptions = stripeConnectId ? { stripeAccount: stripeConnectId } : {};
 
   try {
@@ -263,14 +263,14 @@ async function applyStripeOffer(
         opts,
       );
       // Belt-and-suspenders: remove ChurnShield coupons from both the legacy
-      // subscription.discount field and the customer.discount field — the new-style
+      // subscription.discount field and the customer.discount field  the new-style
       // subscription.discounts array is already cleared by discounts: keepDiscounts above.
       try {
         // 1) Legacy subscription-level discount (singular field, pre-2020 API style)
         await _stripe.subscriptions.deleteDiscount(subscription.id, opts);
       } catch { /* no-op if not present */ }
       try {
-        // 2) Customer-level discount — expand coupon so isChurnShieldRetentionCoupon works
+        // 2) Customer-level discount  expand coupon so isChurnShieldRetentionCoupon works
         const cust = await _stripe.customers.retrieve(
           customerId,
           { expand: ["discount.coupon"] } as Stripe.CustomerRetrieveParams,
@@ -368,7 +368,7 @@ const FEE_RATE = 0.15;
 type OfferType = "pause" | "extension" | "discount" | "downgrade" | "empathy";
 
 /** Offer types where the save is confirmed immediately (no need to wait for payment). */
-// pause is deferred — fee charged after subscriber's invoice.paid fires post-pause
+// pause is deferred  fee charged after subscriber's invoice.paid fires post-pause
 // empathy is caught by monthly billing sweep (no Stripe invoice to match against)
 const IMMEDIATE_CONFIRM = new Set<OfferType>(["empathy"]);
 
@@ -478,7 +478,7 @@ export async function POST(request: Request) {
     savedValue = mrr;
     feeCharged = mrr.mul(FEE_RATE).toDecimalPlaces(2);
   } else if (saved && offerType === "pause") {
-    // Pre-calculate expected fee — actual charge fires on invoice.paid after pause ends
+    // Pre-calculate expected fee  actual charge fires on invoice.paid after pause ends
     savedValue = mrr;
     feeCharged = mrr.mul(FEE_RATE).toDecimalPlaces(2);
   } else if (saved && offerType === "discount") {

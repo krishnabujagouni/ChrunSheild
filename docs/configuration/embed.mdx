@@ -5,11 +5,11 @@ description: "Install the ChurnShield cancel intercept in your app with two line
 
 ## Overview
 
-ChurnShield works via a lightweight JavaScript snippet (`cs.js`) that intercepts your cancel button client-side. When a subscriber clicks cancel, a chat overlay appears in-place — no redirects, no server changes required.
+ChurnShield works via a lightweight JavaScript snippet (`cs.js`) that intercepts your cancel button client-side. When a subscriber clicks cancel, a chat overlay appears in-place  no redirects, no server changes required.
 
 ---
 
-## Step 1 — Add the snippet
+## Step 1  Add the snippet
 
 Paste this into the `<head>` of every page where your cancel button lives. Get your `data-app-id` from **Dashboard → Integration**.
 
@@ -22,12 +22,12 @@ Paste this into the `<head>` of every page where your cancel button lives. Get y
 ```
 
 <Warning>
-  Use `defer` — not `async`. The snippet must finish loading before your cancel button renders, otherwise the intercept won't fire.
+  Use `defer`  not `async`. The snippet must finish loading before your cancel button renders, otherwise the intercept won't fire.
 </Warning>
 
 ---
 
-## Step 2 — Identify the subscriber
+## Step 2  Identify the subscriber
 
 Before the cancel button is shown, call `ChurnShield.identify()` with the subscriber's details. This must run after the script loads.
 
@@ -37,7 +37,7 @@ ChurnShield.identify({
   subscriptionId: "sub_xyz789",         // Stripe subscription ID (recommended)
   subscriberEmail: "user@example.com",  // shown in your dashboard
   subscriptionMrr: 49.00,               // monthly value in USD
-  authHash: "YOUR_HMAC_HASH",           // HMAC-SHA256 signature — see Signing guide
+  authHash: "YOUR_HMAC_HASH",           // HMAC-SHA256 signature  see Signing guide
 });
 ```
 
@@ -46,8 +46,8 @@ ChurnShield.identify({
 | `subscriberId` | Yes | Stripe customer ID (`cus_...`) |
 | `subscriptionId` | Recommended | Stripe subscription ID (`sub_...`). Without it, ChurnShield uses the customer's first active subscription. |
 | `subscriberEmail` | No | Shown in the dashboard instead of the raw customer ID |
-| `subscriptionMrr` | Recommended | Monthly value in USD — used to calculate offer amounts and the 15% success fee |
-| `authHash` | Required in production | HMAC-SHA256 signature — see [HMAC Signing](/configuration/hmac-signing) |
+| `subscriptionMrr` | Recommended | Monthly value in USD  used to calculate offer amounts and the 15% success fee |
+| `authHash` | Required in production | HMAC-SHA256 signature  see [HMAC Signing](/configuration/hmac-signing) |
 
 <Tip>
   `ChurnShield.identify()` is safe to call on every page load. If the same subscriber calls it multiple times, the last call wins.
@@ -55,7 +55,7 @@ ChurnShield.identify({
 
 ---
 
-## Step 3 — Mark your cancel button
+## Step 3  Mark your cancel button
 
 Add `data-cs-cancel` to your cancel button or link:
 
@@ -210,7 +210,7 @@ No server changes or redirects required.
 
 ## Grace mode vs secured mode
 
-When you first install the snippet it runs in **grace mode** — no `authHash` is required. This lets you test quickly without a backend change.
+When you first install the snippet it runs in **grace mode**  no `authHash` is required. This lets you test quickly without a backend change.
 
 Before going live, **activate signing** in Dashboard → Integration. Once activated, every cancel intent requires a valid `authHash`. See [HMAC Signing](/configuration/hmac-signing).
 

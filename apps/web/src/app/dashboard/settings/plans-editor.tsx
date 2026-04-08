@@ -73,7 +73,7 @@ export function PlansEditor({
           {/* Not connected to Stripe */}
           {!stripeConnected && (
             <div style={{ fontSize: 12, color: "#92400e", background: "#fffbeb", border: "1px solid #fcd34d", borderRadius: 8, padding: "10px 12px" }}>
-              Connect Stripe first — your plans will be imported automatically.{" "}
+              Connect Stripe first  your plans will be imported automatically.{" "}
               <a href="/dashboard/connections" style={{ color: "#92400e", fontWeight: 600 }}>Connect Stripe →</a>
             </div>
           )}
@@ -129,7 +129,7 @@ export function PlansEditor({
                 </option>
                 {availablePrices.map((sp) => (
                   <option key={sp.priceId} value={sp.priceId}>
-                    {sp.productName} — ${sp.amount}/mo
+                    {sp.productName}  ${sp.amount}/mo
                   </option>
                 ))}
               </select>

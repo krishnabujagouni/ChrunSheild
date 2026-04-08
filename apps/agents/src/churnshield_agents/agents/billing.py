@@ -1,25 +1,13 @@
-"""30-day save confirmation + Stripe Connect billing.
+"""30-day re-check for pause/empathy (and legacy untyped) saves.
 
-Flow (product doc §3.1):
-1. Find save_sessions where:
-   - offer_accepted = true
-   - outcome_confirmed_at is 30+ days ago   ← set immediately for pause/empathy;
-                                               set by stripe_worker.handle_invoice_paid
-                                               for extension/discount/downgrade
-   - fee_billed_at IS NULL  (not yet charged)
-   - fee_charged > 0
-2. For each session, check Stripe that the subscription is still active.
-3. If active  → charge fee via Stripe Connect application_fee on a PaymentIntent.
-4. If churned → null out saved_value + fee_charged (save didn't hold).
-5. Stamp fee_billed_at either way so we never revisit the row.
+1. Select accepted saves with outcome_confirmed_at set 30+ days ago, fee_billed_at null,
+   fee_charged > 0, offer_type in pause/empathy (or null).
+2. If the Stripe subscription is no longer active → clear saved_value/fee_charged and set
+   fee_billed_at so the row is closed (no tenant charge).
+3. If still active → no-op on fee fields; monthly Vercel cron is the only Stripe charge path.
 
-Fee basis and timing per offer type:
-  pause      → 15% of full MRR    charged by stripe_worker on invoice.paid after pause ends
-  empathy    → 15% of full MRR    charged by THIS sweep after 30 days
-               No payment event to verify, so wait to confirm subscriber stayed.
-  extension  → 15% of full MRR    charged immediately by stripe_worker on invoice.paid
-  discount   → 15% of net MRR     charged immediately by stripe_worker on invoice.paid
-  downgrade  → 15% of new plan MRR charged immediately by stripe_worker on invoice.paid
+Deferred offer types get outcome + fee from stripe_worker on invoice.paid; this job does not
+charge Connect accounts (_charge_via_stripe_connect is unused).
 """
 
 from __future__ import annotations
@@ -115,14 +103,9 @@ async def run_billing_sweep() -> dict[str, Any]:
             """
             SELECT
                 ss.session_id::text,
-                ss.tenant_id::text,
                 ss.subscriber_id,
-                ss.fee_charged,
-                ss.subscription_mrr,
-                t.stripe_connect_id,
-                t.owner_email
+                ss.fee_charged
             FROM save_sessions ss
-            JOIN tenants t ON t.id = ss.tenant_id
             WHERE ss.offer_accepted = true
               AND ss.outcome_confirmed_at IS NOT NULL
               AND ss.fee_billed_at IS NULL
@@ -147,12 +130,8 @@ async def run_billing_sweep() -> dict[str, Any]:
 
     for row in rows:
         session_id = row["session_id"]
-        tenant_id = row["tenant_id"]
-        stripe_connect_id: str | None = row["stripe_connect_id"]
-        owner_email: str | None = row["owner_email"]
         subscriber_id = row["subscriber_id"]
         fee_charged = float(row["fee_charged"] or 0)
-        fee_cents = round(fee_charged * 100)
 
         try:
             # Step 1: verify subscription still active
@@ -179,7 +158,7 @@ async def run_billing_sweep() -> dict[str, Any]:
                 continue
 
             # Step 2: mark confirmed so monthly cron picks it up for billing
-            # No Stripe charge here — all charging done by 1st-of-month cron (one invoice per tenant)
+            # No Stripe charge here  all charging done by 1st-of-month cron (one invoice per tenant)
             async with _db.pool().acquire() as conn:
                 await conn.execute(
                     """
@@ -192,25 +171,9 @@ async def run_billing_sweep() -> dict[str, Any]:
                 )
             charged += 1
             logger.info(
-                "billing.empathy_confirmed session=%s fee=%.2f — queued for monthly cron",
+                "billing.sweep_ok session=%s fee=%.2f — monthly cron bills; no per-row email",
                 session_id, fee_charged,
             )
-
-            # #6: Save confirmation email to merchant
-            if owner_email and stripe_charge_id:
-                try:
-                    subject = f"[ChurnShield] Subscriber saved  ${fee_charged:.2f} fee charged"
-                    html = (
-                        f"<p>Hi,</p>"
-                        f"<p>A subscriber has been retained and a save fee of "
-                        f"<strong>${fee_charged:.2f}</strong> has been charged to your "
-                        f"Stripe account.</p>"
-                        f"<p>Session ID: {session_id}</p>"
-                        f"<p> ChurnShield</p>"
-                    )
-                    await send_merchant_email(owner_email, subject, html)
-                except Exception:
-                    logger.exception("billing.save_confirm_email_failed session=%s", session_id)
 
         except Exception:
             logger.exception("billing.row_failed session=%s", session_id)

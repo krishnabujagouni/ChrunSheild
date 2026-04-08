@@ -61,7 +61,7 @@ When `ChurnShield.identify()` is called and the subscriber then clicks `[data-cs
 3. The retention chat overlay opens with Aria
 4. On save: `POST /api/public/cancel-outcome` records the accepted offer and applies it in Stripe
 
-These internal endpoints are called automatically by `cs.js` — you do not need to call them directly.
+These internal endpoints are called automatically by `cs.js`  you do not need to call them directly.
 
 ---
 
@@ -70,6 +70,6 @@ These internal endpoints are called automatically by `cs.js` — you do not need
 | Symptom | Likely cause |
 |---------|-------------|
 | Chat does not open | `identify()` not called, or called after the click |
-| `invalid_auth_hash` in console | Wrong secret or `subscriberId` mismatch — see [HMAC Signing](/configuration/hmac-signing) |
+| `invalid_auth_hash` in console | Wrong secret or `subscriberId` mismatch  see [HMAC Signing](/configuration/hmac-signing) |
 | `unknown_embed_key` in console | `data-app-id` is wrong or from a different environment |
 | `auth_hash_required` in console | Signing is activated but `authHash` was not passed |

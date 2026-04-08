@@ -39,11 +39,11 @@ export default function SignUpPage() {
             Get started free
           </p>
           <h2 style={{ color: "#09090b", fontSize: 36, fontWeight: 700, lineHeight: 1.2, letterSpacing: "-0.03em", marginBottom: 32 }}>
-            Turn cancellations<br />into conversations —<br />not dead ends.
+            Turn cancellations<br />into conversations <br />not dead ends.
           </h2>
           <div style={{ display: "flex", flexDirection: "column", gap: 16 }}>
             {[
-              "One script tag — live in under 5 minutes",
+              "One script tag  live in under 5 minutes",
               "AI handles every cancel conversation for you",
               "Churn prediction flags at-risk subscribers early",
               "Pay nothing until we save a subscriber",
@@ -83,7 +83,7 @@ export default function SignUpPage() {
             <h1 style={{ fontSize: 24, fontWeight: 700, color: "#09090b", letterSpacing: "-0.02em", marginBottom: 6 }}>
               Create your account
             </h1>
-            <p style={{ fontSize: 14, color: "#71717a" }}>Start saving subscribers — free, no card needed</p>
+            <p style={{ fontSize: 14, color: "#71717a" }}>Start saving subscribers  free, no card needed</p>
           </div>
           <SignUp appearance={{
             elements: {
