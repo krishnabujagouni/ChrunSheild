@@ -7,6 +7,10 @@
     {
       "path": "/api/cron/webhook-cleanup",
       "schedule": "0 3 * * *"
+    },
+    {
+      "path": "/api/cron/billing-sweep",
+      "schedule": "0 6 1 * *"
     }
   ]
 }

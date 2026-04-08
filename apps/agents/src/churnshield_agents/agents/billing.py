@@ -178,33 +178,22 @@ async def run_billing_sweep() -> dict[str, Any]:
                 cancelled += 1
                 continue
 
-            # Step 2: charge via Stripe Connect if account connected
-            stripe_charge_id: str | None = None
-            if stripe_connect_id and fee_cents >= 50:  # Stripe minimum charge $0.50
-                stripe_charge_id = await _charge_via_stripe_connect(
-                    tenant_stripe_account=stripe_connect_id,
-                    customer_id=subscriber_id,
-                    fee_cents=fee_cents,
-                    session_id=session_id,
-                    api_key=settings.stripe_secret_key,
-                )
-
-            # Step 3: stamp fee_billed_at regardless (so we don't retry)
+            # Step 2: mark confirmed so monthly cron picks it up for billing
+            # No Stripe charge here — all charging done by 1st-of-month cron (one invoice per tenant)
             async with _db.pool().acquire() as conn:
                 await conn.execute(
                     """
                     UPDATE save_sessions
-                    SET fee_billed_at   = NOW(),
-                        stripe_charge_id = $1
-                    WHERE session_id = $2::uuid
+                    SET outcome_confirmed_at = NOW()
+                    WHERE session_id = $1::uuid
+                      AND outcome_confirmed_at IS NULL
                     """,
-                    stripe_charge_id,
                     session_id,
                 )
             charged += 1
             logger.info(
-                "billing.confirmed session=%s charged=%s pi=%s",
-                session_id, fee_charged, stripe_charge_id,
+                "billing.empathy_confirmed session=%s fee=%.2f — queued for monthly cron",
+                session_id, fee_charged,
             )
 
             # #6: Save confirmation email to merchant
