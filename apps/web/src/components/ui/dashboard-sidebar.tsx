@@ -12,7 +12,6 @@ import {
   BubbleChatSparkIcon,
   SourceCodeIcon,
   AccountSetting01Icon,
-  HelpCircleIcon,
   ArrowRight01Icon,
   ArrowLeft01Icon,
   Plug01Icon,
@@ -51,8 +50,7 @@ const mainNav: NavItem[] = [
 ];
 
 const bottomNav: NavItem[] = [
-  { icon: AccountSetting01Icon, title: "Settings",      href: "/dashboard/settings" },
-  { icon: HelpCircleIcon,       title: "Help & Support", href: "#" },
+  { icon: AccountSetting01Icon, title: "Settings", href: "/dashboard/settings" },
 ];
 
 function NavOption({ item, selected, open }: { item: NavItem; selected: boolean; open: boolean }) {
@@ -213,7 +211,7 @@ export function DashboardSidebar() {
         {open && (
           <div>
             <div style={{ fontSize: 14, fontWeight: 700, color: "var(--cs-text, #18181b)", letterSpacing: "-0.02em" }}>
-              <span style={{ color: V }}>Churn</span>Shield
+              <span style={{ color: V }}>ChurnQ</span>
             </div>
             <div style={{ fontSize: 11, color: "var(--cs-text-muted, #71717a)", marginTop: 1 }}>Retention Platform</div>
           </div>

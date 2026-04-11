@@ -2,6 +2,7 @@ import { auth } from "@clerk/nextjs/server";
 import { redirect } from "next/navigation";
 import { ClerkUserButton } from "@/components/clerk-auth-header";
 import { DashboardSidebar } from "@/components/ui/dashboard-sidebar";
+import { HelpButton } from "@/components/ui/help-button";
 import "./hide-scroll.css";
 
 export default async function DashboardLayout({ children }: { children: React.ReactNode }) {
@@ -35,6 +36,7 @@ export default async function DashboardLayout({ children }: { children: React.Re
           {children}
         </main>
       </div>
+      <HelpButton />
     </div>
   );
 }
