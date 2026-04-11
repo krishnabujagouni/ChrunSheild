@@ -86,12 +86,14 @@ function AnalystBubble({ content }: { content: string }) {
       {/* Avatar */}
       <div style={{
         width: 32, height: 32, borderRadius: 10,
-        background: "linear-gradient(135deg, #2563eb 0%, #0ea5e9 100%)",
+        background: "#18181b",
         display: "flex", alignItems: "center", justifyContent: "center",
         flexShrink: 0, marginTop: 2,
       }}>
-        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#fff" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
-          <path d="M12 2l2.4 7.6H22l-6.2 4.5 2.4 7.5L12 17.1 5.8 21.6l2.4-7.5L2 9.6h7.6z" />
+        <style>{`.cs-analyst-tri{animation:cs-tri-spin 2.4s cubic-bezier(0.37,0,0.63,1) infinite}@keyframes cs-tri-spin{0%{transform:rotate(0deg)}100%{transform:rotate(360deg)}}`}</style>
+        <svg className="cs-analyst-tri" width="18" height="18" viewBox="0 0 28 28" fill="none" aria-hidden="true">
+          <polygon points="14,2 26,24 2,24" fill="none" stroke="#52525b" strokeWidth="2.5" strokeLinejoin="round" />
+          <polygon points="14,2 26,24 2,24" fill="none" stroke="#fff" strokeWidth="2.5" strokeLinejoin="round" strokeLinecap="round" strokeDasharray="24 60" strokeDashoffset="0" />
         </svg>
       </div>
 
@@ -118,12 +120,13 @@ function ThinkingBubble() {
     <div style={{ display: "flex", gap: 10, marginBottom: 20, alignItems: "flex-start" }}>
       <div style={{
         width: 32, height: 32, borderRadius: 10,
-        background: "linear-gradient(135deg, #2563eb 0%, #0ea5e9 100%)",
+        background: "#18181b",
         display: "flex", alignItems: "center", justifyContent: "center",
         flexShrink: 0, marginTop: 2,
       }}>
-        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#fff" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
-          <path d="M12 2l2.4 7.6H22l-6.2 4.5 2.4 7.5L12 17.1 5.8 21.6l2.4-7.5L2 9.6h7.6z" />
+        <svg className="cs-analyst-tri" width="18" height="18" viewBox="0 0 28 28" fill="none" aria-hidden="true">
+          <polygon points="14,2 26,24 2,24" fill="none" stroke="#52525b" strokeWidth="2.5" strokeLinejoin="round" />
+          <polygon points="14,2 26,24 2,24" fill="none" stroke="#fff" strokeWidth="2.5" strokeLinejoin="round" strokeLinecap="round" strokeDasharray="24 60" strokeDashoffset="0" />
         </svg>
       </div>
       <div style={{
@@ -162,8 +165,9 @@ function EmptyState({ onSuggestion }: { onSuggestion: (s: string) => void }) {
         marginBottom: 14,
         boxShadow: "0 4px 16px rgba(0,0,0,0.15)",
       }}>
-        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#fff" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
-          <path d="M12 2l2.4 7.6H22l-6.2 4.5 2.4 7.5L12 17.1 5.8 21.6l2.4-7.5L2 9.6h7.6z" />
+        <svg className="cs-analyst-tri" width="24" height="24" viewBox="0 0 28 28" fill="none" aria-hidden="true">
+          <polygon points="14,2 26,24 2,24" fill="none" stroke="#52525b" strokeWidth="2.5" strokeLinejoin="round" />
+          <polygon points="14,2 26,24 2,24" fill="none" stroke="#fff" strokeWidth="2.5" strokeLinejoin="round" strokeLinecap="round" strokeDasharray="24 60" strokeDashoffset="0" />
         </svg>
       </div>
 

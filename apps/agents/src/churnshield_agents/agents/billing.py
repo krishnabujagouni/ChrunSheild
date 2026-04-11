@@ -171,7 +171,7 @@ async def run_billing_sweep() -> dict[str, Any]:
                 )
             charged += 1
             logger.info(
-                "billing.sweep_ok session=%s fee=%.2f — monthly cron bills; no per-row email",
+                "billing.sweep_ok session=%s fee=%.2f  monthly cron bills; no per-row email",
                 session_id, fee_charged,
             )
 

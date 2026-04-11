@@ -1,11 +1,42 @@
 # ChurnShield  Project Status
-*Last updated: April 7, 2026 (Production deployment  Vercel + Railway)*
+*Last updated: April 8, 2026 (Production deployment  Vercel + Railway)*
 
 ---
 
 ## For future sessions  what changed recently
 
 **Read this block first** when picking up the repo; it summarizes implementation not obvious from file names alone.
+
+### Monthly billing model + Billing dashboard + docs (April 7–8, 2026)
+
+**Decision:** Tenants are charged **once per month** (one Stripe PaymentIntent per workspace per cron run), bundling all eligible saves  not per-save instant charges  so merchants do not see many micro-charges plus a monthly line.
+
+**The only code path that charges the tenant (Stripe Connect):**
+- **`apps/web/src/app/api/cron/billing-sweep/route.ts`**  Vercel cron **`0 6 1 * *`** (1st of every month, **06:00 UTC**). Declared in **`apps/web/vercel.json`**. Call manually: `GET` with header **`Authorization: Bearer <CRON_SECRET>`** (same pattern as webhook-cleanup cron).
+- Loads `save_sessions` where `offer_accepted = true`, `fee_billed_at` IS NULL, `fee_charged` > 0, `outcome_confirmed_at` IS NOT NULL (and within the sweep’s period logic). **Groups by `tenant_id`**, sums fees, creates **`paymentIntents.create`** on the tenant’s **`stripe_connect_id`**, then sets **`fee_billed_at`** + **`stripe_charge_id`** (PI id) on every session in that batch. Stripe client uses API version **`2025-02-24.acacia`** (must match installed `stripe` types).
+
+**Confirmation without charging:**
+- **`apps/agents/src/churnshield_agents/workers/stripe_worker.py`**  **`handle_invoice_paid`** only stamps **`outcome_confirmed_at`**, **`saved_value`**, **`fee_charged`** from invoice amount for **`DEFERRED_OFFER_TYPES`**: `extension`, `discount`, `downgrade`, **`pause`**. It does **not** create a Connect charge (immediate charge helper removed).
+- **`apps/web/src/app/api/public/cancel-outcome/route.ts`**  **`IMMEDIATE_CONFIRM`** is **`empathy` only**. **Pause** is deferred: provisional fee on save, outcome confirmed when **`invoice.paid`** matches (same as other deferred types). Discount/downgrade can store provisional `fee_charged` / `saved_value` while **`outcome_confirmed_at`** stays null until **`invoice.paid`**.
+
+**Python `billing.py` (APScheduler “billing sweep”):**
+- Still runs on **pause / empathy** (and legacy untyped) rows: after **30 days** since `outcome_confirmed_at`, checks Stripe whether the subscription is still active.
+- If **churned**: clears `saved_value` / `fee_charged`, sets **`fee_billed_at`** to mark the row closed (**no** PaymentIntent  tombstone so nothing bills).
+- If **active**: does **not** charge; monthly Vercel cron is responsible for money movement. **`_charge_via_stripe_connect`** in the same file is **dead code** (never called).
+- **Removed** broken merchant email branch (referenced undefined `stripe_charge_id`) and **removed** per-row “fee charged” emails from this loop (would re-fire on repeated scheduler passes).
+
+**Dashboard `/dashboard/billing`:**
+- **`page.tsx`** + **`billing-table.tsx`** (`BillingDashboard`): pills for **Charged this month** (sum of `fee_charged` with `fee_billed_at` in calendar month), **Queued for next bill**, **Awaiting confirmation** (count).
+- **Charge history** table: **`groupBy(stripe_charge_id)`** over billed sessions  **one row per Stripe payment**; fallback rows where `stripe_charge_id` is null but fee was billed → **one row per session**, label **“No ref (legacy)”**.
+- **Upcoming fees** table: unbilled accepted saves; **Queued** = `outcome_confirmed_at` set; **Confirming** = not set; rows with provisional fee show **“Until Stripe confirms”** under fee.
+- Intro copy describes monthly UTC billing and points to **Recent sessions** for per-save detail.
+- Sidebar includes **Billing**; **`clerk-auth-header`** **`UserButton`** avatar **32px**; deprecated Clerk **`afterSignOutUrl`** removed from layout/header.
+
+**Docs:** **`docs/api-reference/cancel-outcome.mdx`** fee section updated for monthly collection + confirmation timing + “cancels before paying” behavior. (Earlier in the same initiative: Mintlify-oriented rewrites under **`docs/`** for embed, HMAC, webhooks, Zapier/Make, etc.)
+
+**Env:** **`CRON_SECRET`** must be set on Vercel for cron routes to authorize.
+
+---
 
 ### Production Deployment (April 7, 2026)
 
@@ -36,7 +67,7 @@
 #### Sidebar UI fixes (April 7, 2026)
 - Sidebar content wrapped in `overflowY: auto` scrollable container so Settings/Help remain reachable when InfoCard is visible
 - All scrollbars hidden globally in dashboard via `*::-webkit-scrollbar { display: none }` in `hide-scroll.css`
-- Nav item height reduced 44px → 38px, font size 13px → 12px to prevent overlap
+- Nav density tightened further (items ~32px tall, smaller icons/font) so Settings / Help / collapse do not overlap; **Billing** nav entry added
 - InfoCard made compact (smaller padding, shorter text, ✕ dismiss button)
 - `flex: 1` removed from main nav div so bottom nav doesn't get pushed out of view
 
@@ -68,7 +99,7 @@
 #### Double-dipping prevention  offer lock
 - **`offersLocked` flag** added to `CancelAgentContext` and `buildCancelAgentSystem` in `cancel-agent.ts`. When `true`, the system prompt replaces the merchant allowlist with a hard block: "No promotional incentives available  this subscriber already has an active retention offer. Empathy and product support only."
 - **Check in `cancel-chat/route.ts`**: before building the system prompt, queries `SaveSession` for any row where `subscriberId` matches + `offerAccepted = true` + `feeBilledAt = null` (prior session, not current). If found → `offersLocked: true`.
-- **Effect**: a customer who already accepted a discount or downgrade (and the fee hasn't been billed yet) cannot stack a second financial offer in a new cancel flow. Lock lifts automatically once `feeBilledAt` is set by the stripe worker.
+- **Effect**: a customer who already accepted a discount or downgrade (and the fee hasn't been billed yet) cannot stack a second financial offer in a new cancel flow. Lock lifts automatically once **`feeBilledAt`** is set by the **monthly Vercel `billing-sweep`** (tenant charged) or the prior row is voided.
 
 #### Keep my subscription  shows actual price
 - **`buildOfferLabel(offer)`** in `cs.js` updated:
@@ -229,7 +260,7 @@
 - **Double fee guard**  On **`saved`**, `updateMany` voids other rows for same `tenantId` + `subscriberId` with `feeBilledAt` null and `offerAccepted` true (clears fee fields, sets `offerAccepted` false) so only the **latest** save stays eligible for `stripe_worker` / sweep. **Transcript/offer_made preserved.**
 
 ### Agents
-- **`stripe_worker.handle_invoice_paid`**  Confirms deferred offers (extension / discount / downgrade), sets `outcomeConfirmedAt` + fee from invoice, charges Connect immediately (`DEFERRED_OFFER_TYPES`). Query requires **`offer_accepted = true`** (voided rows excluded).
+- **`stripe_worker.handle_invoice_paid`**  Confirms deferred offers (**extension / discount / downgrade / pause**): sets `outcome_confirmed_at` + fee from **`invoice.paid`** (`DEFERRED_OFFER_TYPES`). **Does not** charge Connect  billing is monthly on Vercel cron. Query requires **`offer_accepted = true`** (voided rows excluded).
 
 ### Dashboard & UX
 - **Retention offer settings**  `tenants.offer_settings` JSON + Settings UI (max discount %, toggles pause / extension / downgrade, custom Claude note). **Bug fixed:** duplicate `name` on hidden+checkbox caused FormData to always read `false`; only checkbox remains.
@@ -362,7 +393,7 @@ chrun/
 |-------|------------|
 | `tenants` | id, name, clerkUserId, clerkOrgId, snippetKey, stripeConnectId, ownerEmail, **offer_settings** (JSON: maxDiscountPct, allowPause, allowFreeExtension, allowPlanDowngrade, customMessage) |
 | `stripe_events` | id, tenantId, stripeEventId, type, payload, processed, livemode |
-| `save_sessions` | sessionId, tenantId, triggerType, subscriberId, subscriptionMrr, offerMade, **offerType** (pause\|extension\|discount\|downgrade\|empathy), offerAccepted, outcomeConfirmedAt, savedValue, feeCharged, feeBilledAt, stripeChargeId, transcript, **pendingOffer** (JSON  structured offer from `makeOffer` tool, written in `onFinish`; migration `20260404120000_pending_offer`) |
+| `save_sessions` | sessionId, tenantId, triggerType, subscriberId, subscriptionMrr, offerMade, **offerType** (pause\|extension\|discount\|downgrade\|empathy), offerAccepted, outcomeConfirmedAt, savedValue, feeCharged, **feeBilledAt** (set when monthly Vercel sweep charges or when row closed with no fee), **stripeChargeId** (Stripe PaymentIntent id from that sweep), transcript, **pendingOffer** (JSON  structured offer from `makeOffer` tool, written in `onFinish`; migration `20260404120000_pending_offer`) |
 | `churn_predictions` | id, tenantId, subscriberId, riskScore, riskClass, features, predictedAt |
 | `feedback_digests` | id, tenantId, periodDays, transcriptCount, clusters, digestText |
 | `payment_retries` | id, tenantId, stripeEventId, invoiceId, customerId, customerEmail, failureClass, delayHours, attempts, maxAttempts, nextRetryAt, status, lastError |
@@ -385,22 +416,28 @@ chrun/
 
 **Merchant's effective rate is always exactly 15%**  regardless of offer type.
 
-### When we charge  payment = proof of save = we charge
+### When the fee is **finalized** vs when the tenant is **charged**
 
-| Offer | Save confirmed when | Fee charged | Why |
-|-------|--------------------|-----------|----|
-| **Empathy** |  | After 30-day billing sweep | No payment event  verify subscriber actually stayed |
-| **Pause** |  | After 30-day billing sweep | Pause lasts ~1 month; sweep verifies subscription resumed + active before charging |
-| **Extension** | `invoice.paid` fires after free period | Immediately on first payment | Subscriber paid full MRR  that IS the proof |
-| **Discount** | `invoice.paid` fires (discounted amount) | Immediately on first payment | Real money moved at new price  save proven |
-| **Downgrade** | `invoice.paid` fires (new plan amount) | Immediately on first payment | Real money moved on new plan  save proven |
+| Offer | Outcome / fee finalized (DB) | Tenant charged (Stripe Connect) |
+|-------|------------------------------|----------------------------------|
+| **Empathy** | At save: `cancel-outcome` sets `outcome_confirmed_at` + fee | **Monthly** Vercel **`billing-sweep`** (1st, 06:00 UTC) |
+| **Pause** | Provisional fee on save; **`invoice.paid`** after pause → **`stripe_worker`** sets `outcome_confirmed_at` + fee from invoice | **Monthly** `billing-sweep` |
+| **Extension** | **`invoice.paid`** → **`stripe_worker`** | **Monthly** `billing-sweep` |
+| **Discount** | Provisional fee on save; **`stripe_worker`** adjusts from **`invoice.paid`** | **Monthly** `billing-sweep` |
+| **Downgrade** | Provisional fee on save; **`stripe_worker`** from **`invoice.paid`** | **Monthly** `billing-sweep` |
 
-### How it works in code
+**If the subscriber never pays** (e.g. accepts discount then churns before a confirming `invoice.paid`): `outcome_confirmed_at` stays null → row is **not** picked up by `billing-sweep` (requires confirmed outcome + `fee_charged` > 0).
 
-- **Pause / Empathy** → `cancel-outcome` sets **`outcomeConfirmedAt = now`** (save recorded). **Billing sweep** (04:00 UTC) only charges when `outcome_confirmed_at` is **≥ 30 days ago**, subscription still **active**, `fee_billed_at` null  then Stripe Connect charge.
-- **Extension / Discount / Downgrade** → `cancel-outcome` leaves **`outcomeConfirmedAt = null`** until payment proof. **`stripe_worker.handle_invoice_paid()`** (ingest Stripe **`invoice.paid`**) picks the newest eligible `save_session` per tenant+customer, stamps confirmation + fee from **`amount_paid`**, charges Connect **immediately**.
-- **Supersede rule**  New **`saved`** outcome voids older **unbilled** saves for the same subscriber so `invoice.paid` cannot confirm a stale session and double-charge the merchant.
-- **If subscriber cancels before confirmation** → sweep / logic nulls fee where applicable, no charge.
+### Python 30-day job (`billing.py`)
+
+- Targets **pause / empathy** (and legacy untyped) with **`outcome_confirmed_at` ≥ 30 days ago**, **`fee_billed_at`** null, **`fee_charged`** > 0.
+- **Churned** (sub not active in Stripe): nulls save value + fee, sets **`fee_billed_at`** to close the row (**no** PI).
+- **Still active**: does **not** create a Stripe charge; leaves billing to **Vercel** `billing-sweep`.
+
+### Other rules
+
+- **Supersede rule**  On a new **`saved`** outcome, older **unbilled** `save_sessions` for the same tenant + subscriber are voided so merchants are not fee’d twice.
+- **Dashboard**  **Billing** page shows **charge history** grouped by **`stripe_charge_id`**; **Recent sessions** remains the per-save operational view.
 
 ### Real dollar example ($100/month subscriber)
 
@@ -434,15 +471,24 @@ chrun/
 
 ---
 
-## Cron Jobs (APScheduler)
+## Cron Jobs
+
+### Vercel (`apps/web/vercel.json`)
+
+| Path | Schedule | What it does |
+|------|----------|--------------|
+| `/api/cron/webhook-cleanup` | Daily 03:00 UTC | Deletes old `webhook_deliveries` (15+ days). **`CRON_SECRET`** |
+| `/api/cron/billing-sweep` | **1st of month 06:00 UTC** | **Only** production Stripe charges to tenants: bundles eligible `save_sessions` per tenant, one PI per tenant. **`CRON_SECRET`** |
+
+### Railway / APScheduler (`apps/agents`)
 
 | Job | Schedule | What it does |
 |-----|----------|-------------|
 | Churn prediction | Daily 02:00 UTC | Scores all subscribers, triggers outreach + high-risk alert email to merchant |
 | Feedback digest | Mon 03:00 UTC | LangGraph pipeline, emails merchant weekly digest |
 | Payment retry sweep | Every 1 hour | Claims due retries, calls `stripe.Invoice.pay()`, sets payment wall on exhausted |
-| Billing sweep | Daily 04:00 UTC | Charges pause/empathy saves after 30-day hold; extension/discount/downgrade charged immediately by stripe_worker on invoice.paid |
-| Monthly billing summary | 1st of month 05:00 UTC | Aggregates 30-day fees per merchant, emails summary |
+| Billing sweep (`billing.py`) | Daily 04:00 UTC | **30-day** check on pause/empathy-style rows: void fee if churned; **does not** create Stripe charges (monthly Vercel job bills) |
+| Monthly billing summary | 1st of month 05:00 UTC | Aggregates 30-day **billed** fees per merchant, emails summary |
 | Payment recovery summary | Mon 04:30 UTC | Weekly retry stats per merchant, emails update |
 
 ---
@@ -458,7 +504,8 @@ chrun/
 - [x] Subscriber health page (`/dashboard/subscribers`)  per-subscriber risk score table with progress bars
 - [x] Recent Sessions (`/dashboard/sessions`)  filterable table (search, outcome, offer type, dates); up to 500 rows loaded server-side; `sessions-table.tsx` client component
 - [x] Settings page  workspace rename, notification email display (read-only, synced from Clerk), embed snippet, Stripe Connect, **retention offer controls** (`offer_settings`: max discount %, pause / extension / downgrade toggles, custom Claude message)
-- [x] Nav  Overview | Subscribers | **Recent Sessions** | **Feedback** | Settings
+- [x] Nav  Overview | Subscribers | **Recent Sessions** | **Billing** | **Feedback** | Settings
+- [x] **Billing** (`/dashboard/billing`)  Charge history **one row per** `stripe_charge_id`; upcoming fees (Queued / Confirming); pills for charged this month + queued total + awaiting confirmation; copy explains monthly UTC billing
 - [x] AI Analyst  `POST /api/feedback/search`: hybrid **pgvector + keyword** digest pick; prompt uses **`offer_made`** / **`saved_value`**; optional **`VOYAGE_API_KEY`**; **`traceId`** logging + response field
 - [x] Cancel chat API (`/api/public/cancel-chat`)  system prompt from **merchant allowlist** + MRR-tier discount cap + churn context; streams Claude Sonnet
 - [x] Cancel outcome API (`/api/public/cancel-outcome`)  records save/cancel, `offerType`-aware fee fields; **applies Stripe** (discount coupon + flexible `discounts[]`, extension credit, pause) on connected account; **supersedes** prior unbilled saves for same subscriber
@@ -492,19 +539,19 @@ chrun/
 - [x] asyncpg connection pool  SSL, rightmost-@ URL parsing (handles special chars in password); `lifespan` opens/closes pool
 - [x] `tenant_id_for_stripe_account(acct_id)`  resolves Stripe Connect account → `tenants.id` via `stripe_connect_id`
 - [x] Stripe webhook processor  verifies `Stripe-Signature`, stores full event JSON in `stripe_events`, schedules `BackgroundTask` to process (fast 200 for Stripe)
-- [x] **`stripe_worker.handle_invoice_paid`**  confirms extension/discount/downgrade from invoice amount, charges Connect; respects `offer_accepted` (superseded rows excluded)
+- [x] **`stripe_worker.handle_invoice_paid`**  confirms **extension / discount / downgrade / pause** from `invoice.paid` (fee + `outcome_confirmed_at`); **does not** charge Connect; respects `offer_accepted` (superseded rows excluded)
 - [x] Churn prediction  fetch → score → store → proactive outreach for high-risk
 - [x] Feedback analyser  LangGraph 6-node pipeline (fetch→extract→cluster→summarize→compose→store)
 - [x] Payment recovery  AI email + retry scheduling per failure class
 - [x] Proactive outreach  AI email, stored as save_session (trigger_type='prediction_outreach')
 - [x] Payment retry sweep  claims due rows, calls `stripe.Invoice.pay()`, advances/exhausts
 - [x] Payment wall  sets `payment_wall_active = true` in `subscriber_flags` when retries exhausted
-- [x] 30-day billing confirmation  checks Stripe subscription still active, charges via Connect
-- [x] Billing sweep  `stripe.PaymentIntent.create` on tenant's connected account
+- [x] 30-day billing confirmation (`billing.py`)  checks Stripe subscription still active; voids churned saves; **no** Connect charge in this job
+- [x] **Tenant charges**  **`PaymentIntent.create`** only in **`apps/web`** `GET /api/cron/billing-sweep` (Vercel monthly cron), not in Python billing sweep
 - [x] Weekly digest email  sent to merchant's `ownerEmail` after digest is generated
 - [x] **High-risk alert email** (#4)  after daily churn scoring, emails merchant if any high-risk subscribers found
 - [x] **Monthly billing summary email** (#5)  1st of month cron, aggregates 30-day fees per merchant
-- [x] **Save confirmation email** (#6)  per successful Stripe charge in billing sweep
+- [x] **Save confirmation email** (#6)  was wired to Python sweep; **removed** from `billing.py` loop (buggy / duplicate-send risk). Merchants see fees on **Dashboard → Billing** + monthly summary email
 - [x] **Payment recovery weekly summary** (#7)  Mon 04:30 UTC, retry stats per merchant
 - [x] Shared `merchant_email.py`  `get_owner_email()` + `send_merchant_email()` used by all agent emails
 - [x] UUID generation  all inserts generate IDs in Python (DB defaults not reliable with asyncpg)
@@ -528,7 +575,7 @@ chrun/
 |---|---------|--------|
 | 4 | **High-risk alert email** | ✅ `churn_prediction.py`  after scoring loop |
 | 5 | **Monthly billing summary email** | ✅ `billing.py`  1st of month cron (05:00 UTC) |
-| 6 | **Save confirmation email** | ✅ `billing.py`  per successful Stripe charge |
+| 6 | **Save confirmation email** | ⚠️ **Billing** dashboard + monthly summary; per-row email removed from `billing.py` (was broken/noisy) |
 | 7 | **Payment recovery weekly summary** | ✅ `payment_recovery.py`  Mon 04:30 UTC cron |
 | 8 | **Pause wall** | ✅ `window.ChurnShield.pauseWall()` + `POST /api/public/pause` |
 | 9 | **Payment wall** | ✅ `subscriber_flags` table + `GET /api/public/subscriber-status` + queue.py sets on exhausted retries |
@@ -543,7 +590,7 @@ chrun/
 | Used for weekly feedback digest email | ✅ |
 | High-risk alert emails | ✅ |
 | Monthly billing summary email | ✅ |
-| Save confirmation email to merchant | ✅ |
+| Save confirmation email to merchant | ⚠️ Use **Billing** UI + monthly summary (Python sweep email removed) |
 | Payment recovery update email | ✅ |
 
 **Why owner email matters:** Merchants receive value passively  weekly digests, high-risk alerts, billing receipts  without logging in. This is the core pitch vs Churnkey ($299/mo flat, no proactive emails).
@@ -612,8 +659,8 @@ These are the only tests that can cause financial or security damage if they fai
 | T8 | HMAC auth on `cancel-intent`  wrong hash → 401 | `cancel-intent/route.ts` | Security boundary |
 | T9 | HMAC auth on `cancel-intent`  grace mode (unactivated) allows unsigned with warning | `cancel-intent/route.ts` | Regression guard |
 | T10 | HMAC auth on `cancel-intent`  activated + no hash → 401 `auth_hash_required` | `cancel-intent/route.ts` | Security boundary |
-| T11 | Billing sweep fee calculation  15% of MRR, correct Stripe Connect charge | `billing.py` | Fee correctness |
-| T12 | `stripe_worker.handle_invoice_paid`  confirms deferred offer, stamps fee | `stripe_worker.py` | Revenue recognition |
+| T11 | Monthly **`billing-sweep`** fee bundle + **`PaymentIntent.create`** on Connect | `apps/web/.../billing-sweep/route.ts` | Tenant charge correctness |
+| T12 | `stripe_worker.handle_invoice_paid`  confirms deferred offer, stamps fee (no Connect charge) | `stripe_worker.py` | Outcome/fee recognition before monthly bill |
 | T13 | Double fee guard  `saved` outcome voids older unbilled rows for same subscriber | `cancel-outcome/route.ts` | Prevents double charge |
 
 **How to run (when written):**
@@ -931,6 +978,9 @@ ngrok http --domain=alphonso-nonjuristic-detersively.ngrok-free.dev 3000
 | `apps/web/src/app/api/feedback/search/route.ts` | AI Analyst POST; digests + session snippets + `generateText` |
 | `apps/web/src/app/dashboard/sessions/page.tsx` | Recent Sessions server data |
 | `apps/web/src/app/dashboard/sessions/sessions-table.tsx` | Client filters + table |
+| `apps/web/src/app/dashboard/billing/page.tsx` | Billing data: `groupBy(stripe_charge_id)` + unbilled sessions |
+| `apps/web/src/app/dashboard/billing/billing-table.tsx` | `BillingDashboard`: charge history + upcoming fees tables |
+| `apps/web/src/app/api/cron/billing-sweep/route.ts` | **Monthly** tenant billing: one PI per tenant per run |
 | `apps/web/src/components/ui/ai-chat-input.tsx` | Chat input (`forwardRef` for focus) |
 | `apps/web/src/lib/rate-limit.ts` | Upstash Redis rate limiters for all 5 public endpoints |
 | `apps/web/public/cs.js` | Embed snippet  cancel intercept, chat overlay, pauseWall(), payment wall check |
@@ -940,12 +990,12 @@ ngrok http --domain=alphonso-nonjuristic-detersively.ngrok-free.dev 3000
 | `apps/agents/src/churnshield_agents/agents/feedback_analyser.py` | LangGraph digest pipeline |
 | `apps/agents/src/churnshield_agents/agents/payment_recovery.py` | Payment failure handler + weekly summary email |
 | `apps/agents/src/churnshield_agents/agents/outreach.py` | Proactive retention emails |
-| `apps/agents/src/churnshield_agents/agents/billing.py` | 30-day confirmation + Stripe billing + save confirmation + monthly summary emails |
+| `apps/agents/src/churnshield_agents/agents/billing.py` | 30-day pause/empathy check (void churned); monthly summary email; **`_charge_via_stripe_connect` unused** |
 | `apps/agents/src/churnshield_agents/agents/merchant_email.py` | Shared util  get_owner_email() + send_merchant_email() |
 | `apps/agents/src/churnshield_agents/jobs/queue.py` | APScheduler cron jobs (6 total) + payment wall on exhausted retries |
 | `apps/agents/src/churnshield_agents/db.py` | asyncpg pool + URL parser |
 | `apps/agents/src/churnshield_agents/config.py` | Pydantic settings |
-| `apps/agents/src/churnshield_agents/workers/stripe_worker.py` | `handle_invoice_paid`  deferred save confirm + immediate Connect fee |
+| `apps/agents/src/churnshield_agents/workers/stripe_worker.py` | `handle_invoice_paid`  deferred save **confirm** only (no Connect charge) |
 
 ---
 
@@ -1002,7 +1052,7 @@ ngrok http --domain=alphonso-nonjuristic-detersively.ngrok-free.dev 3000
 | Requires dashboard login to see value | Yes | No |
 | Weekly digest emails | ❌ | ✅ AI-generated feedback digest |
 | High-risk alert emails | ❌ | ✅ Same day as detection |
-| Save confirmation emails | ❌ | ✅ Per successful save |
+| Save confirmation emails | ❌ | ⚠️ Dashboard **Billing** + monthly summary; per-save email removed from Python sweep (was broken/noisy) |
 | Monthly billing summary | ❌ | ✅ 1st of every month |
 | Payment recovery updates | ❌ | ✅ Weekly |
 
@@ -1042,12 +1092,13 @@ High-level recap of what exists in the repo and what was hardened in recent work
 ### Product & billing
 - **15% of retained MRR** only when a save is proven; fee amount follows post-discount / post-offer economics where applicable.
 - **Offer types** in `save_sessions.offer_type`: pause, extension, discount, downgrade, empathy  drive confirmation timing and fee basis.
-- **Pause / empathy**  `outcome_confirmed_at` set at save; **billing sweep** (~30 days) verifies subscription still active before charging merchant.
-- **Extension / discount / downgrade**  wait for **`invoice.paid`** on the connected account; **`stripe_worker.handle_invoice_paid`** confirms from `amount_paid`, charges Connect immediately; **`offer_accepted`** must be true (superseded rows cleared).
+- **Empathy**  `outcome_confirmed_at` + fee at save. **Pause / extension / discount / downgrade**  fee/outcome finalized when **`invoice.paid`** is processed by **`stripe_worker`** (pause included in deferred set). **Discount** can store provisional fee before confirmation; if subscriber never pays, **`outcome_confirmed_at`** stays null → **no** monthly bill line item.
+- **Python `billing.py` (daily)**  30-day **verification** for pause/empathy-style rows: void churned saves; **does not** run **`PaymentIntent.create`**.
+- **Vercel `billing-sweep` (1st of month 06:00 UTC)**  **Only** place that charges the merchant via Stripe Connect; one payment per tenant per run, grouped `stripe_charge_id` on sessions.
 - **Supersede rule**  On a new **saved** outcome, older **unbilled** `save_sessions` for the same tenant + subscriber are voided so merchants are not fee’d twice when the same customer runs through cancel again.
 
 ### Web app (`apps/web`)
-- **Dashboard**  Overview metrics/charts, Subscribers risk table, **Recent Sessions** (filters, 500-row load), **Feedback** (AI Analyst + hybrid digest retrieval + `VOYAGE_API_KEY`), **Settings** (workspace, embed snippet, Stripe Connect, **retention offer limits** via `offer_settings`).
+- **Dashboard**  Overview metrics/charts, Subscribers risk table, **Recent Sessions** (filters, 500-row load), **Billing** (charge history per PI + upcoming fees), **Feedback** (AI Analyst + hybrid digest retrieval + `VOYAGE_API_KEY`), **Settings** (workspace, embed snippet, Stripe Connect, **retention offer limits** via `offer_settings`).
 - **Public APIs**  `cancel-intent`, streaming `cancel-chat`, `cancel-outcome`, `pause`, `subscriber-status`; **Upstash** rate limits (fail open locally); input caps on MRR / ids.
 - **cancel-outcome**  Writes session; **applies Stripe on Connect**: flexible subs use **`discounts[]`** not legacy `coupon`; **shared coupon ids** `churnshield_ret_{pct}p_3m`; **merchant-branded** coupon names; strips prior **ChurnShield** discounts before adding a new one; never `forever` coupons (repeating 3 months).
 - **Embed `cs.js`**  Cancel intercept, chat UI (bubbles, typing, markdown), **`detectOffer`** → `offerType` + `discountPct`, **Keep** fires real outcome, **cancel / ×** re-fires merchant’s original cancel click.
@@ -1062,8 +1113,8 @@ High-level recap of what exists in the repo and what was hardened in recent work
 
 ### Python agents (`apps/agents`)
 - FastAPI app, **cron** jobs (churn scoring, feedback digest, payment retries, billing sweep, summaries, etc.).
-- **Stripe event processing** including **`invoice.paid` → `handle_invoice_paid`** for deferred saves.
-- Churn prediction, outreach, payment recovery, feedback LangGraph pipeline, merchant emails, **billing sweep** for pause/empathy-style timing.
+- **Stripe event processing** including **`invoice.paid` → `handle_invoice_paid`** (confirms deferred saves; **no** Connect charge in worker).
+- Churn prediction, outreach, payment recovery, feedback LangGraph pipeline, merchant emails, **`billing.py` 30-day** verification for pause/empathy-style rows.
 
 ### Documentation & ops notes
 - **`PROJECT_STATUS.md`**  Living map: stack, schema, charge model, env vars, deploy checklist, key files, **feature roadmap table** (done vs not done), competitor snapshot, **“For future sessions”** delta log, and this summary.

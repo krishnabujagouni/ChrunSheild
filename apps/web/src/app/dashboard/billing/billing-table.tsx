@@ -43,7 +43,7 @@ const OFFER_COLORS: Record<string, { bg: string; text: string }> = {
 };
 
 function OfferPill({ type }: { type: string | null }) {
-  if (!type) return <span className="text-muted-foreground">—</span>;
+  if (!type) return <span className="text-muted-foreground"></span>;
   const c = OFFER_COLORS[type] ?? { bg: "bg-slate-100", text: "text-slate-600" };
   return (
     <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-semibold ${c.bg} ${c.text}`}>
@@ -113,7 +113,7 @@ const chargeColumns: ColumnDef<ChargeHistoryRow>[] = [
       }
       return (
         <span className="text-xs text-muted-foreground italic">
-          {isLegacy ? "No ref (legacy)" : "—"}
+          {isLegacy ? "No ref (legacy)" : ""}
         </span>
       );
     },
@@ -146,7 +146,7 @@ const unbilledColumns: ColumnDef<UnbilledRow>[] = [
     header: ({ column }) => <DataGridColumnHeader column={column} title="MRR saved" />,
     cell: ({ getValue }) => {
       const v = getValue() as number | null;
-      if (v === null) return <span className="text-muted-foreground text-sm">—</span>;
+      if (v === null) return <span className="text-muted-foreground text-sm"></span>;
       return <span className="font-medium">${v.toFixed(2)}</span>;
     },
     size: 100,
@@ -158,7 +158,7 @@ const unbilledColumns: ColumnDef<UnbilledRow>[] = [
     cell: ({ row }) => {
       const f = row.original.fee;
       if (f === null) {
-        return <span className="text-muted-foreground text-sm">—</span>;
+        return <span className="text-muted-foreground text-sm"></span>;
       }
       const isEst = row.original.status === "confirming";
       return (
@@ -200,7 +200,7 @@ const unbilledColumns: ColumnDef<UnbilledRow>[] = [
       if (status === "confirming" && sessionStartedAt) {
         return (
           <div className="text-sm">
-            <span className="text-muted-foreground">—</span>
+            <span className="text-muted-foreground"></span>
             <div className="text-[11px] text-muted-foreground mt-0.5 whitespace-nowrap">
               Session{" "}
               {new Date(sessionStartedAt).toLocaleDateString("en-GB", {
@@ -210,7 +210,7 @@ const unbilledColumns: ColumnDef<UnbilledRow>[] = [
           </div>
         );
       }
-      return <span className="text-muted-foreground text-sm">—</span>;
+      return <span className="text-muted-foreground text-sm"></span>;
     },
     size: 120,
   },
@@ -358,7 +358,7 @@ export function BillingDashboard({
         <div>
           <h2 className="text-sm font-semibold text-foreground">Upcoming fees</h2>
           <p className="text-xs text-muted-foreground mt-0.5">
-            Not yet collected — included on the next monthly charge once confirmed.
+            Not yet collected  included on the next monthly charge once confirmed.
           </p>
         </div>
         {unbilledRows.length === 0 ? (
