@@ -1,11 +1,11 @@
 ---
 title: "Embed the Cancellation Flow"
-description: "Install the ChurnShield cancel intercept in your app with two lines of code."
+description: "Install the ChurnQ cancel intercept in your app with two lines of code."
 ---
 
 ## Overview
 
-ChurnShield works via a lightweight JavaScript snippet (`cs.js`) that intercepts your cancel button client-side. When a subscriber clicks cancel, a chat overlay appears in-place  no redirects, no server changes required.
+ChurnQ works via a lightweight JavaScript snippet (`cs.js`) that intercepts your cancel button client-side. When a subscriber clicks cancel, a chat overlay appears in-place  no redirects, no server changes required.
 
 ---
 
@@ -15,7 +15,7 @@ Paste this into the `<head>` of every page where your cancel button lives. Get y
 
 ```html
 <script
-  src="https://cdn.churnshield.ai/cs.js"
+  src="https://cdn.churnq.com/cs.js"
   data-app-id="cs_app_YOUR_APP_ID"
   defer
 ></script>
@@ -29,10 +29,10 @@ Paste this into the `<head>` of every page where your cancel button lives. Get y
 
 ## Step 2  Identify the subscriber
 
-Before the cancel button is shown, call `ChurnShield.identify()` with the subscriber's details. This must run after the script loads.
+Before the cancel button is shown, call `ChurnQ.identify()` with the subscriber's details. This must run after the script loads.
 
 ```javascript
-ChurnShield.identify({
+ChurnQ.identify({
   subscriberId: "cus_abc123",           // Stripe customer ID
   subscriptionId: "sub_xyz789",         // Stripe subscription ID (recommended)
   subscriberEmail: "user@example.com",  // shown in your dashboard
@@ -44,13 +44,13 @@ ChurnShield.identify({
 | Field | Required | Description |
 |-------|----------|-------------|
 | `subscriberId` | Yes | Stripe customer ID (`cus_...`) |
-| `subscriptionId` | Recommended | Stripe subscription ID (`sub_...`). Without it, ChurnShield uses the customer's first active subscription. |
+| `subscriptionId` | Recommended | Stripe subscription ID (`sub_...`). Without it, ChurnQ uses the customer's first active subscription. |
 | `subscriberEmail` | No | Shown in the dashboard instead of the raw customer ID |
 | `subscriptionMrr` | Recommended | Monthly value in USD  used to calculate offer amounts and the 15% success fee |
 | `authHash` | Required in production | HMAC-SHA256 signature  see [HMAC Signing](/configuration/hmac-signing) |
 
 <Tip>
-  `ChurnShield.identify()` is safe to call on every page load. If the same subscriber calls it multiple times, the last call wins.
+  `ChurnQ.identify()` is safe to call on every page load. If the same subscriber calls it multiple times, the last call wins.
 </Tip>
 
 ---
@@ -63,7 +63,7 @@ Add `data-cs-cancel` to your cancel button or link:
 <button data-cs-cancel>Cancel my subscription</button>
 ```
 
-ChurnShield intercepts clicks on any element with `data-cs-cancel`. Works with buttons, links, and any other clickable element.
+ChurnQ intercepts clicks on any element with `data-cs-cancel`. Works with buttons, links, and any other clickable element.
 
 ---
 
@@ -74,7 +74,7 @@ Subscriber clicks [data-cs-cancel] element
         ↓
 cs.js intercepts the click
         ↓
-ChurnShield opens a chat overlay in-place
+ChurnQ opens a chat overlay in-place
         ↓
 Aria (AI agent) converses with the subscriber
         ↓
@@ -93,7 +93,7 @@ No server changes or redirects required.
 <html>
 <head>
   <script
-    src="https://cdn.churnshield.ai/cs.js"
+    src="https://cdn.churnq.com/cs.js"
     data-app-id="cs_app_YOUR_APP_ID"
     defer
   ></script>
@@ -101,7 +101,7 @@ No server changes or redirects required.
 <body>
   <script>
     document.addEventListener("DOMContentLoaded", () => {
-      ChurnShield.identify({
+      ChurnQ.identify({
         subscriberId: "cus_abc123",
         subscriptionId: "sub_xyz789",
         subscriberEmail: "user@example.com",
@@ -131,7 +131,7 @@ No server changes or redirects required.
         <html>
           <head>
             <script
-              src="https://cdn.churnshield.ai/cs.js"
+              src="https://cdn.churnq.com/cs.js"
               data-app-id={process.env.NEXT_PUBLIC_CS_APP_ID}
               defer
             />
@@ -146,8 +146,8 @@ No server changes or redirects required.
     // app/account/page.tsx (client component)
     "use client";
     useEffect(() => {
-      if (typeof window !== "undefined" && window.ChurnShield && subscription) {
-        window.ChurnShield.identify({
+      if (typeof window !== "undefined" && window.ChurnQ && subscription) {
+        window.ChurnQ.identify({
           subscriberId: user.stripeCustomerId,
           subscriptionId: subscription.id,
           subscriptionMrr: subscription.amount / 100,
@@ -164,8 +164,8 @@ No server changes or redirects required.
 
     function AccountPage({ user, subscription }) {
       useEffect(() => {
-        if (!window.ChurnShield || !subscription) return;
-        window.ChurnShield.identify({
+        if (!window.ChurnQ || !subscription) return;
+        window.ChurnQ.identify({
           subscriberId: user.stripeCustomerId,
           subscriptionId: subscription.stripeId,
           subscriptionMrr: subscription.monthlyAmount,
@@ -186,13 +186,13 @@ No server changes or redirects required.
   <Accordion title="Ruby on Rails (ERB)">
     ```erb
     <%# app/views/layouts/application.html.erb %>
-    <%= javascript_include_tag "https://cdn.churnshield.ai/cs.js",
+    <%= javascript_include_tag "https://cdn.churnq.com/cs.js",
           "data-app-id": ENV["CS_APP_ID"], defer: true %>
 
     <%# app/views/account/show.html.erb %>
     <script>
       document.addEventListener("DOMContentLoaded", () => {
-        ChurnShield.identify({
+        ChurnQ.identify({
           subscriberId: "<%= current_user.stripe_customer_id %>",
           subscriptionId: "<%= current_user.stripe_subscription_id %>",
           subscriptionMrr: <%= current_user.monthly_plan_amount %>,
@@ -224,11 +224,11 @@ Before going live, **activate signing** in Dashboard → Integration. Once activ
 
 <AccordionGroup>
   <Accordion title="The chat doesn't open when I click the cancel button">
-    Check that the snippet tag is in the page `<head>` with the correct `data-app-id`, that `ChurnShield.identify()` was called before the click, and that the cancel button has the `data-cs-cancel` attribute. Look for any console errors.
+    Check that the snippet tag is in the page `<head>` with the correct `data-app-id`, that `ChurnQ.identify()` was called before the click, and that the cancel button has the `data-cs-cancel` attribute. Look for any console errors.
   </Accordion>
 
   <Accordion title="I see 'invalid_auth_hash' in the console">
-    The `authHash` you're passing does not match. Verify you are computing `HMAC-SHA256(CHURNSHIELD_EMBED_SECRET, subscriberId)` on your server using the secret from Dashboard → Integration. See [HMAC Signing](/configuration/hmac-signing).
+    The `authHash` you're passing does not match. Verify you are computing `HMAC-SHA256(ChurnQ_EMBED_SECRET, subscriberId)` on your server using the secret from Dashboard → Integration. See [HMAC Signing](/configuration/hmac-signing).
   </Accordion>
 
   <Accordion title="Sessions don't appear in the dashboard">

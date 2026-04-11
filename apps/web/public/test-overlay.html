@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>ChurnShield Chat UI  Test</title>
+  <title>ChurnQ Chat UI  Test</title>
   <style>
     * { box-sizing: border-box; margin: 0; padding: 0; }
     body {
@@ -79,7 +79,7 @@
 <div class="card">
   <span class="badge">Mock Merchant App</span>
   <h1>My SaaS Product</h1>
-  <p>This simulates what a subscriber sees on your merchant's app. Click cancel to trigger the ChurnShield overlay.</p>
+  <p>This simulates what a subscriber sees on your merchant's app. Click cancel to trigger the ChurnQ overlay.</p>
 
   <div class="plan-card">
     <div class="plan-name">Pro Plan</div>
@@ -87,14 +87,14 @@
     <div class="plan-features">Unlimited projects · Priority support · Advanced analytics</div>
   </div>
 
-  <button class="cancel-btn" data-churnshield-cancel>
+  <button class="cancel-btn" data-ChurnQ-cancel>
     Cancel subscription
   </button>
 
   <div class="note" id="test-note">
     Open <code>test-overlay.html</code> in the editor and set <code>USE_REAL_APIS</code> + <code>TEST_CONFIG</code>. With real APIs: run <code>npm run dev</code>, open this page, complete chat, then tap <strong>Keep my subscription</strong>. Verify rows in Supabase → <code>save_sessions</code>.
     <br /><br />
-    <strong>Downgrade test:</strong> In Dashboard → Settings, enable <em>Allow plan downgrade</em> and add plans (e.g. Starter $29, Growth $49, Pro $99). Set <code>planName</code> + <code>subscriptionMrr</code> here to the <em>current</em> tier (e.g. Pro / 99). Say you want something cheaper  Aria should mention only cheaper tiers. Stripe product prices are separate; ChurnShield does not auto-switch the subscription to another price yet.
+    <strong>Downgrade test:</strong> In Dashboard → Settings, enable <em>Allow plan downgrade</em> and add plans (e.g. Starter $29, Growth $49, Pro $99). Set <code>planName</code> + <code>subscriptionMrr</code> here to the <em>current</em> tier (e.g. Pro / 99). Say you want something cheaper  Aria should mention only cheaper tiers. Stripe product prices are separate; ChurnQ does not auto-switch the subscription to another price yet.
   </div>
 </div>
 
@@ -107,7 +107,7 @@
     /** App ID  Settings → Embed (data-app-id). */
     embedAppId:       "cs_app_3478a64af5304134",
     snippetKey:       "cs_live_wyi11fd1pghkihq3ilsgk1td", // data-key (same workspace as embedAppId)
-    /** Same secret as CHURNSHIELD_EMBED_SECRET / last rotated secret in Settings (DEV ONLY  never ship). */
+    /** Same secret as ChurnQ_EMBED_SECRET / last rotated secret in Settings (DEV ONLY  never ship). */
     embedSecret:      "",
     subscriberId:     "cus_UHvAPij3zMI3M3",              // Must be cus_... on the connected account
     subscriptionId:   "sub_1TJLOS1o8oT6sd4n8aqpfnGn",                 // Real sub_... from Stripe (optional but recommended)
@@ -123,7 +123,7 @@
   };
 
   /** Web Crypto HMAC-SHA256 for local real-api testing only */
-  function churnshieldLocalAuthHash(secret, cus) {
+  function ChurnQLocalAuthHash(secret, cus) {
     var enc = new TextEncoder();
     return crypto.subtle
       .importKey("raw", enc.encode(secret), { name: "HMAC", hash: "SHA-256" }, false, ["sign"])
@@ -136,7 +136,7 @@
       });
   }
 
-  function churnshieldIdentifyOpts() {
+  function ChurnQIdentifyOpts() {
     var opts = {
       subscriberId:     TEST_CONFIG.subscriberId,
       subscriptionId:   TEST_CONFIG.subscriptionId && TEST_CONFIG.subscriptionId.indexOf("REPLACE") === -1
@@ -149,7 +149,7 @@
     if (USE_REAL_APIS && TEST_CONFIG.embedSecret) {
       // Option A: raw secret in TEST_CONFIG (DEV only  never ship to production)
       var sec = TEST_CONFIG.embedSecret;
-      opts.getAuthHash = function (cus) { return churnshieldLocalAuthHash(sec, cus); };
+      opts.getAuthHash = function (cus) { return ChurnQLocalAuthHash(sec, cus); };
     } else if (USE_REAL_APIS) {
       // Option B: dev signing endpoint (no secret needed in HTML  localhost only)
       var key = TEST_CONFIG.snippetKey || TEST_CONFIG.embedAppId;
@@ -276,8 +276,8 @@
 
   // Pre-identify the subscriber
   window.addEventListener("DOMContentLoaded", function () {
-    if (window.ChurnShield) {
-      window.ChurnShield.identify(churnshieldIdentifyOpts());
+    if (window.ChurnQ) {
+      window.ChurnQ.identify(ChurnQIdentifyOpts());
     }
   });
 </script>
@@ -298,8 +298,8 @@
 
   window.addEventListener("load", function () {
     setTimeout(function () {
-      if (window.ChurnShield) {
-        window.ChurnShield.identify(churnshieldIdentifyOpts());
+      if (window.ChurnQ) {
+        window.ChurnQ.identify(ChurnQIdentifyOpts());
       }
     }, 200);
   });

@@ -29,7 +29,7 @@ function stripeCouponDisplayName(merchantName: string, discountPct: number, mont
 
 /** One shared Stripe coupon per connected account and discount "shape" (percent × months). */
 function retentionCouponStripeId(percent: number, months: number): string {
-  return `churnshield_ret_${percent}p_${months}m`;
+  return `ChurnQ_ret_${percent}p_${months}m`;
 }
 
 function retentionCouponMatchesShape(c: Stripe.Coupon, percent: number, months: number): boolean {
@@ -40,12 +40,12 @@ function retentionCouponMatchesShape(c: Stripe.Coupon, percent: number, months: 
   );
 }
 
-/** True if this coupon was created by ChurnShield retention (new test runs must replace, not stack). */
-function isChurnShieldRetentionCoupon(c: Stripe.Coupon): boolean {
-  if (c.metadata?.source === "churnshield") return true;
-  if (typeof c.id === "string" && c.id.startsWith("churnshield_ret_")) return true;
+/** True if this coupon was created by ChurnQ retention (new test runs must replace, not stack). */
+function isChurnQRetentionCoupon(c: Stripe.Coupon): boolean {
+  if (c.metadata?.source === "ChurnQ") return true;
+  if (typeof c.id === "string" && c.id.startsWith("ChurnQ_ret_")) return true;
   // Legacy one-off coupons before shared ids / metadata
-  if (typeof c.name === "string" && /^ChurnShield\s+\d+%\s+retention offer$/i.test(c.name.trim())) {
+  if (typeof c.name === "string" && /^ChurnQ\s+\d+%\s+retention offer$/i.test(c.name.trim())) {
     return true;
   }
   return false;
@@ -53,9 +53,9 @@ function isChurnShieldRetentionCoupon(c: Stripe.Coupon): boolean {
 
 /**
  * Subscription-level discounts to keep when applying a new retention %  everything except
- * ChurnShield retention coupons (merchant coupons and other discounts stay stacked).
+ * ChurnQ retention coupons (merchant coupons and other discounts stay stacked).
  */
-async function nonChurnShieldDiscountUpdateParams(
+async function nonChurnQDiscountUpdateParams(
   stripe: Stripe,
   subId: string,
   reqOpts: Stripe.RequestOptions,
@@ -87,7 +87,7 @@ async function nonChurnShieldDiscountUpdateParams(
     if (typeof d === "string") continue;
     const disc: Stripe.Discount = d;
     const couponObj = await couponFromDiscount(disc);
-    if (couponObj && !isChurnShieldRetentionCoupon(couponObj)) {
+    if (couponObj && !isChurnQRetentionCoupon(couponObj)) {
       addKeep(disc.id);
     }
   }
@@ -95,7 +95,7 @@ async function nonChurnShieldDiscountUpdateParams(
   const leg = full.discount;
   if (leg && typeof leg === "object" && leg.id && !seen.has(leg.id)) {
     const couponObj = await couponFromDiscount(leg as Stripe.Discount);
-    if (couponObj && !isChurnShieldRetentionCoupon(couponObj)) {
+    if (couponObj && !isChurnQRetentionCoupon(couponObj)) {
       addKeep(leg.id);
     }
   }
@@ -117,7 +117,7 @@ async function getOrCreateRetentionCoupon(
   const stableId = retentionCouponStripeId(discountPct, months);
   const displayName = stripeCouponDisplayName(merchantDisplayName, discountPct, months);
   const metadata = {
-    source: "churnshield",
+    source: "ChurnQ",
     retention_discount_months: String(months),
   };
 
@@ -248,7 +248,7 @@ async function applyStripeOffer(
       if (!priceId.startsWith("price_")) {
         return { applied: false, detail: "downgrade_no_stripe_price" };
       }
-      const keepDiscounts = await nonChurnShieldDiscountUpdateParams(
+      const keepDiscounts = await nonChurnQDiscountUpdateParams(
         _stripe,
         subscription.id,
         opts,
@@ -262,7 +262,7 @@ async function applyStripeOffer(
         },
         opts,
       );
-      // Belt-and-suspenders: remove ChurnShield coupons from both the legacy
+      // Belt-and-suspenders: remove ChurnQ coupons from both the legacy
       // subscription.discount field and the customer.discount field  the new-style
       // subscription.discounts array is already cleared by discounts: keepDiscounts above.
       try {
@@ -270,7 +270,7 @@ async function applyStripeOffer(
         await _stripe.subscriptions.deleteDiscount(subscription.id, opts);
       } catch { /* no-op if not present */ }
       try {
-        // 2) Customer-level discount  expand coupon so isChurnShieldRetentionCoupon works
+        // 2) Customer-level discount  expand coupon so isChurnQRetentionCoupon works
         const cust = await _stripe.customers.retrieve(
           customerId,
           { expand: ["discount.coupon"] } as Stripe.CustomerRetrieveParams,
@@ -280,7 +280,7 @@ async function applyStripeOffer(
           const cpn = typeof cust.discount.coupon === "string"
             ? await _stripe.coupons.retrieve(cust.discount.coupon, opts)
             : cust.discount.coupon;
-          if (isChurnShieldRetentionCoupon(cpn)) {
+          if (isChurnQRetentionCoupon(cpn)) {
             await _stripe.customers.deleteDiscount(customerId, opts);
           }
         }
@@ -297,7 +297,7 @@ async function applyStripeOffer(
         merchantDisplayName,
         discountDurationMonths,
       );
-      const keepDiscounts = await nonChurnShieldDiscountUpdateParams(
+      const keepDiscounts = await nonChurnQDiscountUpdateParams(
         _stripe,
         subscription.id,
         opts,
@@ -305,7 +305,7 @@ async function applyStripeOffer(
       await _stripe.subscriptions.update(
         subscription.id,
         {
-          // Drop prior ChurnShield retention coupons so a new save does not stack 40% + 25%.
+          // Drop prior ChurnQ retention coupons so a new save does not stack 40% + 25%.
           discounts: [...keepDiscounts, { coupon: coupon.id }],
         },
         opts,
@@ -323,7 +323,7 @@ async function applyStripeOffer(
           amount:      -creditCents,   // negative = credit toward next invoice
           currency:    "usd",
           description: `${brand} · account credit (retention offer)`,
-          metadata:    { source: "churnshield" },
+          metadata:    { source: "ChurnQ" },
         },
         opts,
       );
@@ -345,15 +345,15 @@ async function applyStripeOffer(
     // Never let a Stripe error block the save record  log and continue
     const isNotFound = err instanceof Stripe.errors.StripeInvalidRequestError && err.code === "resource_missing";
     if (isNotFound) {
-      console.warn("[ChurnShield] applyStripeOffer: Stripe resource not found (stale test data?)", offerType, err.message);
+      console.warn("[ChurnQ] applyStripeOffer: Stripe resource not found (stale test data?)", offerType, err.message);
     } else {
-      console.error("[ChurnShield] applyStripeOffer failed", offerType, err);
+      console.error("[ChurnQ] applyStripeOffer failed", offerType, err);
     }
     return { applied: false, detail: err instanceof Error ? err.message : String(err) };
   }
 }
 
-/** Fee rate ChurnShield charges per successful save (15% of retained MRR, per product doc §3). */
+/** Fee rate ChurnQ charges per successful save (15% of retained MRR, per product doc §3). */
 const FEE_RATE = 0.15;
 
 /**

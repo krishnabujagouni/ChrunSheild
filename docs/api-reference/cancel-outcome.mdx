@@ -5,7 +5,7 @@ description: "What gets recorded and fired when a subscriber accepts a retention
 
 ## Overview
 
-When a subscriber clicks "Keep my subscription" in the retention chat, ChurnShield records the outcome, applies the offer in Stripe, and fires a `save.created` webhook event to all your enabled endpoints.
+When a subscriber clicks "Keep my subscription" in the retention chat, ChurnQ records the outcome, applies the offer in Stripe, and fires a `save.created` webhook event to all your enabled endpoints.
 
 ---
 
@@ -16,15 +16,15 @@ Every save creates a `SaveSession` record with the following data:
 | Field | Description |
 |-------|-------------|
 | `sessionId` | Unique session ID |
-| `tenantId` | Your ChurnShield tenant |
-| `subscriberId` | Stripe customer ID passed in `ChurnShield.identify()` |
+| `tenantId` | Your ChurnQ tenant |
+| `subscriberId` | Stripe customer ID passed in `ChurnQ.identify()` |
 | `stripeSubscriptionId` | Stripe subscription the offer was applied to |
 | `subscriptionMrr` | Monthly value at time of save |
 | `offerType` | `discount`, `pause`, `extension`, `downgrade`, or `empathy` |
 | `offerAccepted` | `true` |
 | `discountPct` | Discount percentage (discount offers only) |
 | `targetPriceId` | Stripe Price ID (downgrade offers only) |
-| `churnshieldFee` | 15% of MRR saved |
+| `ChurnQFee` | 15% of MRR saved |
 | `feeBilledAt` | Timestamp when the fee was charged (set after `invoice.paid` for deferred offers) |
 | `createdAt` | When the session was created |
 
@@ -57,7 +57,7 @@ Fired immediately when the subscriber accepts an offer. If you have webhooks con
 
 | Field | Type | Description |
 |-------|------|-------------|
-| `tenant_id` | `string` | Your ChurnShield tenant ID |
+| `tenant_id` | `string` | Your ChurnQ tenant ID |
 | `subscriber_id` | `string` | Stripe customer ID |
 | `subscriber_email` | `string` \| `null` | Subscriber email if provided during identify |
 | `offer_type` | `string` | `discount`, `pause`, `extension`, `downgrade`, or `empathy` |
@@ -80,7 +80,7 @@ Fired immediately when the subscriber accepts an offer. If you have webhooks con
 
 ## Fee billing
 
-ChurnShield charges **15%** of the MRR saved per successful save. **Money movement** is **once per month** (1st of the month, UTC): one Stripe payment per workspace that bundles all eligible saves. Your dashboard **Billing** page shows **one row per charge** (Stripe payment ref).
+ChurnQ charges **15%** of the MRR saved per successful save. **Money movement** is **once per month** (1st of the month, UTC): one Stripe payment per workspace that bundles all eligible saves. Your dashboard **Billing** page shows **one row per charge** (Stripe payment ref).
 
 **When the fee amount is finalized** (before that monthly charge):
 

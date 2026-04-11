@@ -178,7 +178,7 @@ export default async function DashboardPage() {
         }}>
           <div>
             <div style={{ fontSize: 13, fontWeight: 600, color: "#fafafa", marginBottom: 4 }}>
-              ChurnShield is not connected to your app yet
+              ChurnQ is not connected to your app yet
             </div>
             <div style={{ fontSize: 12, color: "#a1a1aa" }}>
               Follow the 4-step guide to start intercepting cancel clicks and saving subscribers.

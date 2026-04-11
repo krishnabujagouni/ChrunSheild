@@ -1,14 +1,14 @@
 ---
 title: "Zapier"
-description: "Send ChurnShield events to 7,000+ apps via Zapier Webhooks."
+description: "Send ChurnQ events to 7,000+ apps via Zapier Webhooks."
 ---
 
 ## Overview
 
-Zapier does not offer a native ChurnShield app, but you can connect ChurnShield to any Zapier workflow using **Webhooks by Zapier**  a built-in Zapier trigger that gives you a unique URL. Paste that URL into ChurnShield and events flow automatically.
+Zapier does not offer a native ChurnQ app, but you can connect ChurnQ to any Zapier workflow using **Webhooks by Zapier**  a built-in Zapier trigger that gives you a unique URL. Paste that URL into ChurnQ and events flow automatically.
 
 <Info>
-  Each Zapier Zap gets its own webhook URL. If you want to send events to multiple Zaps, add each URL as a separate webhook endpoint inside ChurnShield.
+  Each Zapier Zap gets its own webhook URL. If you want to send events to multiple Zaps, add each URL as a separate webhook endpoint inside ChurnQ.
 </Info>
 
 ---
@@ -28,18 +28,18 @@ Zapier does not offer a native ChurnShield app, but you can connect ChurnShield 
     Zapier will generate a unique webhook URL  copy it.
   </Step>
 
-  <Step title="Paste the URL into ChurnShield">
-    Open [ChurnShield → Connections](https://app.churnshield.ai/dashboard/connections).
+  <Step title="Paste the URL into ChurnQ">
+    Open [ChurnQ → Connections](https://app.churnq.com/dashboard/connections).
 
     Find the **Zapier** card and paste the URL into the input field, then click **Save**.
 
-    ChurnShield stores the URL and creates a signed webhook endpoint labelled `zapier`.
+    ChurnQ stores the URL and creates a signed webhook endpoint labelled `zapier`.
   </Step>
 
   <Step title="Test the connection">
     Click the **Test** button (play icon) next to the Zapier endpoint.
 
-    ChurnShield sends a `webhook.test` event. Switch back to Zapier and click **Test trigger**  you should see the payload arrive.
+    ChurnQ sends a `webhook.test` event. Switch back to Zapier and click **Test trigger**  you should see the payload arrive.
   </Step>
 
   <Step title="Build your Zap action">
@@ -57,7 +57,7 @@ Zapier does not offer a native ChurnShield app, but you can connect ChurnShield 
 
 ## Events
 
-ChurnShield sends the following events to your Zapier URL:
+ChurnQ sends the following events to your Zapier URL:
 
 | Event | When it fires |
 |-------|--------------|
@@ -88,8 +88,8 @@ All requests include two headers:
 
 | Header | Value |
 |--------|-------|
-| `X-ChurnShield-Event` | Event name, e.g. `cancel_intent.created` |
-| `X-ChurnShield-Signature` | `sha256=<hmac-hex>`  used to verify authenticity |
+| `X-ChurnQ-Event` | Event name, e.g. `cancel_intent.created` |
+| `X-ChurnQ-Signature` | `sha256=<hmac-hex>`  used to verify authenticity |
 
 See [HMAC Signing](/configuration/hmac-signing) for verification details.
 
@@ -118,18 +118,18 @@ See [HMAC Signing](/configuration/hmac-signing) for verification details.
 
 <AccordionGroup>
   <Accordion title="Zapier says 'No data found for this step'">
-    You need to send a test event from ChurnShield **while** the Zapier editor is open and waiting. Click the **Test** (play) button on the Zapier endpoint in ChurnShield, then immediately click **Test trigger** in Zapier.
+    You need to send a test event from ChurnQ **while** the Zapier editor is open and waiting. Click the **Test** (play) button on the Zapier endpoint in ChurnQ, then immediately click **Test trigger** in Zapier.
   </Accordion>
 
   <Accordion title="My Zap is not triggering on live events">
-    Make sure the Zap is **turned on** (toggle is blue in Zapier). Also check that the events you want are enabled on the endpoint inside ChurnShield (click the endpoint to expand and review selected events).
+    Make sure the Zap is **turned on** (toggle is blue in Zapier). Also check that the events you want are enabled on the endpoint inside ChurnQ (click the endpoint to expand and review selected events).
   </Accordion>
 
   <Accordion title="How do I verify the webhook signature in Zapier?">
-    Zapier's built-in tools cannot run custom code, but you can add a **Code by Zapier** step (Python or JavaScript) before your action to verify the `X-ChurnShield-Signature` header. See [HMAC Signing](/configuration/hmac-signing) for the verification snippet.
+    Zapier's built-in tools cannot run custom code, but you can add a **Code by Zapier** step (Python or JavaScript) before your action to verify the `X-ChurnQ-Signature` header. See [HMAC Signing](/configuration/hmac-signing) for the verification snippet.
   </Accordion>
 
   <Accordion title="Can I connect more than one Zap?">
-    Yes. Each Zap has its own webhook URL. Add each URL as a separate endpoint in ChurnShield  there is no limit on the number of Zapier endpoints you can add.
+    Yes. Each Zap has its own webhook URL. Add each URL as a separate endpoint in ChurnQ  there is no limit on the number of Zapier endpoints you can add.
   </Accordion>
 </AccordionGroup>

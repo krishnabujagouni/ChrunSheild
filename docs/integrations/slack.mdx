@@ -5,7 +5,7 @@ description: Get notified in Slack when a subscriber is saved or flagged as high
 
 ## What you'll get
 
-ChurnShield sends two types of alerts to Slack:
+ChurnQ sends two types of alerts to Slack:
 
 | Alert | When it fires |
 |---|---|
@@ -16,10 +16,10 @@ ChurnShield sends two types of alerts to Slack:
 
 ## Before you connect
 
-Create a dedicated Slack channel first  we recommend `#churnshield-alerts`. During the OAuth flow, Slack will ask which channel to post to. You'll select this channel.
+Create a dedicated Slack channel first  we recommend `#ChurnQ-alerts`. During the OAuth flow, Slack will ask which channel to post to. You'll select this channel.
 
 <Tip>
-  ChurnShield cannot create Slack channels automatically. Create the channel before clicking Connect.
+  ChurnQ cannot create Slack channels automatically. Create the channel before clicking Connect.
 </Tip>
 
 ---
@@ -31,10 +31,10 @@ Create a dedicated Slack channel first  we recommend `#churnshield-alerts`. Duri
     Open **Dashboard → Connections** and click **Authorize** next to Slack.
   </Step>
   <Step title="Authorize in Slack">
-    You'll be redirected to Slack. Select your workspace, choose the channel (e.g. `#churnshield-alerts`), and click **Allow**.
+    You'll be redirected to Slack. Select your workspace, choose the channel (e.g. `#ChurnQ-alerts`), and click **Allow**.
   </Step>
   <Step title="You're redirected back">
-    ChurnShield saves your Slack webhook URL. The Slack row shows **● Connected · #churnshield-alerts**.
+    ChurnQ saves your Slack webhook URL. The Slack row shows **● Connected · #ChurnQ-alerts**.
   </Step>
 </Steps>
 
@@ -68,7 +68,7 @@ Days inactive    18
 
 ## Disconnect Slack
 
-Go to **Dashboard → Connections** → click **Disconnect Slack**. ChurnShield removes the webhook URL immediately. No more alerts will be sent.
+Go to **Dashboard → Connections** → click **Disconnect Slack**. ChurnQ removes the webhook URL immediately. No more alerts will be sent.
 
 ---
 
@@ -76,7 +76,7 @@ Go to **Dashboard → Connections** → click **Disconnect Slack**. ChurnShield 
 
 <AccordionGroup>
   <Accordion title="I'm not receiving alerts">
-    Check that the Slack row shows ● Connected. If not, click Authorize and reconnect. Also check that your Slack channel is still active and the ChurnShield app has not been removed from the workspace.
+    Check that the Slack row shows ● Connected. If not, click Authorize and reconnect. Also check that your Slack channel is still active and the ChurnQ app has not been removed from the workspace.
   </Accordion>
   <Accordion title="Alerts are going to the wrong channel">
     Disconnect and reconnect  during the OAuth flow, select the correct channel.

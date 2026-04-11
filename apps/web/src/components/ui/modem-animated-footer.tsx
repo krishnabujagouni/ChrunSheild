@@ -25,7 +25,7 @@ interface ModemFooterProps {
 }
 
 export const ModemAnimatedFooter = ({
-  brandName = "ChurnShield",
+  brandName = "ChurnQ",
   brandDescription = "Your description here",
   socialLinks = [],
   navLinks = [],
@@ -87,7 +87,7 @@ export const ModemAnimatedFooter = ({
 
           <div className="mt-20 md:mt-24 flex flex-col gap-2 md:gap-1 items-center justify-center md:flex-row md:items-center md:justify-between px-4 md:px-0">
             <p className="text-sm text-[#94a3b8] text-center md:text-left">
-              © {new Date().getFullYear()} ChurnShield. All rights reserved.
+              © {new Date().getFullYear()} ChurnQ. All rights reserved.
             </p>
             <p className="text-sm text-[#94a3b8]">
               Built for SaaS founders · Performance pricing

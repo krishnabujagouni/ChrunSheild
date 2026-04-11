@@ -1,11 +1,11 @@
 ---
 title: Stripe Connect
-description: Link your Stripe account so ChurnShield can apply offers and charge the success fee automatically.
+description: Link your Stripe account so ChurnQ can apply offers and charge the success fee automatically.
 ---
 
 ## Why Stripe Connect is required
 
-ChurnShield applies discounts, pauses, and extensions directly to your subscribers' Stripe subscriptions. To do this on your behalf, it needs OAuth access to your Stripe account via Stripe Connect.
+ChurnQ applies discounts, pauses, and extensions directly to your subscribers' Stripe subscriptions. To do this on your behalf, it needs OAuth access to your Stripe account via Stripe Connect.
 
 Without Stripe Connect:
 - Offers are made in the chat but never applied to the subscription
@@ -20,11 +20,11 @@ Without Stripe Connect:
   <Step title="Go to Connections">
     Open **Dashboard → Connections** and click **Connect** next to Stripe.
   </Step>
-  <Step title="Authorize ChurnShield">
+  <Step title="Authorize ChurnQ">
     You'll be redirected to Stripe. Log in and click **Connect my Stripe account**.
   </Step>
   <Step title="You're redirected back">
-    ChurnShield saves your Stripe Connect account ID. The Stripe row shows **● Connected**.
+    ChurnQ saves your Stripe Connect account ID. The Stripe row shows **● Connected**.
   </Step>
 </Steps>
 
@@ -34,13 +34,13 @@ Without Stripe Connect:
 
 ---
 
-## What ChurnShield does in Stripe
+## What ChurnQ does in Stripe
 
 ### Discount offers
-- Creates a reusable coupon: `churnshield_ret_{pct}p_{months}m` (e.g. `churnshield_ret_25p_3m`)
+- Creates a reusable coupon: `ChurnQ_ret_{pct}p_{months}m` (e.g. `ChurnQ_ret_25p_3m`)
 - Applies it to the subscriber's active subscription
 - Duration: **repeating for 3 months**, then the subscription returns to full price
-- ChurnShield coupons never stack  a new save replaces the previous retention coupon
+- ChurnQ coupons never stack  a new save replaces the previous retention coupon
 
 ### Pause offers
 - Sets `pause_collection: { behavior: "mark_uncollectible" }` on the subscription
@@ -54,7 +54,7 @@ Without Stripe Connect:
 
 ## The 15% success fee
 
-ChurnShield charges 15% of the MRR retained, per successful save. The fee is:
+ChurnQ charges 15% of the MRR retained, per successful save. The fee is:
 
 - **Immediate** for pause and empathy offers (confirmed right away)
 - **Deferred** for discount and extension offers (confirmed after `invoice.paid` fires from Stripe)
@@ -76,9 +76,9 @@ If you need to reconnect (e.g. after revoking access in Stripe), click **Reconne
     Make sure your Stripe account is connected. Go to Dashboard → Connections and check the Stripe row. If it shows "Not connected", click Connect and complete the OAuth flow.
   </Accordion>
   <Accordion title="I see 'subscription_customer_mismatch' in session logs">
-    This happens when the `subscriptionId` passed in `ChurnShield.identify()` belongs to a different customer than the `subscriberId`. Make sure both IDs are from the same Stripe customer.
+    This happens when the `subscriptionId` passed in `ChurnQ.identify()` belongs to a different customer than the `subscriberId`. Make sure both IDs are from the same Stripe customer.
   </Accordion>
   <Accordion title="I see 'no_active_subscription_found'">
-    The subscriber has no active subscription in Stripe. ChurnShield only applies offers to `active` subscriptions. Check that the `subscriberId` is the correct Stripe customer ID (`cus_...`).
+    The subscriber has no active subscription in Stripe. ChurnQ only applies offers to `active` subscriptions. Check that the `subscriberId` is the correct Stripe customer ID (`cus_...`).
   </Accordion>
 </AccordionGroup>

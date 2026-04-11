@@ -1,13 +1,13 @@
 ---
 title: Webhooks
-description: Receive real-time HTTP POST events from ChurnShield to any URL.
+description: Receive real-time HTTP POST events from ChurnQ to any URL.
 ---
 
 ## Overview
 
-Webhooks let ChurnShield send events to your own server, internal tools, or automation platforms the moment something happens  a subscriber is saved, or a subscriber is flagged as high-risk.
+Webhooks let ChurnQ send events to your own server, internal tools, or automation platforms the moment something happens  a subscriber is saved, or a subscriber is flagged as high-risk.
 
-Every request is signed with HMAC-SHA256 so you can verify it genuinely came from ChurnShield.
+Every request is signed with HMAC-SHA256 so you can verify it genuinely came from ChurnQ.
 
 ---
 
@@ -33,7 +33,7 @@ Every request is signed with HMAC-SHA256 so you can verify it genuinely came fro
     Choose which events to receive  `Subscriber retained`, `High-risk detected`, or both.
   </Step>
   <Step title="Click Add endpoint">
-    ChurnShield creates the endpoint and generates a signing secret (`whsec_...`).
+    ChurnQ creates the endpoint and generates a signing secret (`whsec_...`).
   </Step>
   <Step title="Save your signing secret">
     Copy the signing secret  use it to verify incoming requests. It's shown once but you can reveal it anytime from the endpoint row.
@@ -93,11 +93,11 @@ Every webhook POST has the same envelope:
 
 ## Verifying signatures
 
-Every request includes an `X-ChurnShield-Signature` header:
+Every request includes an `X-ChurnQ-Signature` header:
 
 ```
-X-ChurnShield-Signature: sha256=<hex>
-X-ChurnShield-Event: save.created
+X-ChurnQ-Signature: sha256=<hex>
+X-ChurnQ-Event: save.created
 ```
 
 Verify it by computing `HMAC-SHA256(signing_secret, raw_request_body)` and comparing:
@@ -138,7 +138,7 @@ def verify_signature(secret: str, raw_body: bytes, signature_header: str) -> boo
 
 ## Retries
 
-If your endpoint returns a non-2xx response or times out, ChurnShield retries up to **3 times** with backoff (1.5s, 3s). After 3 failures the delivery is marked as failed and logged.
+If your endpoint returns a non-2xx response or times out, ChurnQ retries up to **3 times** with backoff (1.5s, 3s). After 3 failures the delivery is marked as failed and logged.
 
 - Timeout per attempt: **5 seconds**
 - Redirects: **not followed**  use the direct URL
@@ -156,7 +156,7 @@ Click the **play button** on any endpoint row to send a `webhook.test` event:
   "timestamp": "2026-04-06T12:00:00.000Z",
   "data": {
     "test": true,
-    "source": "churnshield_dashboard"
+    "source": "ChurnQ_dashboard"
   }
 }
 ```

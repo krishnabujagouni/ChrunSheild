@@ -1,4 +1,4 @@
-# ChurnShield  Project Status
+# ChurnQ  Project Status
 *Last updated: April 8, 2026 (Production deployment  Vercel + Railway)*
 
 ---
@@ -16,7 +16,7 @@
 - Loads `save_sessions` where `offer_accepted = true`, `fee_billed_at` IS NULL, `fee_charged` > 0, `outcome_confirmed_at` IS NOT NULL (and within the sweep’s period logic). **Groups by `tenant_id`**, sums fees, creates **`paymentIntents.create`** on the tenant’s **`stripe_connect_id`**, then sets **`fee_billed_at`** + **`stripe_charge_id`** (PI id) on every session in that batch. Stripe client uses API version **`2025-02-24.acacia`** (must match installed `stripe` types).
 
 **Confirmation without charging:**
-- **`apps/agents/src/churnshield_agents/workers/stripe_worker.py`**  **`handle_invoice_paid`** only stamps **`outcome_confirmed_at`**, **`saved_value`**, **`fee_charged`** from invoice amount for **`DEFERRED_OFFER_TYPES`**: `extension`, `discount`, `downgrade`, **`pause`**. It does **not** create a Connect charge (immediate charge helper removed).
+- **`apps/agents/src/churnq_agents/workers/stripe_worker.py`**  **`handle_invoice_paid`** only stamps **`outcome_confirmed_at`**, **`saved_value`**, **`fee_charged`** from invoice amount for **`DEFERRED_OFFER_TYPES`**: `extension`, `discount`, `downgrade`, **`pause`**. It does **not** create a Connect charge (immediate charge helper removed).
 - **`apps/web/src/app/api/public/cancel-outcome/route.ts`**  **`IMMEDIATE_CONFIRM`** is **`empathy` only**. **Pause** is deferred: provisional fee on save, outcome confirmed when **`invoice.paid`** matches (same as other deferred types). Discount/downgrade can store provisional `fee_charged` / `saved_value` while **`outcome_confirmed_at`** stays null until **`invoice.paid`**.
 
 **Python `billing.py` (APScheduler “billing sweep”):**
@@ -89,12 +89,12 @@
 #### Downgrade  apply at next billing cycle
 - **`proration_behavior` changed from `"create_prorations"` to `"none"`** in `cancel-outcome/route.ts` downgrade path. Previously the price swap triggered immediate proration credits/charges on the current invoice. Now the switch takes effect cleanly at the next renewal  no proration line items.
 
-#### Downgrade  remove prior ChurnShield coupon
+#### Downgrade  remove prior ChurnQ coupon
 - **Belt-and-suspenders coupon cleanup** added to the downgrade path in `cancel-outcome/route.ts`:
   1. `stripe.subscriptions.deleteDiscount(subscription.id)`  removes legacy singular `subscription.discount` field.
-  2. `stripe.customers.retrieve(customerId, { expand: ["discount.coupon"] })` + `stripe.customers.deleteDiscount(customerId)`  removes any ChurnShield coupon at the customer level (identified by `isChurnShieldRetentionCoupon`).
+  2. `stripe.customers.retrieve(customerId, { expand: ["discount.coupon"] })` + `stripe.customers.deleteDiscount(customerId)`  removes any ChurnQ coupon at the customer level (identified by `isChurnQRetentionCoupon`).
 - Both calls are best-effort (wrapped in `try/catch`) and never block the save record.
-- **Why**: customer-level Stripe coupons don't appear in `subscription.discounts`, so `nonChurnShieldDiscountUpdateParams` alone didn't catch them. Without this fix a prior 25% off coupon persisted through the plan downgrade, stacking both benefits.
+- **Why**: customer-level Stripe coupons don't appear in `subscription.discounts`, so `nonChurnQDiscountUpdateParams` alone didn't catch them. Without this fix a prior 25% off coupon persisted through the plan downgrade, stacking both benefits.
 
 #### Double-dipping prevention  offer lock
 - **`offersLocked` flag** added to `CancelAgentContext` and `buildCancelAgentSystem` in `cancel-agent.ts`. When `true`, the system prompt replaces the merchant allowlist with a hard block: "No promotional incentives available  this subscriber already has an active retention offer. Empathy and product support only."
@@ -116,12 +116,12 @@
 
 ### Zapier + Make connections (April 6, 2026)
 - **`apps/web/src/app/dashboard/connections/zapier-make-card.tsx`**  Two platform cards (Zapier + Make) rendered inside the connections page integration list card, same row layout as Stripe/Slack/Discord.
-- **Flow**: User clicks "Connect" → panel expands inline → user opens Zapier/Make in new tab → creates a Catch Hook / Custom Webhook → copies the URL → pastes it back → clicks Save. ChurnShield creates a labeled webhook endpoint (`label: "zapier"` or `"make"`) and stores it in `webhook_endpoints`.
+- **Flow**: User clicks "Connect" → panel expands inline → user opens Zapier/Make in new tab → creates a Catch Hook / Custom Webhook → copies the URL → pastes it back → clicks Save. ChurnQ creates a labeled webhook endpoint (`label: "zapier"` or `"make"`) and stores it in `webhook_endpoints`.
 - **Connected state**: shows URL (truncated monospace), Copy URL button, "Send test event" button (turns green on success), "Disconnect" button  all in a bordered card matching the webhook endpoint list style.
 - **Labels**: `WebhookEndpoint.label` field (`String? @db.VarChar(32)`) distinguishes Zapier/Make endpoints from custom ones. `label` added to Prisma schema + `npx prisma db push` run. API routes (`GET /api/webhooks`, `POST /api/webhooks`) return/accept `label` field.
 - **One connection per platform**: `page.tsx` uses `find(e => e.label === "zapier")`  one labeled endpoint per platform. Users needing multiple endpoints use the Custom Webhooks section.
 - **Zapier deep link**: `https://zapier.com/app/editor`. **Make deep link**: `https://www.make.com/en/login`.
-- **Tested and working** ✅  Zapier connected, test event received. Make connected, test payload confirmed in scenario run (`event: webhook.test`, `data.test: true`, `data.source: churnshield_dashboard`).
+- **Tested and working** ✅  Zapier connected, test event received. Make connected, test payload confirmed in scenario run (`event: webhook.test`, `data.test: true`, `data.source: ChurnQ_dashboard`).
 
 ### Webhook hardening + minor fixes (April 6, 2026)
 - **Python timestamp normalized**  `churn_prediction.py` now produces `2025-04-05T12:00:00.123Z` (milliseconds + `Z`) matching TypeScript's `new Date().toISOString()` exactly. Previously used Python's `.isoformat()` which produces `+00:00` suffix.
@@ -135,7 +135,7 @@
 
 ### Webhooks (April 5, 2026)
 - **`WebhookEndpoint` model** added to Prisma schema (`webhook_endpoints` table). Fields: `id`, `tenantId`, `url` (varchar 2048), `events` (String[]  subset of `["save.created","high_risk.detected"]`), `secret` (varchar 128, `whsec_...` prefix), `enabled` (bool), `createdAt`. Run `npx prisma db push` to sync (already done).
-- **`apps/web/src/lib/webhooks.ts`**  `fireWebhooks(tenantId, event, data)`: queries enabled endpoints for the event, signs payload with HMAC-SHA256, POSTs with `X-ChurnShield-Signature: sha256=<hex>` + `X-ChurnShield-Event` headers, retries 3× (1.5s, 3s backoff). Fully non-blocking (never throws). `generateWebhookSecret()` produces `whsec_<32 random bytes hex>`.
+- **`apps/web/src/lib/webhooks.ts`**  `fireWebhooks(tenantId, event, data)`: queries enabled endpoints for the event, signs payload with HMAC-SHA256, POSTs with `X-ChurnQ-Signature: sha256=<hex>` + `X-ChurnQ-Event` headers, retries 3× (1.5s, 3s backoff). Fully non-blocking (never throws). `generateWebhookSecret()` produces `whsec_<32 random bytes hex>`.
 - **Payload format**: `{ event, timestamp: ISO8601, data: { ...fields } }`. Same envelope for all events.
 - **Events fired**:
   - `save.created`  in `cancel-outcome/route.ts` after every accepted offer (non-blocking, after Slack/Discord alerts). Payload: `tenant_id`, `subscriber_id`, `subscriber_email`, `offer_type`, `discount_pct`, `mrr_saved`.
@@ -179,7 +179,7 @@
 - **`cancel-outcome` route**  fires both Slack and Discord save alerts in parallel (non-blocking) when respective webhook URLs are set.
 - **`churn_prediction.py`**  `_get_tenant_notification_urls` now fetches `slack_webhook_url`, `discord_webhook_url`, and `name` in one query. Fires `_send_slack_high_risk` and `_send_discord_high_risk` per high-risk subscriber. Both use shared `_post_webhook` helper (stdlib `urllib.request`, no new deps).
 - **Env vars required**: `DISCORD_CLIENT_ID`, `DISCORD_CLIENT_SECRET`, `DISCORD_REDIRECT_URI` (must be HTTPS  use ngrok in dev). Add redirect URI in Discord Developer Portal → OAuth2 → Redirects.
-- **Tenant onboarding note**: Tenants must **create a Discord channel first** (recommended: `churnshield-alerts`) in their server before clicking "Connect Discord". During the OAuth screen Discord asks which server + channel to post to  they select that channel. ChurnShield cannot create channels automatically (requires `MANAGE_CHANNELS` bot permission  not implemented, not worth it at MVP).
+- **Tenant onboarding note**: Tenants must **create a Discord channel first** (recommended: `ChurnQ-alerts`) in their server before clicking "Connect Discord". During the OAuth screen Discord asks which server + channel to post to  they select that channel. ChurnQ cannot create channels automatically (requires `MANAGE_CHANNELS` bot permission  not implemented, not worth it at MVP).
 - **Alerts sent to Discord**: save confirmed + high-risk subscriber only. Feedback digests go to email only (Resend).
 - **Tested and working** ✅  embed alerts confirmed firing in Discord channel.
 
@@ -194,34 +194,34 @@
   - `GET /api/slack/connect`  redirects merchant to Slack OAuth (scope: `incoming-webhook`). Uses `signConnectState` (same HMAC state as Stripe Connect).
   - `GET /api/slack/callback`  exchanges code via `https://slack.com/api/oauth.v2.access`, saves `incoming_webhook.url` + `incoming_webhook.channel` to tenant.
   - `POST /api/slack/disconnect`  clears `slackWebhookUrl` + `slackChannelName`.
-- **Settings UI** (`slack-connect-card.tsx`)  "Add to Slack" button (Slack purple, Slack logo icon). After OAuth: shows green "Connected" pill + channel name (e.g. `#churnshield-alerts`) + "Disconnect Slack" button.
+- **Settings UI** (`slack-connect-card.tsx`)  "Add to Slack" button (Slack purple, Slack logo icon). After OAuth: shows green "Connected" pill + channel name (e.g. `#ChurnQ-alerts`) + "Disconnect Slack" button.
 - **Env vars required**: `SLACK_CLIENT_ID`, `SLACK_CLIENT_SECRET`, `SLACK_REDIRECT_URI` (must be HTTPS  use ngrok in dev).
-- **Tenant onboarding note**: Tenants must **create a Slack channel first** (recommended: `#churnshield-alerts`) before clicking "Add to Slack", then select that channel in the Slack permission screen. ChurnShield cannot create channels automatically (would require `channels:manage` bot scope  not implemented, not worth it at MVP).
+- **Tenant onboarding note**: Tenants must **create a Slack channel first** (recommended: `#ChurnQ-alerts`) before clicking "Add to Slack", then select that channel in the Slack permission screen. ChurnQ cannot create channels automatically (would require `channels:manage` bot scope  not implemented, not worth it at MVP).
 - **Alerts sent to Slack**: save confirmed + high-risk subscriber only. Feedback digests go to email only (Resend).
 - **Hydration fix**  `subscribers-table.tsx` `lastScored` column was using `new Date(v).toLocaleDateString()` which produces different output on Node.js (server) vs browser (client locale). Fixed to `v.slice(0, 10)` → stable `YYYY-MM-DD`.
 
 ### Landing page refactor (April 5, 2026)
 - **All Lucide icons removed** from `apps/web/src/app/page.tsx`. Every icon now uses `@hugeicons/react` (`HugeiconsIcon` component + icon data objects from `@hugeicons/core-free-icons`). Pattern: `<HugeiconsIcon icon={IconDataObject} size={n} />`. **Important:** many icon names differ from Lucide equivalents  always verify against the installed package with `node --input-type=module` before using a new icon name.
-- **Spinning triangle nav logo** added to landing page nav (left of "ChurnShield" wordmark). Uses inline SVG `<polygon>` with `strokeDasharray` + CSS `@keyframes cs-nav-logo-tri` animation. Class `cs-nav-logo-tri` (distinct from dashboard sidebar's `cs-logo-tri`).
+- **Spinning triangle nav logo** added to landing page nav (left of "ChurnQ" wordmark). Uses inline SVG `<polygon>` with `strokeDasharray` + CSS `@keyframes cs-nav-logo-tri` animation. Class `cs-nav-logo-tri` (distinct from dashboard sidebar's `cs-logo-tri`).
 - **"How it works" section** replaced with `HowItWorks` component (`apps/web/src/components/blocks/how-it-works.tsx`). Blog7-style 3-column card grid (shadcn `Card` + `Badge`). Uses HugeIcons: `SourceCodeIcon`, `BubbleChatSparkIcon`, `Analytics01Icon`, `CheckmarkCircle01Icon`. White background, `lnd-shell` container. The old `ContainerScroll` / `CardSticky` sticky-scroll section is gone.
 - **`ProductPillarSection` function removed** entirely from `page.tsx` (was dead code after the sticky-scroll removal).
 - **Logo strips removed**  both the top strip (after metrics) and bottom strip (before footer CTA) are gone.
 - **Footer CTA dark section removed**  was a standalone dark "start saving" block before the footer; no longer needed.
-- **Footer replaced** with `ModemAnimatedFooter` (`apps/web/src/components/ui/modem-animated-footer.tsx`). Large ghost "CHURNSHIELD" background text, spinning triangle brand icon (white on black box, class `cs-footer-logo-tri`), white background. Social links: **mail only** (`Mail01Icon` → `mailto:hello@churnshield.ai`). Twitter/GitHub removed.
+- **Footer replaced** with `ModemAnimatedFooter` (`apps/web/src/components/ui/modem-animated-footer.tsx`). Large ghost "ChurnQ" background text, spinning triangle brand icon (white on black box, class `cs-footer-logo-tri`), white background. Social links: **mail only** (`Mail01Icon` → `mailto:hello@ChurnQ.ai`). Twitter/GitHub removed.
 - **ChatCard** (hero section mock): user bubble `#3f3f46` bg, AI bubble white with `#e4e4e7` border, "Keep my subscription" button `#d1fae5` bg / `#059669` text / `#a7f3d0` border.
 - **Nav mobile toggle** icons: open = `Menu01Icon`, close = `Cancel01Icon`.
 - **Feature108 tab icons**: `BubbleChatIcon`, `CreditCardIcon`, `ChartLineData01Icon`, `Robot01Icon`. Bento grid: same + `BarChartIcon`, `Settings02Icon`.
 
 ### Dashboard settings refactor (April 5, 2026)
 - **`SaveButton` component** added at `apps/web/src/app/dashboard/settings/save-button.tsx`. Client component (`"use client"`). No icons. Tooltip shows "Save changes" on hover; shows "Changes saved!" for 2s after click (button turns emerald green + text "Saved"). Props: `label`, `savedLabel`, `size` (`"sm"` | `"default"`).
-- **Workspace card removed** from settings sidebar. Each ChurnShield tenant = one SaaS product; the editable workspace name served only as a dashboard header label and was unnecessary. `updateWorkspaceName` server action removed.
+- **Workspace card removed** from settings sidebar. Each ChurnQ tenant = one SaaS product; the editable workspace name served only as a dashboard header label and was unnecessary. `updateWorkspaceName` server action removed.
 - **Dashboard `<h1>` changed** from `{tenant.name}` → `"Overview"` (static) in `apps/web/src/app/dashboard/page.tsx`.
 - **Layout fix** for SaveButton in settings: added `minWidth: 0` to the `<input>` (flex items need this to shrink) and `flexShrink: 0` wrapper around the button so it doesn't overflow the card.
 - **Integration page copy button** (`apps/web/src/app/dashboard/integration/copy-button.tsx`) rewritten to use `TooltipProvider` + `Tooltip` + `TooltipTrigger` + `TooltipContent` (shadcn) + HugeIcons (`Copy01Icon`, `CheckmarkCircle01Icon`). Two variants: `"overlay"` (absolute-positioned over dark code block) and `"inline"` (sits next to code value). Animated icon transition on copy success.
 
 ### Cancel chat widget (`cs.js`)  April 5, 2026
-- **Header redesign**: white background (`#ffffff`), dark text, removed avatar element, title changed to `"Aria · Retention Assistant"`, subtitle `"ChurnShield · Active"`. Close button: gray bg `#f4f4f5`, gray `×`. Bottom border `1px solid #f0f0f0`.
-- **AI avatar**: light gray circle `#f4f4f5` with border + sparkle/star SVG icon (inline SVG, no external deps). No ChurnShield logo in chat.
+- **Header redesign**: white background (`#ffffff`), dark text, removed avatar element, title changed to `"Aria · Retention Assistant"`, subtitle `"ChurnQ · Active"`. Close button: gray bg `#f4f4f5`, gray `×`. Bottom border `1px solid #f0f0f0`.
+- **AI avatar**: light gray circle `#f4f4f5` with border + sparkle/star SVG icon (inline SVG, no external deps). No ChurnQ logo in chat.
 - **User bubbles**: solid black (`#09090b`), no gradient. AI bubbles: white with light border.
 - **Dynamic offer button**: After each AI message stream completes, `cs.js` calls `GET /api/public/cancel-chat/offer?sessionId=&key=` (new endpoint, see below). If an offer is present, `buildOfferLabel(offer)` generates a human-readable label (e.g. "Claim 10% off · Stay subscribed") and updates the `.cs-keep` button innerHTML so the user sees the actual offer, not just "Keep my subscription".
 - **`buildOfferLabel(offer)`** function in `cs.js`: switches on `offer.type`  `discount` → "Claim {pct}% off · Stay subscribed", `pause` → "Pause my subscription", `extension` → "Claim {months}-month free extension", `downgrade` → "Switch to a lower plan", default → "Keep my subscription".
@@ -254,9 +254,9 @@
 
 ### `cancel-outcome` & Stripe (flexible billing, Connect)
 - **Apply offer to Stripe** after DB write: discount → coupon + `subscriptions.update` with **`discounts: [...]`** (not legacy `coupon` param) for **`billing_mode.type=flexible`** on the sub.
-- **Shared coupons** per Connect account + shape: id `churnshield_ret_{pct}p_{3}m` (constant `RETENTION_DISCOUNT_DURATION_MONTHS = 3` in route). **`duration: repeating`** only  never forever; after N periods price returns to list.
-- **Customer-facing coupon name**  `{tenant.name} · {pct}% off (3 mo)`; metadata `source: churnshield`.
-- **No stacking ChurnShield retention discounts**  Before attaching a new retention coupon, drop existing subscription discounts whose coupon is ChurnShield (metadata, id prefix, or legacy name `ChurnShield {n}% retention offer`).
+- **Shared coupons** per Connect account + shape: id `ChurnQ_ret_{pct}p_{3}m` (constant `RETENTION_DISCOUNT_DURATION_MONTHS = 3` in route). **`duration: repeating`** only  never forever; after N periods price returns to list.
+- **Customer-facing coupon name**  `{tenant.name} · {pct}% off (3 mo)`; metadata `source: ChurnQ`.
+- **No stacking ChurnQ retention discounts**  Before attaching a new retention coupon, drop existing subscription discounts whose coupon is ChurnQ (metadata, id prefix, or legacy name `ChurnQ {n}% retention offer`).
 - **Double fee guard**  On **`saved`**, `updateMany` voids other rows for same `tenantId` + `subscriberId` with `feeBilledAt` null and `offerAccepted` true (clears fee fields, sets `offerAccepted` false) so only the **latest** save stays eligible for `stripe_worker` / sweep. **Transcript/offer_made preserved.**
 
 ### Agents
@@ -275,7 +275,7 @@
 - **`cancel-intent` grace mode logic:**
   - Hash provided → always verify (wrong hash = 401 even in grace mode)
   - No hash + `embedSecretActivated = true` → 401 `auth_hash_required`
-  - No hash + `embedSecretActivated = false` → allow through with `X-ChurnShield-Warning: embed_unsigned` header + `warning`/`hint` in JSON body
+  - No hash + `embedSecretActivated = false` → allow through with `X-ChurnQ-Warning: embed_unsigned` header + `warning`/`hint` in JSON body
 - **`embed-hmac` POST**  sets `embedSecretActivated: true` alongside the new secret on rotate. First rotate = grace mode exits permanently.
 - **Settings page**  yellow `⚠ Your embed is unsecured` banner visible until `embedSecretActivated = true`.
 - **`EmbedSigningControls`**  "Secured" (green) / "Unsecured" (yellow) pill badge next to "Server signing" heading. Badge flips to Secured in-place after a successful rotate (no page reload needed).
@@ -285,16 +285,16 @@
 - **`cancel-intent` now requires `authHash`**  `verifyEmbedAuthHash(secret, subscriberId, hash)` checks HMAC-SHA256(hex). Missing or invalid hash → 401. Accepts both `snippetKey` and `appId` as public tenant identifier.
 - **New identify fields**  `subscriptionId` (→ `stripeSubscriptionId` on session), `subscriberEmail` (shown in dashboard instead of raw `cus_`). `getAuthHash(cus)` async callback fetches hash from merchant's server; `authHashUrl` as alternative.
 - **Settings page**  Snippet tag now includes `data-app-id`. `identify()` block shows `getAuthHash` pattern. `EmbedSigningControls` client component shows App ID + Snippet key, "Rotate embed secret" button (POST `/api/dashboard/embed-hmac`), copy-once yellow banner on rotation, expandable Next.js example route.
-- **Server signing example**  `CHURNSHIELD_EMBED_SECRET` env var; `HMAC-SHA256(secret, subscriberId)` hex returned from merchant's `/api/churnshield-auth` route. Only called when subscriber actually cancels.
+- **Server signing example**  `ChurnQ_EMBED_SECRET` env var; `HMAC-SHA256(secret, subscriberId)` hex returned from merchant's `/api/ChurnQ-auth` route. Only called when subscriber actually cancels.
 - **Helper libs**  `src/lib/embed-auth.ts` (`verifyEmbedAuthHash`), `src/lib/tenant-embed.ts` (`generateEmbedAppId`, `generateEmbedHmacSecret`), `src/lib/tenant-by-embed.ts` (`findTenantByPublicEmbedId`  looks up by `embedAppId` OR `snippetKey`), `src/lib/subscriber-stripe.ts` (validates `cus_` prefix, normalizes sub/email), `src/lib/save-session-emails.ts` (writes `subscriberEmail` post-create).
 
 ### Streaming cancel agent (April 3, 2026)
 - **`apps/web/src/lib/cancel-agent.ts`**  Retention-focused system prompt (`CANCEL_AGENT_SYSTEM`), `createAnthropic()` + model id from `ANTHROPIC_MODEL` env (default `claude-3-5-sonnet-20241022`, overrideable).
 - **`/api/public/cancel-chat/route.ts`**  `POST` with `{ snippetKey, sessionId, messages }` (last message must be `user`; only string content). Returns plain-text stream via `toTextStreamResponse()` with `CORS *`. **`makeOffer` tool** (`inputSchema` + `execute`), **`stopWhen: stepCountIs(2)`**; `onFinish` writes **`transcript`** and, when the model calls the tool, **`pending_offer`** JSON. `maxDuration = 60` for long Vercel streams.
 - **`cs.js` overlay**  After successful `cancel-intent`, opens "Before you go" chat overlay, seeds first user message ("I was about to cancel…"), streams assistant reply into bubbles, supports follow-up Send. Re-opening cancel replaces the overlay cleanly.
-- **Stripe Connect OAuth**  `/api/stripe/connect/start` (HMAC-signed state, `CHURNSHIELD_ONBOARD_SECRET`) + `/callback` (validates state, `oauth.token`, saves `stripeConnectId`; handles P2002 duplicate). Dependency: `stripe` on `apps/web`.
+- **Stripe Connect OAuth**  `/api/stripe/connect/start` (HMAC-signed state, `ChurnQ_ONBOARD_SECRET`) + `/callback` (validates state, `oauth.token`, saves `stripeConnectId`; handles P2002 duplicate). Dependency: `stripe` on `apps/web`.
 - **Payment recovery pipeline**  `insert_stripe_event` returns `UUID | None` (None = duplicate idempotency key). `stripe_worker.py` uses `FOR UPDATE` transaction: locks row with `processed = false`, runs handler, sets `processed = true` (rollback on error). `payment_recovery.py` maps Stripe error codes → `failure_class` on `invoice.payment_failed`. `main.py` adds `logging.basicConfig(INFO)`.
-- **Env**  `infra/env.example` has `ANTHROPIC_API_KEY`, `ANTHROPIC_MODEL` (optional override), `STRIPE_CONNECT_REDIRECT_URI`, `CHURNSHIELD_ONBOARD_SECRET`, `NEXT_PUBLIC_APP_URL`.
+- **Env**  `infra/env.example` has `ANTHROPIC_API_KEY`, `ANTHROPIC_MODEL` (optional override), `STRIPE_CONNECT_REDIRECT_URI`, `ChurnQ_ONBOARD_SECRET`, `NEXT_PUBLIC_APP_URL`.
 
 ### Next logical slice (not yet built)
 - ~~**Agent tool calls** (`makeOffer`, …) inside cancel-chat~~  **Done (April 2026):** `makeOffer` tool (`inputSchema` + `execute`), `stopWhen: stepCountIs(2)`, `save_sessions.pending_offer` JSON written in `onFinish`; **`cancel-outcome`** resolves offer via **`resolveBillingOfferFromSession`** (validated `pending_offer` first, then client body, else empathy).
@@ -325,7 +325,7 @@ plus claims that Stripe was **manual** before, that **rejected** offers are **lo
 
 ---
 
-## What is ChurnShield?
+## What is ChurnQ?
 
 AI-native subscription retention SaaS for small SaaS founders, indie hackers, and solo founders.
 
@@ -346,7 +346,7 @@ chrun/
 │   ├── web/          # Next.js 14, Clerk v5, Prisma, Supabase
 │   └── agents/       # FastAPI, LangGraph, APScheduler, asyncpg
 ├── PROJECT_STATUS.md
-├── ChurnShield_Product_Document.docx
+├── ChurnQ_Product_Document.docx
 └── .gitignore
 ```
 
@@ -404,7 +404,7 @@ chrun/
 
 ### What we charge  15% of what the subscriber actually pays going forward
 
-| Offer | Subscriber pays going forward | ChurnShield fee |
+| Offer | Subscriber pays going forward | ChurnQ fee |
 |-------|------------------------------|-----------------|
 | Empathy (no offer needed) | Full MRR | 15% of full MRR |
 | Pause (1 month break) | Full MRR (resumes after pause) | 15% of full MRR |
@@ -441,7 +441,7 @@ chrun/
 
 ### Real dollar example ($100/month subscriber)
 
-| Offer | Subscriber pays | ChurnShield earns | Merchant nets |
+| Offer | Subscriber pays | ChurnQ earns | Merchant nets |
 |-------|----------------|-------------------|---------------|
 | Empathy | $100 | $15.00 | $85.00 |
 | Pause | $100 (resumes) | $15.00 | $85.00 |
@@ -511,7 +511,7 @@ chrun/
 - [x] Cancel outcome API (`/api/public/cancel-outcome`)  records save/cancel, `offerType`-aware fee fields; **applies Stripe** (discount coupon + flexible `discounts[]`, extension credit, pause) on connected account; **supersedes** prior unbilled saves for same subscriber
 - [x] Pause wall API (`/api/public/pause`)  finds active Stripe sub, pauses via `mark_uncollectible`, records session
 - [x] Subscriber status API (`/api/public/subscriber-status`)  returns `paymentWallActive` + `pauseWallActive` flags
-- [x] Embed grace mode  `embedSecretActivated` flag; `cancel-intent` allows unsigned requests until merchant rotates secret; wrong hash always rejected; `X-ChurnShield-Warning: embed_unsigned` header + JSON hint in grace mode
+- [x] Embed grace mode  `embedSecretActivated` flag; `cancel-intent` allows unsigned requests until merchant rotates secret; wrong hash always rejected; `X-ChurnQ-Warning: embed_unsigned` header + JSON hint in grace mode
 - [x] Embed HMAC auth  `Tenant.embedAppId` (`cs_app_...`) + `Tenant.embedHmacSecret`; auto-generated on settings load; `cancel-intent` verifies `authHash = HMAC-SHA256(secret, subscriberId)` hex  missing/invalid → 401 when activated
 - [x] `EmbedSigningControls`  "Rotate embed secret" button → POST `/api/dashboard/embed-hmac`; copy-once yellow banner; expandable Next.js signing example
 - [x] `findTenantByPublicEmbedId()`  resolves `cs_app_...` or `cs_live_...` to tenant
@@ -522,10 +522,10 @@ chrun/
 - [x] Cancel intent API (`/api/public/cancel-intent`)  POST with `snippetKey`, `subscriberId`, optional `subscriptionMrr`; CORS *; creates `save_sessions` row (`cancel_attempt`)
 - [x] Stripe webhook ingress  Svix verified, idempotent
 - [x] Clerk webhook handler  auto-creates tenant on `user.created` + `organization.created`, syncs email on `user.updated`
-- [x] cs.js embed  `data-key`, optional `data-api-base` / `data-cancel-selector`, capture-phase click handler; intercepts cancel clicks, streaming AI chat overlay, **markdown** in bubbles, **typing** indicator, outcome buttons (Keep / Cancel), **`detectOffer`** → `offerType`/`discountPct`, **re-fire** merchant cancel on exit / “still cancel”; dispatches `churnshield:cancel-intent` event
-- [x] `window.ChurnShield.identify({ subscriberId, subscriptionMrr })`  triggers status check on call
-- [x] `window.ChurnShield.pauseWall()`  shows pause modal, calls `/api/public/pause`, closes on success
-- [x] `window.ChurnShield.isPaymentWallActive()`  returns bool; fires `churnshield:payment-wall-active` event
+- [x] cs.js embed  `data-key`, optional `data-api-base` / `data-cancel-selector`, capture-phase click handler; intercepts cancel clicks, streaming AI chat overlay, **markdown** in bubbles, **typing** indicator, outcome buttons (Keep / Cancel), **`detectOffer`** → `offerType`/`discountPct`, **re-fire** merchant cancel on exit / “still cancel”; dispatches `ChurnQ:cancel-intent` event
+- [x] `window.ChurnQ.identify({ subscriberId, subscriptionMrr })`  triggers status check on call
+- [x] `window.ChurnQ.pauseWall()`  shows pause modal, calls `/api/public/pause`, closes on success
+- [x] `window.ChurnQ.isPaymentWallActive()`  returns bool; fires `ChurnQ:payment-wall-active` event
 - [x] Production rate limiting  Upstash Redis + sliding window on all 5 public endpoints (fails open in dev)
 - [x] Input bounds  `subscriptionMrr` capped at $10k, `subscriberId`/`sessionId` max 255 chars on all endpoints
 - [x] TypeScript errors fixed  `cancel-outcome` variable scope, `charts.tsx` Recharts formatter types
@@ -577,7 +577,7 @@ chrun/
 | 5 | **Monthly billing summary email** | ✅ `billing.py`  1st of month cron (05:00 UTC) |
 | 6 | **Save confirmation email** | ⚠️ **Billing** dashboard + monthly summary; per-row email removed from `billing.py` (was broken/noisy) |
 | 7 | **Payment recovery weekly summary** | ✅ `payment_recovery.py`  Mon 04:30 UTC cron |
-| 8 | **Pause wall** | ✅ `window.ChurnShield.pauseWall()` + `POST /api/public/pause` |
+| 8 | **Pause wall** | ✅ `window.ChurnQ.pauseWall()` + `POST /api/public/pause` |
 | 9 | **Payment wall** | ✅ `subscriber_flags` table + `GET /api/public/subscriber-status` + queue.py sets on exhausted retries |
 | 10 | **Merchant email in settings** | ✅ Read-only display in settings; auto-synced from Clerk via `user.updated` webhook |
 
@@ -604,7 +604,7 @@ chrun/
 | 10 | **A/B test offers** | `offerType` column already in `save_sessions` ✅. Build analytics query in dashboard  which offer type wins per MRR tier. |
 | 11 | **Trained ML churn model** | Once 500+ labelled sessions exist, train sklearn LogisticRegression on (cancel_attempts, failed_payments, days_inactive) → save to model.pkl → load in churn_prediction.py. |
 | 12 | **Test coverage** | Unit: pytest for agents (mock Stripe + DB). E2E: Playwright for cancel flow. AI evals: Claude-graded tests for offer quality. |
-|  | **Optional: coupon cleanup job** | Archive/delete orphaned unused `churnshield_ret_*` coupons on Connect accounts (Stripe API + care with attached subs). |
+|  | **Optional: coupon cleanup job** | Archive/delete orphaned unused `ChurnQ_ret_*` coupons on Connect accounts (Stripe API + care with attached subs). |
 
 ---
 
@@ -699,7 +699,7 @@ cd apps/agents && uv run pytest tests/ -v
 | T25 | Offer analytics  save rate, avg MRR, bestOffer computed correctly |
 | T26 | Embed HMAC secret rotation  `embedSecretActivated` flips to true |
 | T27 | `getOrCreateRetentionCoupon`  reuses existing coupon with same shape |
-| T28 | `nonChurnShieldDiscountUpdateParams`  keeps non-ChurnShield discounts, drops retention ones |
+| T28 | `nonChurnQDiscountUpdateParams`  keeps non-ChurnQ discounts, drops retention ones |
 
 ---
 
@@ -743,14 +743,14 @@ These two features are **already built in code** (`cs.js` + Python agents) but i
 
 ---
 
-### Advanced Feature 1  Pause Wall (`window.ChurnShield.pauseWall()`)
+### Advanced Feature 1  Pause Wall (`window.ChurnQ.pauseWall()`)
 
 #### What it is
 A proactive pause modal the **merchant triggers manually** from their own UI  before the subscriber ever clicks cancel. When called, it shows "Want to pause instead of cancel?" and calls `/api/public/pause` directly, bypassing the AI chat entirely.
 
 #### How it works
 ```
-Merchant calls window.ChurnShield.pauseWall()
+Merchant calls window.ChurnQ.pauseWall()
         ↓
 cs.js shows a modal: "Pause your subscription for 1 month?"
         ↓
@@ -760,7 +760,7 @@ cs.js → POST /api/public/pause → Stripe mark_uncollectible on the subscripti
         ↓
 save_session row created (trigger_type = cancel_attempt, offerType = pause)
         ↓
-30-day billing sweep: if subscription still active after 30 days → ChurnShield charges 15% fee
+30-day billing sweep: if subscription still active after 30 days → ChurnQ charges 15% fee
 ```
 
 #### Why it exists
@@ -773,11 +773,11 @@ Some merchants want to offer pause as a **proactive self-service option** (e.g. 
 - Most indie hackers don’t have a billing page sophisticated enough to warrant this
 
 #### What makes it different from Stripe’s native pause
-| | Stripe native pause | ChurnShield pauseWall() |
+| | Stripe native pause | ChurnQ pauseWall() |
 |---|---|---|
 | Triggered by | Merchant support team / billing portal | Subscriber self-service at moment of cancel intent |
 | Saves the subscriber | Maybe, if they find it | Yes  intercepts the cancel click proactively |
-| Recorded in ChurnShield | No | Yes  full save_session, fee after 30 days |
+| Recorded in ChurnQ | No | Yes  full save_session, fee after 30 days |
 
 #### When to add it (post-launch signal)
 Merchants ask: *"Can subscribers pause without going through the chat?"* or *"I want a pause button on my billing page."*
@@ -786,16 +786,16 @@ Merchants ask: *"Can subscribers pause without going through the chat?"* or *"I 
 Add a new section to the Integration page (`/dashboard/integration`) under an "Advanced" accordion or tab. Show:
 ```js
 // Place this wherever you want to offer pause proactively
-window.ChurnShield.pauseWall();
+window.ChurnQ.pauseWall();
 ```
 Note: `identify()` must be called first. Requires "Allow subscription pause" to be ON in Retention Offer Settings.
 
 ---
 
-### Advanced Feature 2  Payment Wall (`window.ChurnShield.isPaymentWallActive()`)
+### Advanced Feature 2  Payment Wall (`window.ChurnQ.isPaymentWallActive()`)
 
 #### What it is
-A flag check that returns `true` when ChurnShield’s Python agent has determined a subscriber’s payment has **permanently failed** (all retries exhausted). The merchant’s app reads this flag and decides what to show  a hard block, a banner, a redirect.
+A flag check that returns `true` when ChurnQ’s Python agent has determined a subscriber’s payment has **permanently failed** (all retries exhausted). The merchant’s app reads this flag and decides what to show  a hard block, a banner, a redirect.
 
 #### How it works
 ```
@@ -817,8 +817,8 @@ Python agent sets subscriber_flags.payment_wall_active = true
         ↓
 cs.js → GET /api/public/subscriber-status → returns { paymentWallActive: true }
         ↓
-window.ChurnShield.isPaymentWallActive() returns true
-Fires churnshield:payment-wall-active event
+window.ChurnQ.isPaymentWallActive() returns true
+Fires ChurnQ:payment-wall-active event
 ```
 
 #### Why it exists
@@ -826,7 +826,7 @@ Without this, a subscriber with a permanently failed payment either:
 1. Keeps using the product for free (merchant loses MRR silently)
 2. Gets cut off by Stripe’s dunning with no soft landing
 
-ChurnShield’s flag gives the merchant a **programmatic hook** to show a card-update prompt at the right moment, without the merchant having to build their own Stripe webhook handler.
+ChurnQ’s flag gives the merchant a **programmatic hook** to show a card-update prompt at the right moment, without the merchant having to build their own Stripe webhook handler.
 
 #### Why it’s NOT needed day-one
 - Stripe already handles payment failure with its own built-in dunning (smart retries + email)
@@ -835,7 +835,7 @@ ChurnShield’s flag gives the merchant a **programmatic hook** to show a card-u
 - It requires the merchant to wire the flag into their own UI  non-trivial decision
 
 #### What makes it different from Stripe’s built-in dunning
-| | Stripe built-in dunning | ChurnShield payment wall |
+| | Stripe built-in dunning | ChurnQ payment wall |
 |---|---|---|
 | Retry timing | Fixed smart retry schedule | Customized per failure_class |
 | Recovery email | Generic Stripe email | AI-written via Claude Haiku, personalized |
@@ -849,13 +849,13 @@ Merchants ask: *"How do I block access when a payment fails?"* or *"I’m gettin
 Add to the Integration page Advanced section:
 ```js
 // After identify()  check on every page load
-const blocked = window.ChurnShield.isPaymentWallActive();
+const blocked = window.ChurnQ.isPaymentWallActive();
 if (blocked) {
   window.location.href = "/billing/update-card";
 }
 
 // Or listen for the event (fires automatically after identify())
-window.addEventListener("churnshield:payment-wall-active", () => {
+window.addEventListener("ChurnQ:payment-wall-active", () => {
   showUpdateCardModal();
 });
 ```
@@ -875,7 +875,7 @@ STRIPE_SECRET_KEY=sk_test_...
 NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY=pk_test_...
 STRIPE_CLIENT_ID=ca_...                        # Stripe Dashboard → Connect → Settings
 STRIPE_CONNECT_REDIRECT_URI=https://[vercel-url]/api/stripe/connect/callback
-CHURNSHIELD_ONBOARD_SECRET=[random 32-char hex]  # Signs OAuth state param (CSRF protection)
+ChurnQ_ONBOARD_SECRET=[random 32-char hex]  # Signs OAuth state param (CSRF protection)
 NEXT_PUBLIC_APP_URL=https://[vercel-url]
 ANTHROPIC_API_KEY=sk-ant-...
 UPSTASH_REDIS_REST_URL=https://...upstash.io   # console.upstash.com → Create DB → REST URL
@@ -906,7 +906,7 @@ npm run dev
 
 # Terminal 2  Python agents
 cd apps/agents
-uv run churnshield-agents
+uv run ChurnQ-agents
 # Runs on http://localhost:8001
 # Docs: http://localhost:8001/docs
 
@@ -926,8 +926,8 @@ ngrok http --domain=alphonso-nonjuristic-detersively.ngrok-free.dev 3000
 | `database_configured: false` | Check agents `.env` is at `apps/agents/.env`, not inside src folder |
 | Clerk **hydration** error (`UserButton` / header) | Root layout uses `ClerkAuthHeader` client wrapper  do not inline `UserButton` in server `layout` without mount gate |
 | **No `save_sessions` row** from test page | `test-overlay.html`: use `defer` for `cs.js`; set `data-key` in inline script immediately after tag; `USE_REAL_APIS=true` |
-| Stripe **flexible** sub rejects `coupon` on update | Use `discounts: [{ coupon: id }]` + strip prior ChurnShield discounts  see `cancel-outcome/route.ts` |
-| **Two retention discounts** on one subscription | Fixed by replacing ChurnShield coupons before attach; old subs may need manual fix in Dashboard |
+| Stripe **flexible** sub rejects `coupon` on update | Use `discounts: [{ coupon: id }]` + strip prior ChurnQ discounts  see `cancel-outcome/route.ts` |
+| **Two retention discounts** on one subscription | Fixed by replacing ChurnQ coupons before attach; old subs may need manual fix in Dashboard |
 | **Two merchant save fees** same subscriber | Fixed by supersede `updateMany` on new save; void stale rows with `offer_accepted=false` if needed |
 
 ---
@@ -985,25 +985,25 @@ ngrok http --domain=alphonso-nonjuristic-detersively.ngrok-free.dev 3000
 | `apps/web/src/lib/rate-limit.ts` | Upstash Redis rate limiters for all 5 public endpoints |
 | `apps/web/public/cs.js` | Embed snippet  cancel intercept, chat overlay, pauseWall(), payment wall check |
 | `apps/web/prisma/schema.prisma` | Full DB schema (includes SubscriberFlag) |
-| `apps/agents/src/churnshield_agents/main.py` | FastAPI app entry point |
-| `apps/agents/src/churnshield_agents/agents/churn_prediction.py` | Daily risk scoring + high-risk alert email |
-| `apps/agents/src/churnshield_agents/agents/feedback_analyser.py` | LangGraph digest pipeline |
-| `apps/agents/src/churnshield_agents/agents/payment_recovery.py` | Payment failure handler + weekly summary email |
-| `apps/agents/src/churnshield_agents/agents/outreach.py` | Proactive retention emails |
-| `apps/agents/src/churnshield_agents/agents/billing.py` | 30-day pause/empathy check (void churned); monthly summary email; **`_charge_via_stripe_connect` unused** |
-| `apps/agents/src/churnshield_agents/agents/merchant_email.py` | Shared util  get_owner_email() + send_merchant_email() |
-| `apps/agents/src/churnshield_agents/jobs/queue.py` | APScheduler cron jobs (6 total) + payment wall on exhausted retries |
-| `apps/agents/src/churnshield_agents/db.py` | asyncpg pool + URL parser |
-| `apps/agents/src/churnshield_agents/config.py` | Pydantic settings |
-| `apps/agents/src/churnshield_agents/workers/stripe_worker.py` | `handle_invoice_paid`  deferred save **confirm** only (no Connect charge) |
+| `apps/agents/src/churnq_agents/main.py` | FastAPI app entry point |
+| `apps/agents/src/churnq_agents/agents/churn_prediction.py` | Daily risk scoring + high-risk alert email |
+| `apps/agents/src/churnq_agents/agents/feedback_analyser.py` | LangGraph digest pipeline |
+| `apps/agents/src/churnq_agents/agents/payment_recovery.py` | Payment failure handler + weekly summary email |
+| `apps/agents/src/churnq_agents/agents/outreach.py` | Proactive retention emails |
+| `apps/agents/src/churnq_agents/agents/billing.py` | 30-day pause/empathy check (void churned); monthly summary email; **`_charge_via_stripe_connect` unused** |
+| `apps/agents/src/churnq_agents/agents/merchant_email.py` | Shared util  get_owner_email() + send_merchant_email() |
+| `apps/agents/src/churnq_agents/jobs/queue.py` | APScheduler cron jobs (6 total) + payment wall on exhausted retries |
+| `apps/agents/src/churnq_agents/db.py` | asyncpg pool + URL parser |
+| `apps/agents/src/churnq_agents/config.py` | Pydantic settings |
+| `apps/agents/src/churnq_agents/workers/stripe_worker.py` | `handle_invoice_paid`  deferred save **confirm** only (no Connect charge) |
 
 ---
 
-## Competitor Analysis  ChurnShield vs Churnkey
+## Competitor Analysis  ChurnQ vs Churnkey
 
 ### Pricing
 
-| | Churnkey | ChurnShield |
+| | Churnkey | ChurnQ |
 |-|----------|-------------|
 | Model | Flat monthly fee | 15% commission on saved MRR only |
 | Starter | $299/mo | $0 |
@@ -1012,26 +1012,26 @@ ngrok http --domain=alphonso-nonjuristic-detersively.ngrok-free.dev 3000
 | If nothing saved | Still pay $299–$599 | Pay $0 |
 | Break-even point | Need to save ~$2,000/mo MRR to justify $299 | No break-even risk |
 
-**Winner: ChurnShield**  zero risk for the merchant. Churnkey costs money even when it fails.
+**Winner: ChurnQ**  zero risk for the merchant. Churnkey costs money even when it fails.
 
 ---
 
 ### Onboarding
 
-| | Churnkey | ChurnShield |
+| | Churnkey | ChurnQ |
 |-|----------|-------------|
 | Demo required | Yes  sales call needed | No |
 | Self-serve signup | No | Yes  sign up, get snippet, done |
 | Time to first value | Days (sales cycle) | Minutes |
 | Setup complexity | High (custom flows, UI builder) | One `<script>` tag |
 
-**Winner: ChurnShield**  built for solo founders who don't want to talk to sales.
+**Winner: ChurnQ**  built for solo founders who don't want to talk to sales.
 
 ---
 
 ### Churn Prevention Approach
 
-| | Churnkey | ChurnShield |
+| | Churnkey | ChurnQ |
 |-|----------|-------------|
 | Cancel flow | Static modal with offers | Live AI conversation (Claude Sonnet) |
 | Offer type | Pre-configured discount/pause options | Dynamic  adapts to MRR tier + risk signals |
@@ -1041,13 +1041,13 @@ ngrok http --domain=alphonso-nonjuristic-detersively.ngrok-free.dev 3000
 | Pause wall | ✅ Yes | ✅ Yes |
 | Payment wall | ❌ No | ✅ Yes |
 
-**Winner: ChurnShield**  reactive (cancel flow) + proactive (prediction + outreach). Churnkey is reactive only.
+**Winner: ChurnQ**  reactive (cancel flow) + proactive (prediction + outreach). Churnkey is reactive only.
 
 ---
 
 ### Merchant Communication
 
-| | Churnkey | ChurnShield |
+| | Churnkey | ChurnQ |
 |-|----------|-------------|
 | Requires dashboard login to see value | Yes | No |
 | Weekly digest emails | ❌ | ✅ AI-generated feedback digest |
@@ -1056,13 +1056,13 @@ ngrok http --domain=alphonso-nonjuristic-detersively.ngrok-free.dev 3000
 | Monthly billing summary | ❌ | ✅ 1st of every month |
 | Payment recovery updates | ❌ | ✅ Weekly |
 
-**Winner: ChurnShield**  merchants get value passively. Churnkey requires you to log in to see what's happening.
+**Winner: ChurnQ**  merchants get value passively. Churnkey requires you to log in to see what's happening.
 
 ---
 
 ### Target Customer
 
-| | Churnkey | ChurnShield |
+| | Churnkey | ChurnQ |
 |-|----------|-------------|
 | Primary target | Mid-market SaaS ($10k–$100k MRR) | Indie hackers, solo founders, small SaaS (<$10k MRR) |
 | Min viable MRR to justify cost | ~$2,000/mo (to cover $299 fee) | $1 (performance only) |
@@ -1072,7 +1072,7 @@ ngrok http --domain=alphonso-nonjuristic-detersively.ngrok-free.dev 3000
 
 ### Summary
 
-| Dimension | Churnkey | ChurnShield |
+| Dimension | Churnkey | ChurnQ |
 |-----------|----------|-------------|
 | Price risk | High (flat fee) | Zero |
 | Onboarding friction | High | Low |
@@ -1081,7 +1081,7 @@ ngrok http --domain=alphonso-nonjuristic-detersively.ngrok-free.dev 3000
 | Merchant notifications | Minimal | Full passive reporting |
 | Target market | Mid-market | SMB / indie |
 
-**ChurnShield's core pitch:** Churnkey charges you $299/mo regardless of results. ChurnShield charges nothing unless a subscriber is saved  and works harder to save them with live AI, proactive outreach, and automated payment recovery.
+**ChurnQ's core pitch:** Churnkey charges you $299/mo regardless of results. ChurnQ charges nothing unless a subscriber is saved  and works harder to save them with live AI, proactive outreach, and automated payment recovery.
 
 ---
 
@@ -1100,7 +1100,7 @@ High-level recap of what exists in the repo and what was hardened in recent work
 ### Web app (`apps/web`)
 - **Dashboard**  Overview metrics/charts, Subscribers risk table, **Recent Sessions** (filters, 500-row load), **Billing** (charge history per PI + upcoming fees), **Feedback** (AI Analyst + hybrid digest retrieval + `VOYAGE_API_KEY`), **Settings** (workspace, embed snippet, Stripe Connect, **retention offer limits** via `offer_settings`).
 - **Public APIs**  `cancel-intent`, streaming `cancel-chat`, `cancel-outcome`, `pause`, `subscriber-status`; **Upstash** rate limits (fail open locally); input caps on MRR / ids.
-- **cancel-outcome**  Writes session; **applies Stripe on Connect**: flexible subs use **`discounts[]`** not legacy `coupon`; **shared coupon ids** `churnshield_ret_{pct}p_3m`; **merchant-branded** coupon names; strips prior **ChurnShield** discounts before adding a new one; never `forever` coupons (repeating 3 months).
+- **cancel-outcome**  Writes session; **applies Stripe on Connect**: flexible subs use **`discounts[]`** not legacy `coupon`; **shared coupon ids** `ChurnQ_ret_{pct}p_3m`; **merchant-branded** coupon names; strips prior **ChurnQ** discounts before adding a new one; never `forever` coupons (repeating 3 months).
 - **Embed `cs.js`**  Cancel intercept, chat UI (bubbles, typing, markdown), **`detectOffer`** → `offerType` + `discountPct`, **Keep** fires real outcome, **cancel / ×** re-fires merchant’s original cancel click.
 - **`test-overlay.html`**  Local QA; **`USE_REAL_APIS`**; load **`cs.js` with `defer`** so `data-key` applies before init.
 - **Clerk**  Auth, webhooks, tenant + email sync; **root layout** auth via **`ClerkAuthHeader`** to avoid hydration mismatch with `UserButton`.

@@ -11,7 +11,7 @@ from urllib.parse import unquote
 
 import asyncpg
 
-from churnshield_agents.config import get_settings
+from churnq_agents.config import get_settings
 
 _pool: asyncpg.Pool | None = None
 

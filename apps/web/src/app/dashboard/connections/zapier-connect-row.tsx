@@ -45,7 +45,7 @@ export function ZapierConnectRow() {
             Zapier
           </div>
           <div style={{ fontSize: 12, color: "var(--cs-text-muted, #71717a)", lineHeight: 1.5 }}>
-            Automate ChurnShield events in 5,000+ apps using{" "}
+            Automate ChurnQ events in 5,000+ apps using{" "}
             <strong style={{ fontWeight: 600, color: "var(--cs-text, #3f3f46)" }}>Webhooks by Zapier</strong> (Catch Hook).
             No separate Zapier app required  we POST signed JSON to your hook URL.
           </div>
@@ -122,15 +122,15 @@ export function ZapierConnectRow() {
               ).
             </li>
             <li style={{ marginBottom: 8 }}>
-              In ChurnShield, open the{" "}
-              <a href="#churnshield-webhooks" style={{ color: "#c2410c", fontWeight: 600, textDecoration: "none" }}>
+              In ChurnQ, open the{" "}
+              <a href="#ChurnQ-webhooks" style={{ color: "#c2410c", fontWeight: 600, textDecoration: "none" }}>
                 Webhooks
               </a>{" "}
               section (next row), click <strong>Connect</strong> or <strong>Manage</strong>, paste that URL, choose
               events, then add the endpoint.
             </li>
             <li style={{ marginBottom: 8 }}>
-              In Zapier, run <strong>Test trigger</strong>. In ChurnShield, use <strong>Send test</strong> on the endpoint
+              In Zapier, run <strong>Test trigger</strong>. In ChurnQ, use <strong>Send test</strong> on the endpoint
               so Zapier can sample the payload fields.
             </li>
             <li>
@@ -140,7 +140,7 @@ export function ZapierConnectRow() {
               <code style={{ background: "#e4e4e7", padding: "1px 5px", borderRadius: 4, fontSize: 11 }}>data</code> (JSON
               body). Optional verification: header{" "}
               <code style={{ background: "#e4e4e7", padding: "1px 5px", borderRadius: 4, fontSize: 11 }}>
-                X-ChurnShield-Signature
+                X-ChurnQ-Signature
               </code>{" "}
               (HMAC-SHA256 of the raw body)  use a Code step if you need to verify it.
             </li>

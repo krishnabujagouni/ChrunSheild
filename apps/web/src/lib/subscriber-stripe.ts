@@ -1,5 +1,5 @@
 /**
- * ChurnShield public APIs expect `subscriberId` = Stripe Customer id on the merchant's
+ * ChurnQ public APIs expect `subscriberId` = Stripe Customer id on the merchant's
  * connected account (`cus_...`), same value as `subscription.customer` from Stripe.
  * Email or internal DB ids cause confusing Stripe errors (e.g. "No such customer: 'x@y.com'").
  */
@@ -16,7 +16,7 @@ export function validateSubscriberIdForStripeConnect(subscriberId: string): Subs
     return {
       ok: false,
       error: "subscriber_id_empty",
-      hint: "Call ChurnShield.identify({ subscriberId }) with the Stripe Customer id (cus_...).",
+      hint: "Call ChurnQ.identify({ subscriberId }) with the Stripe Customer id (cus_...).",
     };
   }
   if (id.includes("@")) {

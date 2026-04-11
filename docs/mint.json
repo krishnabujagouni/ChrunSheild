@@ -1,6 +1,6 @@
 {
   "$schema": "https://mintlify.com/schema.json",
-  "name": "ChurnShield",
+  "name": "ChurnQ",
   "logo": {
     "dark": "/logo/dark.svg",
     "light": "/logo/light.svg"
@@ -18,12 +18,12 @@
   "topbarLinks": [
     {
       "name": "Dashboard",
-      "url": "https://app.churnshield.ai/dashboard"
+      "url": "https://app.churnq.com/dashboard"
     }
   ],
   "topbarCtaButton": {
     "name": "Get Started",
-    "url": "https://app.churnshield.ai"
+    "url": "https://app.churnq.com"
   },
   "tabs": [
     {
@@ -35,12 +35,12 @@
     {
       "name": "Connections",
       "icon": "plug",
-      "url": "https://app.churnshield.ai/dashboard/connections"
+      "url": "https://app.churnq.com/dashboard/connections"
     },
     {
       "name": "Support",
       "icon": "envelope",
-      "url": "mailto:hello@churnshield.ai"
+      "url": "mailto:hello@churnq.com"
     }
   ],
   "navigation": [
@@ -81,6 +81,6 @@
     }
   ],
   "footerSocials": {
-    "website": "https://churnshield.ai"
+    "website": "https://churnq.com"
   }
 }

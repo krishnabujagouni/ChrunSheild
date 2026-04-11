@@ -53,7 +53,7 @@ function useMobileNav() {
 /* ─── Testimonials data ─────────────────────────────────────────────────── */
 const testimonials: Testimonial[] = [
   {
-    text: "ChurnShield saved us $4,200 in MRR last month alone. The AI handles cancellations better than our best support rep.",
+    text: "ChurnQ saved us $4,200 in MRR last month alone. The AI handles cancellations better than our best support rep.",
     name: "Briana Patton",
     role: "Founder, Taskfully",
   },
@@ -83,7 +83,7 @@ const testimonials: Testimonial[] = [
     role: "Co-founder, Funnelbase",
   },
   {
-    text: "Payment recovery was a manual nightmare. ChurnShield's retry sequences recovered $1,800 last quarter without us touching a thing.",
+    text: "Payment recovery was a manual nightmare. ChurnQ's retry sequences recovered $1,800 last quarter without us touching a thing.",
     name: "Farhan Siddiqui",
     role: "Founder, Stackr",
   },
@@ -212,7 +212,7 @@ export default function LandingPage() {
               <polygon points="14,2 26,24 2,24" fill="none" stroke="#e4e4e7" strokeWidth="2.5" strokeLinejoin="round" />
               <polygon points="14,2 26,24 2,24" fill="none" stroke="#09090b" strokeWidth="2.5" strokeLinejoin="round" strokeLinecap="round" strokeDasharray="24 60" strokeDashoffset="0" />
             </svg>
-            <span style={{ color: "var(--cs-accent)" }}>ChurnShield</span>
+            <span style={{ color: "var(--cs-accent)" }}>ChurnQ</span>
           </Link>
           <div className="lnd-desktop items-center" style={{ gap: 0 }}>
             <div style={{ "--primary": "240 6% 10%", "--muted-foreground": "240 4% 46%" } as React.CSSProperties}>
@@ -256,7 +256,7 @@ export default function LandingPage() {
           text: "Retention automation for SaaS",
         }}
         title="Stop losing revenue every time someone clicks cancel."
-        description="ChurnShield intercepts cancel intent with a calm AI conversation, recovers failed payments, and flags who's about to leave before they do. One script tag, zero subscriptions."
+        description="ChurnQ intercepts cancel intent with a calm AI conversation, recovers failed payments, and flags who's about to leave before they do. One script tag, zero subscriptions."
         actions={[
           { text: "Start for free", href: "/sign-up", variant: "default" },
         ]}
@@ -306,7 +306,7 @@ export default function LandingPage() {
               content: {
                 badge: "AI-powered",
                 title: "Turn cancellations into conversations  not dead ends.",
-                description: "Most cancel buttons fire a blunt form and lose the customer forever. ChurnShield intercepts the moment of intent with a calm, on-brand dialogue: understand the reason, offer what fits, and honour a clean exit when that's what they want.",
+                description: "Most cancel buttons fire a blunt form and lose the customer forever. ChurnQ intercepts the moment of intent with a calm, on-brand dialogue: understand the reason, offer what fits, and honour a clean exit when that's what they want.",
                 bullets: [
                   "AI-powered flows that adapt to price, missing features, seasonality, or competitor switches.",
                   "You set guardrails: offer types, limits, segments, and tone  so it feels like your product.",
@@ -325,7 +325,7 @@ export default function LandingPage() {
               content: {
                 badge: "Smart dunning",
                 title: "Recover failed payments before they become churn.",
-                description: "Involuntary churn from card failures is silent MRR leakage. ChurnShield generates contextual dunning for each failure type and uses intelligent retry windows so subscribers update billing without opening a ticket.",
+                description: "Involuntary churn from card failures is silent MRR leakage. ChurnQ generates contextual dunning for each failure type and uses intelligent retry windows so subscribers update billing without opening a ticket.",
                 bullets: [
                   "Copy tuned to insufficient funds, expired cards, and bank blocks  not one generic dunning blast.",
                   "Retry cadences you can align with how your processor and product behave.",
@@ -499,7 +499,7 @@ export default function LandingPage() {
 
           <p style={{ textAlign: "center", marginTop: 24, fontSize: 13, color: "#64748b" }}>
             High-volume or enterprise?{" "}
-            <Link href="mailto:hello@churnshield.ai" style={{ color: "#18181b", fontWeight: 600, textDecoration: "none" }}>Talk to us</Link>
+            <Link href="mailto:hello@churnq.com" style={{ color: "#18181b", fontWeight: 600, textDecoration: "none" }}>Talk to us</Link>
           </p>
         </div>
       </section>
@@ -521,7 +521,7 @@ export default function LandingPage() {
               What our users say
             </h2>
             <p style={{ color: "var(--cs-text-secondary)", fontSize: 15, margin: 0, textAlign: "center", lineHeight: 1.6 }}>
-              See how ChurnShield founders are saving MRR every single day.
+              See how ChurnQ founders are saving MRR every single day.
             </p>
           </motion.div>
 
@@ -551,7 +551,7 @@ export default function LandingPage() {
               Everything you need to know
             </h2>
             <p style={{ color: "#64748b", fontSize: 16, margin: 0 }}>
-              Common questions about ChurnShield, how it compares, and how billing works.
+              Common questions about ChurnQ, how it compares, and how billing works.
             </p>
           </div>
 
@@ -559,28 +559,28 @@ export default function LandingPage() {
             {[
               {
                 id: "q1",
-                q: "How is ChurnShield different from Churnkey?",
-                a: "The biggest difference is how we charge. Churnkey charges a flat monthly subscription fee regardless of results  you pay even if they save zero customers. ChurnShield uses pure performance pricing: we take 15% of MRR we actually recover. If we don't save anyone, you pay nothing. We also use a live AI agent that adapts its offer in real time, while most competitors rely on static templates you configure manually.",
+                q: "How is ChurnQ different from Churnkey?",
+                a: "The biggest difference is how we charge. Churnkey charges a flat monthly subscription fee regardless of results  you pay even if they save zero customers. ChurnQ uses pure performance pricing: we take 15% of MRR we actually recover. If we don't save anyone, you pay nothing. We also use a live AI agent that adapts its offer in real time, while most competitors rely on static templates you configure manually.",
               },
               {
                 id: "q2",
                 q: "Is there a monthly fee or subscription cost?",
-                a: "No. ChurnShield has zero monthly fees, zero setup costs, and zero subscriptions. Our only revenue comes from a 15% share of the revenue we save you. This aligns our incentives completely with yours  we only win when you win.",
+                a: "No. ChurnQ has zero monthly fees, zero setup costs, and zero subscriptions. Our only revenue comes from a 15% share of the revenue we save you. This aligns our incentives completely with yours  we only win when you win.",
               },
               {
                 id: "q3",
                 q: "What is the best cancel flow software for SaaS in 2025?",
-                a: "The best cancel flow tool is one that charges you nothing unless it delivers results. ChurnShield's AI-powered cancel flow engages subscribers in real time, surfaces the right offer (discount, pause, downgrade, or empathy), and only bills you for successful saves. Unlike fixed-fee platforms, you're never paying for performance you didn't get.",
+                a: "The best cancel flow tool is one that charges you nothing unless it delivers results. ChurnQ's AI-powered cancel flow engages subscribers in real time, surfaces the right offer (discount, pause, downgrade, or empathy), and only bills you for successful saves. Unlike fixed-fee platforms, you're never paying for performance you didn't get.",
               },
               {
                 id: "q4",
-                q: "How does ChurnShield's AI compare to template-based retention tools?",
-                a: "Traditional retention tools let you build a decision tree  if the customer says X show them Y. ChurnShield uses a conversational AI agent that reads the subscriber's reason for cancelling, their usage history, and their MRR tier to generate a personalised offer on the fly. This produces higher save rates because the response feels human, not scripted.",
+                q: "How does ChurnQ's AI compare to template-based retention tools?",
+                a: "Traditional retention tools let you build a decision tree  if the customer says X show them Y. ChurnQ uses a conversational AI agent that reads the subscriber's reason for cancelling, their usage history, and their MRR tier to generate a personalised offer on the fly. This produces higher save rates because the response feels human, not scripted.",
               },
               {
                 id: "q5",
-                q: "Which billing platforms does ChurnShield integrate with?",
-                a: "ChurnShield integrates with Stripe and Paddle out of the box via a single JavaScript snippet. Setup takes under 5 minutes  you drop in the script tag, connect your billing provider, and ChurnShield automatically intercepts cancel events from that point forward.",
+                q: "Which billing platforms does ChurnQ integrate with?",
+                a: "ChurnQ integrates with Stripe and Paddle out of the box via a single JavaScript snippet. Setup takes under 5 minutes  you drop in the script tag, connect your billing provider, and ChurnQ automatically intercepts cancel events from that point forward.",
               },
               {
                 id: "q6",
@@ -589,7 +589,7 @@ export default function LandingPage() {
               },
               {
                 id: "q7",
-                q: "What happens if ChurnShield doesn't save a subscriber?",
+                q: "What happens if ChurnQ doesn't save a subscriber?",
                 a: "Nothing  you owe us nothing. There is no base fee. If a customer cancels despite the AI's best effort, we charge zero. This is the core promise of performance pricing: our interests are identical to yours.",
               },
               {
@@ -615,7 +615,7 @@ export default function LandingPage() {
 
           <p style={{ textAlign: "center", marginTop: 40, fontSize: 14, color: "#64748b" }}>
             Still have questions?{" "}
-            <Link href="mailto:hello@churnshield.ai" style={{ color: "#18181b", fontWeight: 600, textDecoration: "none" }}>
+            <Link href="mailto:hello@churnq.com" style={{ color: "#18181b", fontWeight: 600, textDecoration: "none" }}>
               Email us →
             </Link>
           </p>
@@ -625,20 +625,20 @@ export default function LandingPage() {
 
 
       <ModemAnimatedFooter
-        brandName="ChurnShield"
+        brandName="ChurnQ"
         brandDescription="Stop losing revenue every time someone clicks cancel. AI-powered retention for SaaS founders  zero flat fee, pay only on results."
         socialLinks={[
           {
             icon: <HugeiconsIcon icon={Mail01Icon} size={20} strokeWidth={1.5} />,
-            href: "mailto:hello@churnshield.ai",
-            label: "Email ChurnShield",
+            href: "mailto:hello@churnq.com",
+            label: "Email ChurnQ",
           },
         ]}
         navLinks={[
           { href: "#product", label: "Overview" },
           { href: "#features", label: "Features" },
           { href: "#pricing", label: "Pricing" },
-          { href: "mailto:hello@churnshield.ai", label: "Contact" },
+          { href: "mailto:hello@churnq.com", label: "Contact" },
           { href: "#", label: "Privacy" },
           { href: "#", label: "Terms" },
         ]}

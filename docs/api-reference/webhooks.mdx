@@ -1,11 +1,11 @@
 ---
 title: "Webhooks API"
-description: "Manage webhook endpoints programmatically via the ChurnShield REST API."
+description: "Manage webhook endpoints programmatically via the ChurnQ REST API."
 ---
 
 ## Overview
 
-You can manage webhook endpoints through the ChurnShield dashboard or via these REST endpoints. The API is useful for automated provisioning (e.g. creating an endpoint per customer in a multi-tenant setup).
+You can manage webhook endpoints through the ChurnQ dashboard or via these REST endpoints. The API is useful for automated provisioning (e.g. creating an endpoint per customer in a multi-tenant setup).
 
 ---
 
@@ -223,14 +223,14 @@ Each log entry includes:
 
 <CodeGroup>
 ```typescript List and toggle all endpoints
-const listRes = await fetch("https://app.churnshield.ai/api/webhooks", {
+const listRes = await fetch("https://app.churnq.com/api/webhooks", {
   headers: { "Authorization": `Bearer ${API_KEY}` },
 });
 const endpoints = await listRes.json();
 
 // Disable all endpoints
 for (const ep of endpoints) {
-  await fetch(`https://app.churnshield.ai/api/webhooks/${ep.id}`, {
+  await fetch(`https://app.churnq.com/api/webhooks/${ep.id}`, {
     method: "PATCH",
     headers: {
       "Authorization": `Bearer ${API_KEY}`,
@@ -245,7 +245,7 @@ for (const ep of endpoints) {
 import httpx
 
 res = httpx.post(
-    "https://app.churnshield.ai/api/webhooks",
+    "https://app.churnq.com/api/webhooks",
     headers={
         "Authorization": f"Bearer {API_KEY}",
         "Content-Type": "application/json",

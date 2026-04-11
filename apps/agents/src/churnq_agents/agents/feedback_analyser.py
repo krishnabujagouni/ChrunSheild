@@ -18,8 +18,8 @@ from sklearn.cluster import KMeans
 from sklearn.feature_extraction.text import TfidfVectorizer
 from typing_extensions import TypedDict
 
-from churnshield_agents import db as _db
-from churnshield_agents.config import get_settings
+from churnq_agents import db as _db
+from churnq_agents.config import get_settings
 
 logger = logging.getLogger(__name__)
 
@@ -279,7 +279,7 @@ async def _store(state: FeedbackState) -> FeedbackState:
                 "from": settings.resend_from_email,
                 "to": [owner_email],
                 "subject": f"Weekly Cancellation Digest  {tenant_name}",
-                "html": f"<h2>Weekly Cancellation Feedback Digest</h2>{html}<hr><p style='color:#94a3b8;font-size:12px'>ChurnShield · {state['period_days']}-day window · {len(state['texts'])} sessions analyzed</p>",
+                "html": f"<h2>Weekly Cancellation Feedback Digest</h2>{html}<hr><p style='color:#94a3b8;font-size:12px'>ChurnQ · {state['period_days']}-day window · {len(state['texts'])} sessions analyzed</p>",
             })
             logger.info("feedback.digest_emailed to=%s tenant=%s", owner_email, state["tenant_id"])
         except Exception:

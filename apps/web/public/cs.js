@@ -1,7 +1,7 @@
 /**
- * ChurnShield embed  cancel intent + streaming Claude chat overlay + outcome tracking.
+ * ChurnQ embed  cancel intent + streaming Claude chat overlay + outcome tracking.
  * Script: data-app-id (App ID) + data-key (snippet key). Prefer data-app-id for public API id.
- * Identify: window.ChurnShield.identify({
+ * Identify: window.ChurnQ.identify({
  *   subscriberId, subscriptionMrr, subscriberEmail?, subscriptionId?,
  *   planName?,  // e.g. "Pro"  shown to Aria; pair with subscriptionMrr for downgrade vs your Settings plans
  *   authHash? | getAuthHash?(cus) | authHashUrl?
@@ -14,7 +14,7 @@
   var API_OUTCOME = "/api/public/cancel-outcome";
   var API_PAUSE   = "/api/public/pause";
   var API_STATUS  = "/api/public/subscriber-status";
-  var DEFAULT_SELECTOR = "[data-churnshield-cancel], [data-churnshield-cancel='true']";
+  var DEFAULT_SELECTOR = "[data-ChurnQ-cancel], [data-ChurnQ-cancel='true']";
 
   function currentScript() { return document.currentScript; }
 
@@ -51,7 +51,7 @@
 
   var overlayEls = { root: null, messages: null, input: null, send: null, outcomeBar: null, typing: null };
 
-  // Design tokens  ChurnShield brand (DM Sans, premium SaaS)
+  // Design tokens  ChurnQ brand (DM Sans, premium SaaS)
   var T = {
     primary:     "#09090b",
     primaryDk:   "#18181b",
@@ -88,7 +88,7 @@
     cancelEl: null,   // original element that was clicked  re-fired on confirmed cancel
   };
 
-  // Flag to let the next cancel click pass through without ChurnShield intercepting it
+  // Flag to let the next cancel click pass through without ChurnQ intercepting it
   var _bypassNext = false;
 
   // ── Cancel intent ────────────────────────────────────────────────────────────
@@ -99,7 +99,7 @@
 
   function postCancelIntent(base, key) {
     if (!key || !identifyState.subscriberId) {
-      console.warn("[ChurnShield] missing data-app-id/data-key or identify(subscriberId)");
+      console.warn("[ChurnQ] missing data-app-id/data-key or identify(subscriberId)");
       return Promise.resolve(null);
     }
 
@@ -173,7 +173,7 @@
         subscriberEmail: identifyState.subscriberEmail || undefined,
       }),
     }).catch(function (err) {
-      console.error("[ChurnShield] cancel-outcome failed", err);
+      console.error("[ChurnQ] cancel-outcome failed", err);
     });
   }
 
@@ -196,23 +196,23 @@
     "@keyframes cs-backdrop-in{from{opacity:0}to{opacity:1}}",
     "@keyframes cs-dot{0%,60%,100%{transform:translateY(0);opacity:0.35}30%{transform:translateY(-5px);opacity:1}}",
     "@keyframes cs-tri-spin{0%{transform:rotate(0deg)}100%{transform:rotate(360deg)}}",
-    "#churnshield-overlay{animation:cs-backdrop-in 200ms ease both}",
-    "#churnshield-overlay *{box-sizing:border-box;-webkit-font-smoothing:antialiased;-moz-osx-font-smoothing:grayscale}",
-    "#churnshield-overlay .cs-panel-desktop{animation:cs-slide-up 300ms cubic-bezier(0.34,1.4,0.64,1) both}",
-    "#churnshield-overlay .cs-panel-mobile{animation:cs-slide-up-mobile 320ms cubic-bezier(0.22,1,0.36,1) both}",
-    "#churnshield-overlay .cs-bubble{animation:cs-fade-in 200ms ease-out both}",
-    "#churnshield-overlay .cs-messages::-webkit-scrollbar{width:4px}",
-    "#churnshield-overlay .cs-messages::-webkit-scrollbar-track{background:transparent}",
-    "#churnshield-overlay .cs-messages::-webkit-scrollbar-thumb{background:#e2e8f0;border-radius:99px}",
-    "#churnshield-overlay .cs-keep:hover:not(:disabled){background:" + T.greenDk + "!important;transform:translateY(-1px);box-shadow:0 6px 20px " + T.greenGlow + "!important}",
-    "#churnshield-overlay .cs-keep:active:not(:disabled){transform:translateY(0)!important}",
-    "#churnshield-overlay .cs-cancel:hover{background:#f8fafc!important;color:#475569!important}",
-    "#churnshield-overlay .cs-send:hover:not(:disabled){background:" + T.primaryDk + "!important;transform:scale(1.05)}",
-    "#churnshield-overlay .cs-send:active:not(:disabled){transform:scale(0.97)!important}",
-    "#churnshield-overlay .cs-close:hover{background:#f4f4f5!important}",
-    "#churnshield-overlay .cs-input:focus{outline:none!important;border:none!important;box-shadow:none!important}",
-    "#churnshield-overlay .cs-keep,.cs-send{transition:background 150ms ease,transform 150ms ease,box-shadow 150ms ease!important}",
-    "@media(prefers-reduced-motion:reduce){#churnshield-overlay .cs-panel-desktop,#churnshield-overlay .cs-panel-mobile,#churnshield-overlay .cs-bubble,#churnshield-overlay{animation:none!important}}",
+    "#ChurnQ-overlay{animation:cs-backdrop-in 200ms ease both}",
+    "#ChurnQ-overlay *{box-sizing:border-box;-webkit-font-smoothing:antialiased;-moz-osx-font-smoothing:grayscale}",
+    "#ChurnQ-overlay .cs-panel-desktop{animation:cs-slide-up 300ms cubic-bezier(0.34,1.4,0.64,1) both}",
+    "#ChurnQ-overlay .cs-panel-mobile{animation:cs-slide-up-mobile 320ms cubic-bezier(0.22,1,0.36,1) both}",
+    "#ChurnQ-overlay .cs-bubble{animation:cs-fade-in 200ms ease-out both}",
+    "#ChurnQ-overlay .cs-messages::-webkit-scrollbar{width:4px}",
+    "#ChurnQ-overlay .cs-messages::-webkit-scrollbar-track{background:transparent}",
+    "#ChurnQ-overlay .cs-messages::-webkit-scrollbar-thumb{background:#e2e8f0;border-radius:99px}",
+    "#ChurnQ-overlay .cs-keep:hover:not(:disabled){background:" + T.greenDk + "!important;transform:translateY(-1px);box-shadow:0 6px 20px " + T.greenGlow + "!important}",
+    "#ChurnQ-overlay .cs-keep:active:not(:disabled){transform:translateY(0)!important}",
+    "#ChurnQ-overlay .cs-cancel:hover{background:#f8fafc!important;color:#475569!important}",
+    "#ChurnQ-overlay .cs-send:hover:not(:disabled){background:" + T.primaryDk + "!important;transform:scale(1.05)}",
+    "#ChurnQ-overlay .cs-send:active:not(:disabled){transform:scale(0.97)!important}",
+    "#ChurnQ-overlay .cs-close:hover{background:#f4f4f5!important}",
+    "#ChurnQ-overlay .cs-input:focus{outline:none!important;border:none!important;box-shadow:none!important}",
+    "#ChurnQ-overlay .cs-keep,.cs-send{transition:background 150ms ease,transform 150ms ease,box-shadow 150ms ease!important}",
+    "@media(prefers-reduced-motion:reduce){#ChurnQ-overlay .cs-panel-desktop,#ChurnQ-overlay .cs-panel-mobile,#ChurnQ-overlay .cs-bubble,#ChurnQ-overlay{animation:none!important}}",
   ].join("");
   document.head.appendChild(_style);
 
@@ -340,10 +340,10 @@
 
     // ── Backdrop ──
     var root = document.createElement("div");
-    root.id = "churnshield-overlay";
+    root.id = "ChurnQ-overlay";
     root.setAttribute("role", "dialog");
     root.setAttribute("aria-modal", "true");
-    root.setAttribute("aria-label", "ChurnShield retention assistant");
+    root.setAttribute("aria-label", "ChurnQ retention assistant");
     root.style.cssText = [
       "position:fixed;inset:0;z-index:2147483647;",
       "background:rgba(15,23,42,0.72);backdrop-filter:blur(8px);-webkit-backdrop-filter:blur(8px);",
@@ -384,7 +384,7 @@
     var statusDot = document.createElement("span");
     statusDot.style.cssText = "width:6px;height:6px;border-radius:50%;background:#4ade80;display:inline-block;flex-shrink:0;box-shadow:0 0 6px rgba(74,222,128,0.6);";
     hSub.appendChild(statusDot);
-    hSub.appendChild(document.createTextNode("ChurnShield · Active"));
+    hSub.appendChild(document.createTextNode("ChurnQ · Active"));
     hText.appendChild(hTitle);
     hText.appendChild(hSub);
 
@@ -597,7 +597,7 @@
         return readChunk();
       })
       .catch(function (err) {
-        console.error("[ChurnShield] cancel-chat failed", err);
+        console.error("[ChurnQ] cancel-chat failed", err);
         hideTypingIndicator();
         chatState.busy = false;
         if (overlayEls.send) { overlayEls.send.disabled = false; overlayEls.send.style.opacity = "1"; }
@@ -633,7 +633,7 @@
         wallState.paymentWallActive = !!data.paymentWallActive;
         wallState.pauseWallActive   = !!data.pauseWallActive;
         if (wallState.paymentWallActive) {
-          document.dispatchEvent(new CustomEvent("churnshield:payment-wall-active", {
+          document.dispatchEvent(new CustomEvent("ChurnQ:payment-wall-active", {
             detail: { subscriberId: identifyState.subscriberId },
           }));
         }
@@ -653,7 +653,7 @@
   function showPauseOverlay() {
     if (pauseOverlayEl) return;
     if (!_key || !identifyState.subscriberId) {
-      console.warn("[ChurnShield] pauseWall() called before identify()");
+      console.warn("[ChurnQ] pauseWall() called before identify()");
       return;
     }
 
@@ -765,18 +765,18 @@
       var effKey = keyNow || key;
       postCancelIntent(base, effKey)
         .then(function (data) {
-          document.dispatchEvent(new CustomEvent("churnshield:cancel-intent", { detail: data }));
+          document.dispatchEvent(new CustomEvent("ChurnQ:cancel-intent", { detail: data }));
           if (data && data.sessionId) openCancelOverlay(base, effKey, data.sessionId);
         })
         .catch(function (err) {
-          console.error("[ChurnShield] cancel-intent failed", err);
+          console.error("[ChurnQ] cancel-intent failed", err);
         });
     }, true);
   }
 
   // ── Public API ───────────────────────────────────────────────────────────────
 
-  window.ChurnShield = window.ChurnShield || {
+  window.ChurnQ = window.ChurnQ || {
     setAuthHash: function (hex) {
       var h = hex != null ? String(hex).trim() : "";
       identifyState.authHash = h || null;
@@ -791,7 +791,7 @@
         identifyState.stripeSubscriptionId = subIdOpt.slice(0, 64);
       } else if (subIdOpt) {
         identifyState.stripeSubscriptionId = null;
-        console.warn("[ChurnShield] subscriptionId should be Stripe sub_...; got:", subIdOpt.slice(0, 24));
+        console.warn("[ChurnQ] subscriptionId should be Stripe sub_...; got:", subIdOpt.slice(0, 24));
       } else if (opts.subscriptionId != null || opts.stripeSubscriptionId != null) {
         identifyState.stripeSubscriptionId = null;
       }
@@ -814,12 +814,12 @@
         identifyState.stripeCustomerId = null;
         if (sub.indexOf("@") >= 0) {
           console.warn(
-            "[ChurnShield] subscriberId looks like an email. Stripe APIs need the Customer id (cus_...). " +
+            "[ChurnQ] subscriberId looks like an email. Stripe APIs need the Customer id (cus_...). " +
               "Pass subscriberEmail for dashboard display and subscriberId: subscription.customer (cus_...)."
           );
         } else if (sub.indexOf("cus_") !== 0) {
           console.warn(
-            "[ChurnShield] subscriberId should be a Stripe Customer id (cus_...). Got: " + sub.slice(0, 20)
+            "[ChurnQ] subscriberId should be a Stripe Customer id (cus_...). Got: " + sub.slice(0, 20)
           );
         }
       }

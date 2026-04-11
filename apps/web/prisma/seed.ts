@@ -16,7 +16,7 @@ async function main() {
   });
   console.log("Seeded demo tenant (snippet_key=cs_test_demo, id=%s)", t.id);
   console.log(
-    "Stripe Connect start (set env first): /api/stripe/connect/start?tenantId=%s&secret=<CHURNSHIELD_ONBOARD_SECRET>",
+    "Stripe Connect start (set env first): /api/stripe/connect/start?tenantId=%s&secret=<ChurnQ_ONBOARD_SECRET>",
     t.id,
   );
 }

@@ -1,12 +1,12 @@
-# ChurnShield Integration Guide
+# ChurnQ Integration Guide
 
-Add ChurnShield to your app in 4 steps. Total time: ~15 minutes.
+Add ChurnQ to your app in 4 steps. Total time: ~15 minutes.
 
 ---
 
 ## Before you start
 
-Log in to your ChurnShield dashboard and go to **Settings → Embed Snippet**. You will need:
+Log in to your ChurnQ dashboard and go to **Settings → Embed Snippet**. You will need:
 
 - **App ID**  looks like `cs_app_xxxxxxxxxxxxxxxxxx`
 - **Snippet key**  looks like `cs_live_xxxxxxxxxxxxxxxxxx`
@@ -20,7 +20,7 @@ Paste this into the `<head>` of every page where your subscribers are logged in.
 
 ```html
 <script
-  src="https://cdn.churnshield.dev/cs.js"
+  src="https://cdn.ChurnQ.dev/cs.js"
   data-app-id="cs_app_YOUR_APP_ID"
   data-key="cs_live_YOUR_SNIPPET_KEY"
   defer
@@ -33,7 +33,7 @@ Paste this into the `<head>` of every page where your subscribers are logged in.
 import Script from "next/script";
 
 <Script
-  src="https://cdn.churnshield.dev/cs.js"
+  src="https://cdn.ChurnQ.dev/cs.js"
   data-app-id="cs_app_YOUR_APP_ID"
   data-key="cs_live_YOUR_SNIPPET_KEY"
   strategy="afterInteractive"
@@ -44,24 +44,24 @@ import Script from "next/script";
 
 ## Step 2  Create a server-side signing endpoint
 
-ChurnShield requires every cancel request to include a signed hash from **your** server. This prevents anyone from faking cancel sessions.
+ChurnQ requires every cancel request to include a signed hash from **your** server. This prevents anyone from faking cancel sessions.
 
 Store your embed secret as an environment variable on your server:
 
 ```
-CHURNSHIELD_EMBED_SECRET=your_secret_here
+ChurnQ_EMBED_SECRET=your_secret_here
 ```
 
 Then create a POST route that returns the hash. Examples below.
 
 ### Next.js App Router
 ```ts
-// app/api/churnshield-auth/route.ts
+// app/api/ChurnQ-auth/route.ts
 import crypto from "crypto";
 import { NextResponse } from "next/server";
 
 export async function POST(req: Request) {
-  const secret = process.env.CHURNSHIELD_EMBED_SECRET;
+  const secret = process.env.ChurnQ_EMBED_SECRET;
   if (!secret) return NextResponse.json({ error: "misconfigured" }, { status: 500 });
 
   const { subscriberId } = await req.json();
@@ -82,8 +82,8 @@ export async function POST(req: Request) {
 ```js
 const crypto = require("crypto");
 
-app.post("/api/churnshield-auth", (req, res) => {
-  const secret = process.env.CHURNSHIELD_EMBED_SECRET;
+app.post("/api/ChurnQ-auth", (req, res) => {
+  const secret = process.env.ChurnQ_EMBED_SECRET;
   const { subscriberId } = req.body;
 
   // TODO: verify subscriberId belongs to req.user
@@ -102,9 +102,9 @@ import hmac, hashlib, os
 from fastapi import APIRouter
 router = APIRouter()
 
-@router.post("/api/churnshield-auth")
-async def churnshield_auth(body: dict):
-    secret = os.environ["CHURNSHIELD_EMBED_SECRET"].encode()
+@router.post("/api/ChurnQ-auth")
+async def ChurnQ_auth(body: dict):
+    secret = os.environ["ChurnQ_EMBED_SECRET"].encode()
     subscriber_id = body.get("subscriberId", "").strip()
 
     # TODO: verify subscriber_id belongs to the current user
@@ -118,16 +118,16 @@ async def churnshield_auth(body: dict):
 
 ## Step 3  Identify the subscriber
 
-Call `window.ChurnShield.identify()` after your user logs in and their subscription data is available.
+Call `window.ChurnQ.identify()` after your user logs in and their subscription data is available.
 
 ```js
-window.ChurnShield.identify({
+window.ChurnQ.identify({
   subscriberId: subscription.customer,      // Stripe customer ID (cus_...)
   subscriptionId: subscription.id,          // Stripe subscription ID (sub_...)  optional but recommended
-  subscriberEmail: user.email,              // shown in your ChurnShield dashboard
+  subscriberEmail: user.email,              // shown in your ChurnQ dashboard
   subscriptionMrr: plan.price,             // monthly value in dollars, e.g. 49
   getAuthHash: async (cus) => {
-    const r = await fetch("/api/churnshield-auth", {
+    const r = await fetch("/api/ChurnQ-auth", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ subscriberId: cus }),
@@ -143,23 +143,23 @@ window.ChurnShield.identify({
 
 ## Step 4  Mark your cancel button (optional)
 
-By default ChurnShield intercepts any click on elements matching:
+By default ChurnQ intercepts any click on elements matching:
 
 ```
-[data-churnshield-cancel], [data-churnshield-cancel="true"]
+[data-ChurnQ-cancel], [data-ChurnQ-cancel="true"]
 ```
 
 Add the attribute to your cancel button:
 
 ```html
-<button data-churnshield-cancel>Cancel subscription</button>
+<button data-ChurnQ-cancel>Cancel subscription</button>
 ```
 
 If your cancel button uses a different selector, pass it via `data-cancel-selector` on the script tag:
 
 ```html
 <script
-  src="https://cdn.churnshield.dev/cs.js"
+  src="https://cdn.ChurnQ.dev/cs.js"
   data-app-id="cs_app_YOUR_APP_ID"
   data-key="cs_live_YOUR_SNIPPET_KEY"
   data-cancel-selector="#cancel-btn, .cancel-link"
@@ -173,7 +173,7 @@ If your cancel button uses a different selector, pass it via `data-cancel-select
 
 1. Open your app, log in as a subscriber.
 2. Click the cancel button  a **"Before you go"** chat overlay should appear.
-3. In your ChurnShield dashboard → **Overview**, you should see the session appear within a few seconds.
+3. In your ChurnQ dashboard → **Overview**, you should see the session appear within a few seconds.
 4. Check **Settings**  the "Unsecured" badge should now show **Secured** (green) after you rotated your secret in Step 2.
 
 ---
@@ -185,20 +185,20 @@ Show a pause modal instead of letting the subscriber cancel immediately:
 
 ```js
 // Call this instead of showing your normal cancel UI
-window.ChurnShield.pauseWall();
+window.ChurnQ.pauseWall();
 ```
 
 ### Payment wall
 Check if a subscriber's payment has failed and block access accordingly:
 
 ```js
-const blocked = window.ChurnShield.isPaymentWallActive();
+const blocked = window.ChurnQ.isPaymentWallActive();
 if (blocked) {
   // redirect to billing update page
 }
 
 // Or listen for the event
-window.addEventListener("churnshield:payment-wall-active", () => {
+window.addEventListener("ChurnQ:payment-wall-active", () => {
   // show payment update prompt
 });
 ```
@@ -211,6 +211,6 @@ window.addEventListener("churnshield:payment-wall-active", () => {
 |---------|-----|
 | Overlay does not appear | Check DevTools console for errors. Make sure `identify()` is called before the subscriber clicks cancel. Use `defer` (not `async`) on the script tag. |
 | `unknown_embed_key` error | Double-check `data-app-id` and `data-key` match what is shown in your dashboard. |
-| `auth_hash_required` error | Your `getAuthHash` function is not returning a hash. Check your signing endpoint is deployed and `CHURNSHIELD_EMBED_SECRET` is set. |
-| `invalid_auth_hash` error | The secret used to sign does not match the one in ChurnShield. Rotate the secret in Settings, copy the new value, update `CHURNSHIELD_EMBED_SECRET` on your server. |
+| `auth_hash_required` error | Your `getAuthHash` function is not returning a hash. Check your signing endpoint is deployed and `ChurnQ_EMBED_SECRET` is set. |
+| `invalid_auth_hash` error | The secret used to sign does not match the one in ChurnQ. Rotate the secret in Settings, copy the new value, update `ChurnQ_EMBED_SECRET` on your server. |
 | Sessions not appearing in dashboard | Confirm `subscriptionMrr` is passed as a number (dollars), not a string. |

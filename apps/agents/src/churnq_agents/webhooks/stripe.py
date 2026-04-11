@@ -8,9 +8,9 @@ from typing import Any
 import stripe
 from fastapi import APIRouter, BackgroundTasks, Header, HTTPException, Request
 
-from churnshield_agents.config import get_settings
-from churnshield_agents import db
-from churnshield_agents.workers import stripe_worker
+from churnq_agents.config import get_settings
+from churnq_agents import db
+from churnq_agents.workers import stripe_worker
 
 router = APIRouter()
 

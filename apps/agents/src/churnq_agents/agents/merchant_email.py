@@ -7,8 +7,8 @@ import logging
 
 import resend
 
-from churnshield_agents import db as _db
-from churnshield_agents.config import get_settings
+from churnq_agents import db as _db
+from churnq_agents.config import get_settings
 
 logger = logging.getLogger(__name__)
 

@@ -1,14 +1,14 @@
 ---
 title: "Make (formerly Integromat)"
-description: "Trigger Make scenarios automatically from ChurnShield events."
+description: "Trigger Make scenarios automatically from ChurnQ events."
 ---
 
 ## Overview
 
-Make does not have a native ChurnShield module, but every Make scenario can expose a **custom webhook URL**. Paste that URL into ChurnShield and events flow into your scenario in real time.
+Make does not have a native ChurnQ module, but every Make scenario can expose a **custom webhook URL**. Paste that URL into ChurnQ and events flow into your scenario in real time.
 
 <Info>
-  Make's free plan includes 1,000 operations per month. A single ChurnShield event that triggers one action counts as 2 operations (one for receiving the webhook, one for the action).
+  Make's free plan includes 1,000 operations per month. A single ChurnQ event that triggers one action counts as 2 operations (one for receiving the webhook, one for the action).
 </Info>
 
 ---
@@ -25,21 +25,21 @@ Make does not have a native ChurnShield module, but every Make scenario can expo
 
     Select **Custom webhook** as the trigger, then click **Add** to create a new webhook.
 
-    Give it a name (e.g. `ChurnShield`) and click **Save**. Make will generate a unique URL  copy it.
+    Give it a name (e.g. `ChurnQ`) and click **Save**. Make will generate a unique URL  copy it.
   </Step>
 
-  <Step title="Paste the URL into ChurnShield">
-    Open [ChurnShield → Connections](https://app.churnshield.ai/dashboard/connections).
+  <Step title="Paste the URL into ChurnQ">
+    Open [ChurnQ → Connections](https://app.churnq.com/dashboard/connections).
 
     Find the **Make** card and paste the URL into the input field, then click **Save**.
 
-    ChurnShield stores the URL and creates a signed webhook endpoint labelled `make`.
+    ChurnQ stores the URL and creates a signed webhook endpoint labelled `make`.
   </Step>
 
   <Step title="Test the connection">
     In Make, click **Run once**  the scenario enters "waiting for data" mode.
 
-    Back in ChurnShield, click the **Test** button (play icon) next to the Make endpoint.
+    Back in ChurnQ, click the **Test** button (play icon) next to the Make endpoint.
 
     Make will receive the `webhook.test` payload and show the data structure. Click **OK** to accept it as the schema.
   </Step>
@@ -88,8 +88,8 @@ All requests include two headers:
 
 | Header | Value |
 |--------|-------|
-| `X-ChurnShield-Event` | Event name, e.g. `cancel_intent.created` |
-| `X-ChurnShield-Signature` | `sha256=<hmac-hex>`  used to verify authenticity |
+| `X-ChurnQ-Event` | Event name, e.g. `cancel_intent.created` |
+| `X-ChurnQ-Signature` | `sha256=<hmac-hex>`  used to verify authenticity |
 
 See [HMAC Signing](/configuration/hmac-signing) for verification details.
 
@@ -103,7 +103,7 @@ To view payloads Make has received:
 2. Click **History** (clock icon in the top bar).
 3. Select any run to see the full input and output of each module.
 
-The webhook module shows the raw JSON body ChurnShield sent.
+The webhook module shows the raw JSON body ChurnQ sent.
 
 ---
 
@@ -130,7 +130,7 @@ The webhook module shows the raw JSON body ChurnShield sent.
 
 <AccordionGroup>
   <Accordion title="Make says 'Waiting for data' and nothing arrives">
-    Make sure you clicked **Run once** in Make **before** sending the test from ChurnShield. The scenario must be actively listening when the test payload is sent.
+    Make sure you clicked **Run once** in Make **before** sending the test from ChurnQ. The scenario must be actively listening when the test payload is sent.
   </Accordion>
 
   <Accordion title="My scenario is not triggering on live events">
@@ -138,14 +138,14 @@ The webhook module shows the raw JSON body ChurnShield sent.
   </Accordion>
 
   <Accordion title="How do I verify the signature in Make?">
-    Add an **HTTP → Get a response body** module or a **Tools → Set variable** module to capture the `X-ChurnShield-Signature` header, then use a **custom function** or a **Webhooks → Custom webhook** response router to validate it. See [HMAC Signing](/configuration/hmac-signing) for the exact algorithm.
+    Add an **HTTP → Get a response body** module or a **Tools → Set variable** module to capture the `X-ChurnQ-Signature` header, then use a **custom function** or a **Webhooks → Custom webhook** response router to validate it. See [HMAC Signing](/configuration/hmac-signing) for the exact algorithm.
   </Accordion>
 
   <Accordion title="Can I have multiple Make scenarios receive the same events?">
-    Yes. Add each scenario's webhook URL as a separate endpoint in ChurnShield. All enabled endpoints receive every event simultaneously.
+    Yes. Add each scenario's webhook URL as a separate endpoint in ChurnQ. All enabled endpoints receive every event simultaneously.
   </Accordion>
 
   <Accordion title="Make shows 'Error 413 Payload Too Large'">
-    This is uncommon but can happen with large subscriber datasets. ChurnShield's payloads are typically under 2 KB. If you see this error, check for any Make middleware or proxy that might be adding size limits.
+    This is uncommon but can happen with large subscriber datasets. ChurnQ's payloads are typically under 2 KB. If you see this error, check for any Make middleware or proxy that might be adding size limits.
   </Accordion>
 </AccordionGroup>

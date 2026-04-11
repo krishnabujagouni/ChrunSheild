@@ -96,13 +96,13 @@ export default async function IntegrationPage() {
   const appId      = tenant.embedAppId  ?? "";
   const snippetKey = tenant.snippetKey  ?? "";
 
-  const scriptTag    = `<script\n  src="https://cdn.churnshield.dev/cs.js"\n  data-app-id="${appId}"\n  data-key="${snippetKey}"\n  defer\n></script>`;
-  const nextjsScript = `import Script from "next/script";\n\n<Script\n  src="https://cdn.churnshield.dev/cs.js"\n  data-app-id="${appId}"\n  data-key="${snippetKey}"\n  strategy="afterInteractive"\n/>`;
-  const identifyCode = `window.ChurnShield.identify({\n  subscriberId: subscription.customer,   // Stripe cus_...\n  subscriptionId: subscription.id,       // Stripe sub_...\n  subscriberEmail: user.email,\n  subscriptionMrr: plan.price,           // number, in dollars\n  planName: plan.name,                   // optional; same labels as Settings → downgrade plans\n  getAuthHash: async (cus) => {\n    const r = await fetch("/api/churnshield-auth", {\n      method: "POST",\n      headers: { "Content-Type": "application/json" },\n      body: JSON.stringify({ subscriberId: cus }),\n    });\n    return (await r.json()).authHash;\n  },\n});`;
-  const nextjsAuth   = `// app/api/churnshield-auth/route.ts\nimport crypto from "crypto";\nimport { NextResponse } from "next/server";\n\nexport async function POST(req: Request) {\n  const secret = process.env.CHURNSHIELD_EMBED_SECRET;\n  if (!secret) return NextResponse.json({ error: "misconfigured" }, { status: 500 });\n  const { subscriberId } = await req.json();\n  const cus = typeof subscriberId === "string" ? subscriberId.trim() : "";\n  if (!cus.startsWith("cus_"))\n    return NextResponse.json({ error: "invalid" }, { status: 400 });\n  // TODO: verify cus belongs to the signed-in user\n  const authHash = crypto.createHmac("sha256", secret).update(cus).digest("hex");\n  return NextResponse.json({ authHash });\n}`;
-  const expressAuth  = `const crypto = require("crypto");\n\napp.post("/api/churnshield-auth", (req, res) => {\n  const secret = process.env.CHURNSHIELD_EMBED_SECRET;\n  const { subscriberId } = req.body;\n  // TODO: verify subscriberId belongs to req.user\n  const authHash = crypto\n    .createHmac("sha256", secret)\n    .update(subscriberId)\n    .digest("hex");\n  res.json({ authHash });\n});`;
-  const pythonAuth   = `import hmac, hashlib, os\n\n@router.post("/api/churnshield-auth")\nasync def churnshield_auth(body: dict):\n    secret = os.environ["CHURNSHIELD_EMBED_SECRET"].encode()\n    subscriber_id = body.get("subscriberId", "").strip()\n    # TODO: verify subscriber_id belongs to current user\n    auth_hash = hmac.new(secret, subscriber_id.encode(), hashlib.sha256).hexdigest()\n    return {"authHash": auth_hash}`;
-  const cancelCode   = `<button data-churnshield-cancel>\n  Cancel subscription\n</button>`;
+  const scriptTag    = `<script\n  src="https://cdn.ChurnQ.dev/cs.js"\n  data-app-id="${appId}"\n  data-key="${snippetKey}"\n  defer\n></script>`;
+  const nextjsScript = `import Script from "next/script";\n\n<Script\n  src="https://cdn.ChurnQ.dev/cs.js"\n  data-app-id="${appId}"\n  data-key="${snippetKey}"\n  strategy="afterInteractive"\n/>`;
+  const identifyCode = `window.ChurnQ.identify({\n  subscriberId: subscription.customer,   // Stripe cus_...\n  subscriptionId: subscription.id,       // Stripe sub_...\n  subscriberEmail: user.email,\n  subscriptionMrr: plan.price,           // number, in dollars\n  planName: plan.name,                   // optional; same labels as Settings → downgrade plans\n  getAuthHash: async (cus) => {\n    const r = await fetch("/api/ChurnQ-auth", {\n      method: "POST",\n      headers: { "Content-Type": "application/json" },\n      body: JSON.stringify({ subscriberId: cus }),\n    });\n    return (await r.json()).authHash;\n  },\n});`;
+  const nextjsAuth   = `// app/api/ChurnQ-auth/route.ts\nimport crypto from "crypto";\nimport { NextResponse } from "next/server";\n\nexport async function POST(req: Request) {\n  const secret = process.env.ChurnQ_EMBED_SECRET;\n  if (!secret) return NextResponse.json({ error: "misconfigured" }, { status: 500 });\n  const { subscriberId } = await req.json();\n  const cus = typeof subscriberId === "string" ? subscriberId.trim() : "";\n  if (!cus.startsWith("cus_"))\n    return NextResponse.json({ error: "invalid" }, { status: 400 });\n  // TODO: verify cus belongs to the signed-in user\n  const authHash = crypto.createHmac("sha256", secret).update(cus).digest("hex");\n  return NextResponse.json({ authHash });\n}`;
+  const expressAuth  = `const crypto = require("crypto");\n\napp.post("/api/ChurnQ-auth", (req, res) => {\n  const secret = process.env.ChurnQ_EMBED_SECRET;\n  const { subscriberId } = req.body;\n  // TODO: verify subscriberId belongs to req.user\n  const authHash = crypto\n    .createHmac("sha256", secret)\n    .update(subscriberId)\n    .digest("hex");\n  res.json({ authHash });\n});`;
+  const pythonAuth   = `import hmac, hashlib, os\n\n@router.post("/api/ChurnQ-auth")\nasync def ChurnQ_auth(body: dict):\n    secret = os.environ["ChurnQ_EMBED_SECRET"].encode()\n    subscriber_id = body.get("subscriberId", "").strip()\n    # TODO: verify subscriber_id belongs to current user\n    auth_hash = hmac.new(secret, subscriber_id.encode(), hashlib.sha256).hexdigest()\n    return {"authHash": auth_hash}`;
+  const cancelCode   = `<button data-ChurnQ-cancel>\n  Cancel subscription\n</button>`;
 
   return (
     <div style={{ width: "100%" }}>
@@ -111,7 +111,7 @@ export default async function IntegrationPage() {
       <div style={{ marginBottom: 28 }}>
         <h1 style={{ fontSize: 22, fontWeight: 700, margin: 0, color: "#0f172a" }}>Integration</h1>
         <p style={{ color: "#64748b", fontSize: 13, margin: "4px 0 0" }}>
-          Add ChurnShield to your app in 4 steps.
+          Add ChurnQ to your app in 4 steps.
         </p>
       </div>
 
@@ -146,11 +146,11 @@ export default async function IntegrationPage() {
 
           <Step n={2} title="Identify the subscriber after login">
             <Desc>
-              Call <code style={{ background: "#f1f5f9", padding: "1px 5px", borderRadius: 4 }}>window.ChurnShield.identify()</code> once the user is logged in and their subscription is available. <code style={{ background: "#f1f5f9", padding: "1px 5px", borderRadius: 4 }}>getAuthHash</code> fires automatically when they click cancel  you do not need to call it yourself.
+              Call <code style={{ background: "#f1f5f9", padding: "1px 5px", borderRadius: 4 }}>window.ChurnQ.identify()</code> once the user is logged in and their subscription is available. <code style={{ background: "#f1f5f9", padding: "1px 5px", borderRadius: 4 }}>getAuthHash</code> fires automatically when they click cancel  you do not need to call it yourself.
             </Desc>
             <CodeBlock code={identifyCode} />
             <Note>
-              <strong>subscriptionId</strong> (sub_...) is optional but recommended  ChurnShield targets the exact subscription when applying offers, which matters if a customer has more than one.
+              <strong>subscriptionId</strong> (sub_...) is optional but recommended  ChurnQ targets the exact subscription when applying offers, which matters if a customer has more than one.
             </Note>
           </Step>
 
@@ -162,7 +162,7 @@ export default async function IntegrationPage() {
               <EmbedSigningControls embedAppId={appId} snippetKey={snippetKey} activated={tenant.embedSecretActivated} />
             </div>
             <Desc>
-              After rotating, set <code style={{ background: "#f1f5f9", padding: "1px 5px", borderRadius: 4 }}>CHURNSHIELD_EMBED_SECRET</code> on your server, then add this endpoint:
+              After rotating, set <code style={{ background: "#f1f5f9", padding: "1px 5px", borderRadius: 4 }}>ChurnQ_EMBED_SECRET</code> on your server, then add this endpoint:
             </Desc>
             <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
               <CodeBlock code={nextjsAuth} label="Next.js App Router" />
@@ -176,7 +176,7 @@ export default async function IntegrationPage() {
 
           <Step n={4} title="Mark your cancel button">
             <Desc>
-              ChurnShield intercepts clicks on elements with the <code style={{ background: "#f1f5f9", padding: "1px 5px", borderRadius: 4 }}>data-churnshield-cancel</code> attribute. Add it to your cancel button.
+              ChurnQ intercepts clicks on elements with the <code style={{ background: "#f1f5f9", padding: "1px 5px", borderRadius: 4 }}>data-ChurnQ-cancel</code> attribute. Add it to your cancel button.
             </Desc>
             <CodeBlock code={cancelCode} />
             <Note>
@@ -259,7 +259,7 @@ export default async function IntegrationPage() {
                 { err: "Overlay missing", fix: "Check console. Ensure identify() runs before cancel click. Use defer not async." },
                 { err: "unknown_embed_key", fix: "Check data-app-id and data-key match the keys above exactly." },
                 { err: "auth_hash_required", fix: "getAuthHash is not returning. Check your signing endpoint is deployed and secret is set." },
-                { err: "invalid_auth_hash", fix: "Rotate the secret, copy the new value, update CHURNSHIELD_EMBED_SECRET on your server." },
+                { err: "invalid_auth_hash", fix: "Rotate the secret, copy the new value, update ChurnQ_EMBED_SECRET on your server." },
                 { err: "No sessions in dashboard", fix: "Pass subscriptionMrr as a number (e.g. 49), not a string." },
               ].map(({ err, fix }) => (
                 <div key={err} style={{ borderBottom: "1px solid #f1f5f9", paddingBottom: 10 }}>

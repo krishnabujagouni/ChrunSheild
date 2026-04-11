@@ -3,7 +3,7 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>ChurnShield  Manual test app</title>
+    <title>ChurnQ  Manual test app</title>
     <style>
       body {
         font-family: system-ui, sans-serif;
@@ -20,7 +20,7 @@
   <body>
     <h1>Fake SaaS  cancel test</h1>
     <p>Click cancel to exercise the cancel-flow snippet (wire <code>data-key</code> when ready).</p>
-    <button type="button" id="cancel-subscription" data-churnshield-cancel>
+    <button type="button" id="cancel-subscription" data-ChurnQ-cancel>
       Cancel subscription
     </button>
     <!-- Set data-api-base if testing snippet against another origin (e.g. http://localhost:3000) -->
@@ -28,7 +28,7 @@
     <!-- Replace YOUR_CUS_ID with a real Stripe customer id (cus_...) from your connected Stripe account -->
     <script src="/cs.js" data-key="cs_live_wyi11fd1pghkihq3ilsgk1td" defer></script>
     <script>
-      window.ChurnShield.identify({
+      window.ChurnQ.identify({
         subscriberId: "cus_UEzw3pzU4XgKGJ",
         subscriptionMrr: 49,
         planName: "Growth",

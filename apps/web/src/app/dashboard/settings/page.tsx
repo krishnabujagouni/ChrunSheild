@@ -176,7 +176,7 @@ export default async function SettingsPage({
       {/* Banners  full width */}
       {stripeConnected && (
         <div style={{ background: "#dcfce7", border: "1px solid #86efac", borderRadius: 10, padding: "12px 16px", marginBottom: 20, fontSize: 13, color: "#166534", fontWeight: 500 }}>
-          Stripe account connected successfully. ChurnShield can now charge save fees automatically.
+          Stripe account connected successfully. ChurnQ can now charge save fees automatically.
         </div>
       )}
       {stripeError && (
@@ -202,7 +202,7 @@ export default async function SettingsPage({
           <div style={{ marginBottom: 24 }}>
             <h2 style={{ margin: "0 0 4px", fontSize: 16, fontWeight: 700, color: "#0f172a" }}>Retention Offer Settings</h2>
             <p style={{ margin: 0, fontSize: 13, color: "#64748b" }}>
-              Control exactly what ChurnShield&apos;s AI is allowed to offer your subscribers during the cancel flow.
+              Control exactly what ChurnQ&apos;s AI is allowed to offer your subscribers during the cancel flow.
             </p>
           </div>
 

@@ -67,7 +67,7 @@ export function HowItWorks() {
             Live in <span className="text-violet-600">three steps.</span>
           </h2>
           <p className="text-muted-foreground max-w-md text-base">
-            Drop one script tag and ChurnShield does the rest  no webhook
+            Drop one script tag and ChurnQ does the rest  no webhook
             config, no backend changes, no flat monthly fee.
           </p>
         </div>

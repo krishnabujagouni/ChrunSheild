@@ -29,7 +29,7 @@ export default function SignUpPage() {
             </svg>
           </div>
           <span style={{ color: "#09090b", fontSize: 18, fontWeight: 700, letterSpacing: "-0.02em" }}>
-            ChurnShield
+            ChurnQ
           </span>
         </div>
 

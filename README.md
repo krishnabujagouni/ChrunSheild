@@ -1,6 +1,6 @@
-# ChurnShield (chrun)
+# ChurnQ (chrun)
 
-Monorepo for **ChurnShield**: an AI-native subscription retention platform (cancel-flow agent, payment recovery, churn prediction, feedback analysis), per the product spec.
+Monorepo for **ChurnQ**: an AI-native subscription retention platform (cancel-flow agent, payment recovery, churn prediction, feedback analysis), per the product spec.
 
 ## Layout
 
@@ -13,7 +13,7 @@ Monorepo for **ChurnShield**: an AI-native subscription retention platform (canc
 
 ## Product summary
 
-- **Integrations:** Stripe Connect OAuth, one script tag + `ChurnShield.identify()`, webhooks for payment events.
+- **Integrations:** Stripe Connect OAuth, one script tag + `ChurnQ.identify()`, webhooks for payment events.
 - **Data:** PostgreSQL (Supabase) + Prisma in `apps/web/prisma` (schema to be added); optional pgvector for feedback embeddings.
 - **Agents:** Cancel flow primarily on **Vercel** (streaming); payment recovery, prediction crons, and feedback jobs on **Python**.
 
@@ -39,7 +39,7 @@ From repo root:
 uv sync
 cd apps/agents
 # copy infra/env.example → .env and set DATABASE_URL, STRIPE_WEBHOOK_SECRET
-uv run churnshield-agents
+uv run ChurnQ-agents
 ```
 
 - Health: `http://127.0.0.1:8000/health`
@@ -59,14 +59,14 @@ npm run dev
 
 ### Stripe Connect (Standard OAuth)
 
-Set `STRIPE_SECRET_KEY`, `STRIPE_CLIENT_ID`, `STRIPE_CONNECT_REDIRECT_URI` (must match [Stripe Dashboard](https://dashboard.stripe.com/settings/connect/onboarding-options/oauth) redirect allowlist), and `CHURNSHIELD_ONBOARD_SECRET` (dev gate until Clerk). Optionally `NEXT_PUBLIC_APP_URL` for post-connect redirects.
+Set `STRIPE_SECRET_KEY`, `STRIPE_CLIENT_ID`, `STRIPE_CONNECT_REDIRECT_URI` (must match [Stripe Dashboard](https://dashboard.stripe.com/settings/connect/onboarding-options/oauth) redirect allowlist), and `ChurnQ_ONBOARD_SECRET` (dev gate until Clerk). Optionally `NEXT_PUBLIC_APP_URL` for post-connect redirects.
 
 1. `npx prisma db seed`  copy the logged **tenant id**.
 2. Open (browser):  
-   `/api/stripe/connect/start?tenantId=<uuid>&secret=<CHURNSHIELD_ONBOARD_SECRET>`  
-   or same `tenantId` with header `x-churnshield-onboard-secret: <secret>`.
+   `/api/stripe/connect/start?tenantId=<uuid>&secret=<ChurnQ_ONBOARD_SECRET>`  
+   or same `tenantId` with header `x-ChurnQ-onboard-secret: <secret>`.
 3. Finish Stripe OAuth; callback writes `tenants.stripe_connect_id` (`acct_...`). Webhooks from Connect use `event.account` to resolve the tenant in `apps/agents`.
 
 ## Documents
 
-`ChurnShield_Product_Document.docx`  full product, stack, and week-by-week plan.
+`ChurnQ_Product_Document.docx`  full product, stack, and week-by-week plan.

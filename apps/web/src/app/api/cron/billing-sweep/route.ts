@@ -137,11 +137,11 @@ export async function GET(req: Request) {
           currency:    "usd",
           confirm:     true,
           automatic_payment_methods: { enabled: true, allow_redirects: "never" },
-          description: `ChurnShield saves  ${label} (${sessionIds.length} save${sessionIds.length !== 1 ? "s" : ""})`,
+          description: `ChurnQ saves  ${label} (${sessionIds.length} save${sessionIds.length !== 1 ? "s" : ""})`,
           metadata: {
             period:           label,
             session_count:    String(sessionIds.length),
-            churnshield_type: "monthly_billing_sweep",
+            ChurnQ_type: "monthly_billing_sweep",
           },
         },
         { stripeAccount: stripeConnectId },

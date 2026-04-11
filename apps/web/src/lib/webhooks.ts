@@ -63,8 +63,8 @@ export async function postWebhookSigned(
         method: "POST",
         headers: {
           "Content-Type": "application/json",
-          "X-ChurnShield-Signature": sig,
-          "X-ChurnShield-Event": event,
+          "X-ChurnQ-Signature": sig,
+          "X-ChurnQ-Event": event,
         },
         body: payload,
         signal: AbortSignal.timeout(WEBHOOK_TIMEOUT_MS),
@@ -239,7 +239,7 @@ export async function runWebhookTest(endpoint: {
     url: endpoint.url,
     secret: endpoint.secret,
     event: "webhook.test",
-    data: { test: true, source: "churnshield_dashboard" },
+    data: { test: true, source: "ChurnQ_dashboard" },
     isTest: true,
   });
 }

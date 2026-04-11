@@ -19,9 +19,9 @@ from typing import Any
 
 import stripe
 
-from churnshield_agents import db as _db
-from churnshield_agents.agents.merchant_email import send_merchant_email
-from churnshield_agents.config import get_settings
+from churnq_agents import db as _db
+from churnq_agents.agents.merchant_email import send_merchant_email
+from churnq_agents.config import get_settings
 
 logger = logging.getLogger(__name__)
 
@@ -56,7 +56,7 @@ async def _charge_via_stripe_connect(
 ) -> str | None:
     """
     Create a Stripe PaymentIntent on the tenant's connected account with
-    application_fee_amount so ChurnShield's platform account gets the fee.
+    application_fee_amount so ChurnQ's platform account gets the fee.
 
     Returns the PaymentIntent ID on success, None on failure.
 
@@ -71,8 +71,8 @@ async def _charge_via_stripe_connect(
             customer=customer_id,
             confirm=True,
             automatic_payment_methods={"enabled": True, "allow_redirects": "never"},
-            description=f"ChurnShield save fee  session {session_id}",
-            metadata={"churnshield_session_id": session_id},
+            description=f"ChurnQ save fee  session {session_id}",
+            metadata={"ChurnQ_session_id": session_id},
             stripe_account=tenant_stripe_account,
             api_key=api_key,
         )
@@ -218,16 +218,16 @@ async def run_monthly_billing_summary() -> dict[str, Any]:
         total_mrr = float(row["total_mrr_saved"] or 0)
         plural = "s" if sessions != 1 else ""
 
-        subject = f"[ChurnShield] Monthly summary  ${total_fees:.2f} in save fees"
+        subject = f"[ChurnQ] Monthly summary  ${total_fees:.2f} in save fees"
         html = (
             f"<p>Hi,</p>"
-            f"<p>Here's your ChurnShield summary for the last 30 days:</p>"
+            f"<p>Here's your ChurnQ summary for the last 30 days:</p>"
             f"<ul>"
             f"<li><strong>{sessions}</strong> subscriber{plural} saved</li>"
             f"<li><strong>${total_mrr:.2f}</strong> MRR retained</li>"
-            f"<li><strong>${total_fees:.2f}</strong> in ChurnShield save fees charged</li>"
+            f"<li><strong>${total_fees:.2f}</strong> in ChurnQ save fees charged</li>"
             f"</ul>"
-            f"<p> ChurnShield</p>"
+            f"<p> ChurnQ</p>"
         )
         try:
             await send_merchant_email(owner_email, subject, html)

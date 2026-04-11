@@ -29,7 +29,7 @@ export default function SignInPage() {
             </svg>
           </div>
           <span style={{ color: "#09090b", fontSize: 18, fontWeight: 700, letterSpacing: "-0.02em" }}>
-            ChurnShield
+            ChurnQ
           </span>
         </div>
 
@@ -84,7 +84,7 @@ export default function SignInPage() {
             <h1 style={{ fontSize: 24, fontWeight: 700, color: "#09090b", letterSpacing: "-0.02em", marginBottom: 6 }}>
               Welcome back
             </h1>
-            <p style={{ fontSize: 14, color: "#71717a" }}>Sign in to your ChurnShield dashboard</p>
+            <p style={{ fontSize: 14, color: "#71717a" }}>Sign in to your ChurnQ dashboard</p>
           </div>
           <SignIn appearance={{
             elements: {

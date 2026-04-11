@@ -7,7 +7,7 @@ import "./globals.css";
 const inter = Inter({ subsets: ["latin"], variable: "--font-inter" });
 
 export const metadata: Metadata = {
-  title: "ChurnShield  Stop Losing Subscribers",
+  title: "ChurnQ  Stop Losing Subscribers",
   description: "AI-native subscription retention platform. Cancel flow agent, payment recovery, churn prediction.",
 };
 

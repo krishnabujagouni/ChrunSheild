@@ -34,7 +34,7 @@ export async function fetchLatestEmailBySubscriberId(tenantId: string): Promise<
     if (subscriberEmailColumnMissing(e)) {
       if (process.env.NODE_ENV === "development") {
         console.warn(
-          "[ChurnShield] save_sessions.subscriber_email column missing  run: npx prisma migrate deploy",
+          "[ChurnQ] save_sessions.subscriber_email column missing  run: npx prisma migrate deploy",
         );
       }
       return {};
@@ -65,7 +65,7 @@ export async function fetchSubscriberEmailBySessionIds(
     if (subscriberEmailColumnMissing(e)) {
       if (process.env.NODE_ENV === "development") {
         console.warn(
-          "[ChurnShield] save_sessions.subscriber_email column missing  run: npx prisma migrate deploy",
+          "[ChurnQ] save_sessions.subscriber_email column missing  run: npx prisma migrate deploy",
         );
       }
       return Object.fromEntries(sessionIds.map((id) => [id, null]));
@@ -87,7 +87,7 @@ export async function setSaveSessionSubscriberEmail(sessionId: string, email: st
     if (subscriberEmailColumnMissing(e)) {
       if (process.env.NODE_ENV === "development") {
         console.warn(
-          "[ChurnShield] save_sessions.subscriber_email column missing  email not stored; run: npx prisma migrate deploy",
+          "[ChurnQ] save_sessions.subscriber_email column missing  email not stored; run: npx prisma migrate deploy",
         );
       }
       return;

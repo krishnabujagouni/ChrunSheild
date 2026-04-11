@@ -51,17 +51,17 @@ Every cancel attempt creates a `SaveSession` row. The session tracks:
 - What offer was made
 - Whether they accepted
 - The MRR value saved
-- The ChurnShield fee (15% of saved MRR)
+- The ChurnQ fee (15% of saved MRR)
 
-For **discount** and **extension** offers, the fee is confirmed after Stripe sends `invoice.paid`  this is how ChurnShield verifies the subscriber actually paid at the new rate before charging you.
+For **discount** and **extension** offers, the fee is confirmed after Stripe sends `invoice.paid`  this is how ChurnQ verifies the subscriber actually paid at the new rate before charging you.
 
 ---
 
 ## The 15% fee
 
-ChurnShield charges 15% of the MRR retained, per save. Examples:
+ChurnQ charges 15% of the MRR retained, per save. Examples:
 
-| Plan price | Offer | MRR saved | ChurnShield fee |
+| Plan price | Offer | MRR saved | ChurnQ fee |
 |---|---|---|---|
 | $49/mo | 25% discount | $36.75 | $5.51 |
 | $99/mo | Pause (full MRR) | $99.00 | $14.85 |
@@ -73,7 +73,7 @@ Fees are charged to your Stripe account automatically  no invoices, no manual bi
 
 ## Grace mode vs secured mode
 
-When you first install the snippet, it runs in **grace mode**  ChurnShield accepts cancel intents without requiring an HMAC signature. This lets you test quickly.
+When you first install the snippet, it runs in **grace mode**  ChurnQ accepts cancel intents without requiring an HMAC signature. This lets you test quickly.
 
 Before going live, you must **activate signing** in Dashboard → Integration. Once activated, every cancel intent requires a valid HMAC-SHA256 signature. See the [HMAC signing guide](/configuration/hmac-signing).
 

@@ -80,7 +80,7 @@ export default async function ConnectionsPage() {
           </div>
         </div>
         <a
-          href="mailto:hello@churnshield.ai?subject=Integration request"
+          href="mailto:hello@churnq.com?subject=Integration request"
           style={{
             display: "inline-flex", alignItems: "center", gap: 6,
             background: "var(--cs-text, #18181b)", color: "#fff",
@@ -167,7 +167,7 @@ export default async function ConnectionsPage() {
             )}
             {!tenant.slackWebhookUrl && (
               <div style={{ marginTop: 4, fontSize: 11, color: "var(--cs-text-muted, #94a3b8)" }}>
-                Tip: create a <code style={{ background: "var(--cs-bg, #f4f4f5)", padding: "1px 5px", borderRadius: 4 }}>#churnshield-alerts</code> channel first.
+                Tip: create a <code style={{ background: "var(--cs-bg, #f4f4f5)", padding: "1px 5px", borderRadius: 4 }}>#ChurnQ-alerts</code> channel first.
               </div>
             )}
           </div>
@@ -195,7 +195,7 @@ export default async function ConnectionsPage() {
             )}
             {!tenant.discordWebhookUrl && (
               <div style={{ marginTop: 4, fontSize: 11, color: "var(--cs-text-muted, #94a3b8)" }}>
-                Tip: create a <code style={{ background: "var(--cs-bg, #f4f4f5)", padding: "1px 5px", borderRadius: 4 }}>churnshield-alerts</code> channel in your server first.
+                Tip: create a <code style={{ background: "var(--cs-bg, #f4f4f5)", padding: "1px 5px", borderRadius: 4 }}>ChurnQ-alerts</code> channel in your server first.
               </div>
             )}
           </div>

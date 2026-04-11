@@ -7,8 +7,8 @@ from typing import Any
 from fastapi import APIRouter, HTTPException
 from pydantic import BaseModel
 
-from churnshield_agents import db as _db
-from churnshield_agents.agents import billing, churn_prediction, feedback_analyser
+from churnq_agents import db as _db
+from churnq_agents.agents import billing, churn_prediction, feedback_analyser
 
 router = APIRouter()
 

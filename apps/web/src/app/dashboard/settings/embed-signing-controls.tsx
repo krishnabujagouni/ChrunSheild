@@ -18,12 +18,12 @@ async function readJsonBody(r: Response): Promise<Record<string, unknown> | null
   }
 }
 
-const NEXT_HMAC_ROUTE = `// app/api/churnshield-auth/route.ts  on your app
+const NEXT_HMAC_ROUTE = `// app/api/ChurnQ-auth/route.ts  on your app
 import crypto from "crypto";
 import { NextResponse } from "next/server";
 
 export async function POST(req: Request) {
-  const secret = process.env.CHURNSHIELD_EMBED_SECRET;
+  const secret = process.env.ChurnQ_EMBED_SECRET;
   if (!secret) return NextResponse.json({ error: "misconfigured" }, { status: 500 });
   const { subscriberId } = await req.json();
   const cus = typeof subscriberId === "string" ? subscriberId.trim() : "";
@@ -80,7 +80,7 @@ export function EmbedSigningControls({ embedAppId, snippetKey, activated: initia
         )}
       </div>
       <p style={{ margin: "0 0 12px", fontSize: 12, color: "#64748b", lineHeight: 1.5 }}>
-        Store the embed secret as <code style={{ background: "#f1f5f9", padding: "1px 5px", borderRadius: 4 }}>CHURNSHIELD_EMBED_SECRET</code> on your
+        Store the embed secret as <code style={{ background: "#f1f5f9", padding: "1px 5px", borderRadius: 4 }}>ChurnQ_EMBED_SECRET</code> on your
         server. Return HMAC-SHA256(secret, <code style={{ background: "#f1f5f9", padding: "1px 5px", borderRadius: 4 }}>subscriberId</code>) as{" "}
         <code style={{ background: "#f1f5f9", padding: "1px 5px", borderRadius: 4 }}>authHash</code> from your auth endpoint (same ID as in{" "}
         <code style={{ background: "#f1f5f9", padding: "1px 5px", borderRadius: 4 }}>identify</code>).
@@ -115,7 +115,7 @@ export function EmbedSigningControls({ embedAppId, snippetKey, activated: initia
           Rotate embed secret
         </button>
         <span style={{ fontSize: 12, color: "#64748b" }}>
-          After rotating, update <code style={{ background: "#f1f5f9", padding: "1px 4px", borderRadius: 3 }}>CHURNSHIELD_EMBED_SECRET</code> on every
+          After rotating, update <code style={{ background: "#f1f5f9", padding: "1px 4px", borderRadius: 3 }}>ChurnQ_EMBED_SECRET</code> on every
           server.
         </span>
       </div>

@@ -14,9 +14,9 @@ import resend
 from langchain_anthropic import ChatAnthropic
 from langchain_core.messages import HumanMessage
 
-from churnshield_agents import db as _db
-from churnshield_agents.agents.merchant_email import send_merchant_email
-from churnshield_agents.config import get_settings
+from churnq_agents import db as _db
+from churnq_agents.agents.merchant_email import send_merchant_email
+from churnq_agents.config import get_settings
 
 logger = logging.getLogger(__name__)
 
@@ -271,7 +271,7 @@ async def run_payment_recovery_summary() -> dict[str, Any]:
         exhausted = int(row["exhausted"])
         likely_recovered = int(row["likely_recovered"])
 
-        subject = "[ChurnShield] Weekly payment recovery update"
+        subject = "[ChurnQ] Weekly payment recovery update"
         html = (
             f"<p>Hi,</p>"
             f"<p>Here's your payment recovery summary for the past 7 days:</p>"
@@ -281,9 +281,9 @@ async def run_payment_recovery_summary() -> dict[str, Any]:
             f"<li><strong>{pending}</strong> still being retried automatically</li>"
             f"<li><strong>{exhausted}</strong> exhausted (no further retries)</li>"
             f"</ul>"
-            f"<p>ChurnShield automatically retried failed invoices and sent recovery "
+            f"<p>ChurnQ automatically retried failed invoices and sent recovery "
             f"emails to your subscribers on your behalf.</p>"
-            f"<p> ChurnShield</p>"
+            f"<p> ChurnQ</p>"
         )
         try:
             await send_merchant_email(owner_email, subject, html)

@@ -498,7 +498,7 @@ export function WebhooksSection({ initial }: { initial: Endpoint[] }) {
   return (
     <>
       <div
-        id="churnshield-webhooks"
+        id="ChurnQ-webhooks"
         style={{
         display: "flex", alignItems: "center", gap: 16,
         padding: "20px 0",
@@ -550,7 +550,7 @@ export function WebhooksSection({ initial }: { initial: Endpoint[] }) {
             Manage webhooks
           </div>
           <div style={{ fontSize: 13, color: "var(--cs-text-muted, #71717a)", marginBottom: 18 }}>
-            Add webhook endpoints to receive ChurnShield events in real time.
+            Add webhook endpoints to receive ChurnQ events in real time.
           </div>
 
           {/* URL input + Add button */}
@@ -638,7 +638,7 @@ export function WebhooksSection({ initial }: { initial: Endpoint[] }) {
               background: "var(--cs-bg, #f4f4f5)", borderRadius: 8, padding: "10px 14px", lineHeight: 1.6,
             }}>
               A unique <code style={{ background: "#e4e4e7", padding: "1px 5px", borderRadius: 4, fontSize: 11 }}>whsec_...</code> signing secret is auto-generated per endpoint.
-              Verify requests using the <code style={{ background: "#e4e4e7", padding: "1px 5px", borderRadius: 4, fontSize: 11 }}>X-ChurnShield-Signature</code> header (HMAC-SHA256).
+              Verify requests using the <code style={{ background: "#e4e4e7", padding: "1px 5px", borderRadius: 4, fontSize: 11 }}>X-ChurnQ-Signature</code> header (HMAC-SHA256).
               While this section is open, each endpoint’s full secret is listed below its URL.
             </div>
           )}

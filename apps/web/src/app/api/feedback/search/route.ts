@@ -95,7 +95,7 @@ ${olderTurns.length > 0
   : ""}
 ────────────────────────────────────────`;
 
-  return `You are an expert customer insights analyst embedded in ChurnShield, a retention tool for SaaS merchants.
+  return `You are an expert customer insights analyst embedded in ChurnQ, a retention tool for SaaS merchants.
 Your job is to help the merchant deeply understand why their subscribers cancel and what to do about it.
 
 ────────────────────────────────────────

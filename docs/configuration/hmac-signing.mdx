@@ -5,9 +5,9 @@ description: "Secure your embed so only your server can start a retention sessio
 
 ## Overview
 
-When the ChurnShield snippet calls `ChurnShield.identify()`, it sends the subscriber's ID to ChurnShield's servers. Without signing, anyone who knows your `data-app-id` could pass a fake subscriber ID and trigger the retention chat.
+When the ChurnQ snippet calls `ChurnQ.identify()`, it sends the subscriber's ID to ChurnQ's servers. Without signing, anyone who knows your `data-app-id` could pass a fake subscriber ID and trigger the retention chat.
 
-HMAC signing solves this: your server computes a cryptographic signature of the `subscriberId` and passes it as `authHash`. ChurnShield verifies the signature before creating a session. Forged requests are rejected.
+HMAC signing solves this: your server computes a cryptographic signature of the `subscriberId` and passes it as `authHash`. ChurnQ verifies the signature before creating a session. Forged requests are rejected.
 
 <Warning>
   Always activate HMAC signing before going live. Running unsigned in production is a security risk.
@@ -17,11 +17,11 @@ HMAC signing solves this: your server computes a cryptographic signature of the 
 
 ## How it works
 
-1. Your server computes `HMAC-SHA256(CHURNSHIELD_EMBED_SECRET, subscriberId)` and sends the hex digest to your frontend.
-2. Your frontend passes the hex string as `authHash` in `ChurnShield.identify()`.
-3. ChurnShield verifies the hash using the same secret. If it doesn't match, the request is rejected with `invalid_auth_hash`.
+1. Your server computes `HMAC-SHA256(ChurnQ_EMBED_SECRET, subscriberId)` and sends the hex digest to your frontend.
+2. Your frontend passes the hex string as `authHash` in `ChurnQ.identify()`.
+3. ChurnQ verifies the hash using the same secret. If it doesn't match, the request is rejected with `invalid_auth_hash`.
 
-The `CHURNSHIELD_EMBED_SECRET` is a private key that never leaves your server.
+The `ChurnQ_EMBED_SECRET` is a private key that never leaves your server.
 
 ---
 
@@ -45,15 +45,15 @@ The hash is `HMAC-SHA256(secret, subscriberId)` encoded as a lowercase hex strin
 ```typescript Node.js / TypeScript
 import crypto from "crypto";
 
-function getChurnShieldAuthHash(subscriberId: string): string {
+function getChurnQAuthHash(subscriberId: string): string {
   return crypto
-    .createHmac("sha256", process.env.CHURNSHIELD_EMBED_SECRET!)
+    .createHmac("sha256", process.env.ChurnQ_EMBED_SECRET!)
     .update(subscriberId)
     .digest("hex");
 }
 
 // Example: in a Next.js API route or server component
-const authHash = getChurnShieldAuthHash(user.stripeCustomerId);
+const authHash = getChurnQAuthHash(user.stripeCustomerId);
 // Pass authHash to the client via props, session, or API response
 ```
 
@@ -62,8 +62,8 @@ import hmac
 import hashlib
 import os
 
-def get_churnshield_auth_hash(subscriber_id: str) -> str:
-    secret = os.environ["CHURNSHIELD_EMBED_SECRET"]
+def get_ChurnQ_auth_hash(subscriber_id: str) -> str:
+    secret = os.environ["ChurnQ_EMBED_SECRET"]
     return hmac.new(
         secret.encode("utf-8"),
         subscriber_id.encode("utf-8"),
@@ -74,18 +74,18 @@ def get_churnshield_auth_hash(subscriber_id: str) -> str:
 ```ruby Ruby
 require "openssl"
 
-def churnshield_auth_hash(subscriber_id)
+def ChurnQ_auth_hash(subscriber_id)
   OpenSSL::HMAC.hexdigest(
     "SHA256",
-    ENV["CHURNSHIELD_EMBED_SECRET"],
+    ENV["ChurnQ_EMBED_SECRET"],
     subscriber_id
   )
 end
 ```
 
 ```php PHP
-function churnshield_auth_hash(string $subscriber_id): string {
-    return hash_hmac("sha256", $subscriber_id, $_ENV["CHURNSHIELD_EMBED_SECRET"]);
+function ChurnQ_auth_hash(string $subscriber_id): string {
+    return hash_hmac("sha256", $subscriber_id, $_ENV["ChurnQ_EMBED_SECRET"]);
 }
 ```
 
@@ -97,8 +97,8 @@ import (
   "os"
 )
 
-func ChurnShieldAuthHash(subscriberID string) string {
-  secret := os.Getenv("CHURNSHIELD_EMBED_SECRET")
+func ChurnQAuthHash(subscriberID string) string {
+  secret := os.Getenv("ChurnQ_EMBED_SECRET")
   mac := hmac.New(sha256.New, []byte(secret))
   mac.Write([]byte(subscriberID))
   return hex.EncodeToString(mac.Sum(nil))
@@ -121,7 +121,7 @@ Compute the hash server-side and pass it to your frontend. Never compute it in t
     export default async function AccountPage() {
       const user = await getCurrentUser();
       const authHash = crypto
-        .createHmac("sha256", process.env.CHURNSHIELD_EMBED_SECRET!)
+        .createHmac("sha256", process.env.ChurnQ_EMBED_SECRET!)
         .update(user.stripeCustomerId)
         .digest("hex");
 
@@ -136,7 +136,7 @@ Compute the hash server-side and pass it to your frontend. Never compute it in t
 
     export function AccountClient({ authHash, user }) {
       useEffect(() => {
-        window.ChurnShield?.identify({
+        window.ChurnQ?.identify({
           subscriberId: user.stripeCustomerId,
           subscriptionId: user.stripeSubscriptionId,
           subscriptionMrr: user.monthlyPlanAmount,
@@ -155,7 +155,7 @@ Compute the hash server-side and pass it to your frontend. Never compute it in t
 
     app.get("/account", requireAuth, (req, res) => {
       const authHash = crypto
-        .createHmac("sha256", process.env.CHURNSHIELD_EMBED_SECRET)
+        .createHmac("sha256", process.env.ChurnQ_EMBED_SECRET)
         .update(req.user.stripeCustomerId)
         .digest("hex");
 
@@ -166,7 +166,7 @@ Compute the hash server-side and pass it to your frontend. Never compute it in t
     ```html
     <!-- views/account.ejs -->
     <script>
-      ChurnShield.identify({
+      ChurnQ.identify({
         subscriberId: "<%= user.stripeCustomerId %>",
         subscriptionMrr: <%= user.monthlyAmount %>,
         authHash: "<%= authHash %>",
@@ -185,7 +185,7 @@ Compute the hash server-side and pass it to your frontend. Never compute it in t
       if (!session) return Response.json({ error: "Unauthorized" }, { status: 401 });
 
       const authHash = crypto
-        .createHmac("sha256", process.env.CHURNSHIELD_EMBED_SECRET!)
+        .createHmac("sha256", process.env.ChurnQ_EMBED_SECRET!)
         .update(session.user.stripeCustomerId)
         .digest("hex");
 
@@ -196,7 +196,7 @@ Compute the hash server-side and pass it to your frontend. Never compute it in t
     ```javascript
     // Frontend
     const { authHash } = await fetch("/api/cs-hash").then(r => r.json());
-    ChurnShield.identify({
+    ChurnQ.identify({
       subscriberId: user.stripeCustomerId,
       authHash,
     });
@@ -212,7 +212,7 @@ Once your backend is computing and passing the `authHash`, activate signing to e
 
 1. Go to **Dashboard → Integration**
 2. Click **Rotate embed secret**  this generates a new secret and locks the embed
-3. Update `CHURNSHIELD_EMBED_SECRET` in your server's environment variables with the new secret
+3. Update `ChurnQ_EMBED_SECRET` in your server's environment variables with the new secret
 
 After activation, any request without a valid `authHash` is rejected. Test your integration before activating to avoid disrupting live users.
 
@@ -223,7 +223,7 @@ After activation, any request without a valid `authHash` is rejected. Test your 
 To rotate the secret:
 1. Click **Rotate embed secret** in Dashboard → Integration
 2. A new secret is generated immediately  the old one is invalidated
-3. Update `CHURNSHIELD_EMBED_SECRET` in your environment and redeploy
+3. Update `ChurnQ_EMBED_SECRET` in your environment and redeploy
 
 <Warning>
   Rotating the secret invalidates all previously computed hashes. Make sure your server is using the new secret before old hashes expire from caches.
@@ -243,6 +243,6 @@ To rotate the secret:
   </Accordion>
 
   <Accordion title="Grace mode still works without a hash">
-    If signing is not yet activated, requests without an `authHash` are accepted with a warning header (`X-ChurnShield-Warning: embed_unsigned`). Activate signing before going live.
+    If signing is not yet activated, requests without an `authHash` are accepted with a warning header (`X-ChurnQ-Warning: embed_unsigned`). Activate signing before going live.
   </Accordion>
 </AccordionGroup>

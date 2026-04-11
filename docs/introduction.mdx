@@ -1,13 +1,13 @@
 ---
 title: Introduction
-description: ChurnShield saves cancelling subscribers automatically  no engineering required after setup.
+description: ChurnQ saves cancelling subscribers automatically  no engineering required after setup.
 ---
 
-## What is ChurnShield?
+## What is ChurnQ?
 
-ChurnShield sits between your subscriber and their cancel button. When someone tries to cancel, ChurnShield intercepts that click, opens an AI-powered retention chat, and offers a personalized incentive  a discount, pause, or extension  to keep them subscribed.
+ChurnQ sits between your subscriber and their cancel button. When someone tries to cancel, ChurnQ intercepts that click, opens an AI-powered retention chat, and offers a personalized incentive  a discount, pause, or extension  to keep them subscribed.
 
-When a subscriber accepts, ChurnShield automatically applies the offer to their Stripe subscription and charges you a 15% success fee on the MRR saved. You only pay when it works.
+When a subscriber accepts, ChurnQ automatically applies the offer to their Stripe subscription and charges you a 15% success fee on the MRR saved. You only pay when it works.
 
 ---
 
@@ -15,10 +15,10 @@ When a subscriber accepts, ChurnShield automatically applies the offer to their 
 
 <Steps>
   <Step title="Subscriber clicks cancel">
-    Your existing cancel button is intercepted by the ChurnShield snippet (`cs.js`).
+    Your existing cancel button is intercepted by the ChurnQ snippet (`cs.js`).
   </Step>
   <Step title="Aria opens a chat">
-    ChurnShield's AI retention assistant  Aria  starts a conversation, understands why they want to cancel, and offers the right incentive.
+    ChurnQ's AI retention assistant  Aria  starts a conversation, understands why they want to cancel, and offers the right incentive.
   </Step>
   <Step title="Subscriber accepts the offer">
     The offer is applied to their Stripe subscription automatically. No manual work.
@@ -26,7 +26,7 @@ When a subscriber accepts, ChurnShield automatically applies the offer to their 
   <Step title="You get notified">
     A save alert fires to Slack, Discord, or any webhook you've connected.
   </Step>
-  <Step title="ChurnShield charges 15%">
+  <Step title="ChurnQ charges 15%">
     A 15% fee on the retained MRR is charged via Stripe Connect  only on successful saves.
   </Step>
 </Steps>
@@ -37,9 +37,9 @@ When a subscriber accepts, ChurnShield automatically applies the offer to their 
 
 | Requirement | Why |
 |---|---|
-| A Stripe account | ChurnShield applies offers and charges fees via Stripe Connect |
+| A Stripe account | ChurnQ applies offers and charges fees via Stripe Connect |
 | A website or web app | The `cs.js` snippet needs to be installed |
-| A cancel button | ChurnShield intercepts it  any HTML element works |
+| A cancel button | ChurnQ intercepts it  any HTML element works |
 
 ---
 
@@ -50,7 +50,7 @@ When a subscriber accepts, ChurnShield automatically applies the offer to their 
     Install the snippet and save your first subscriber in under 15 minutes.
   </Card>
   <Card title="Connect Stripe" icon="stripe" href="/integrations/stripe">
-    Link your Stripe account so ChurnShield can apply offers automatically.
+    Link your Stripe account so ChurnQ can apply offers automatically.
   </Card>
   <Card title="Set up notifications" icon="bell" href="/integrations/slack">
     Get alerted in Slack or Discord when a subscriber is saved.

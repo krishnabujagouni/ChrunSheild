@@ -1,24 +1,24 @@
 ---
 title: Quickstart
-description: Install ChurnShield and save your first subscriber in under 15 minutes.
+description: Install ChurnQ and save your first subscriber in under 15 minutes.
 ---
 
 ## Step 1  Create your account
 
-Go to [app.churnshield.ai](https://app.churnshield.ai) and sign up. Once you're in, you'll land on the dashboard.
+Go to [app.churnq.com](https://app.churnq.com) and sign up. Once you're in, you'll land on the dashboard.
 
 ---
 
 ## Step 2  Connect Stripe
 
-ChurnShield needs Stripe Connect to apply discounts, pauses, and extensions to your subscribers' subscriptions.
+ChurnQ needs Stripe Connect to apply discounts, pauses, and extensions to your subscribers' subscriptions.
 
 1. Go to **Dashboard → Connections**
 2. Click **Connect** next to Stripe
 3. Complete the Stripe OAuth flow  you'll be redirected back automatically
 
 <Info>
-  Stripe Connect is required. ChurnShield cannot apply offers or charge the 15% success fee without it.
+  Stripe Connect is required. ChurnQ cannot apply offers or charge the 15% success fee without it.
 </Info>
 
 ---
@@ -29,7 +29,7 @@ Go to **Dashboard → Integration** and copy your snippet tag. It looks like thi
 
 ```html
 <script
-  src="https://cdn.churnshield.ai/cs.js"
+  src="https://cdn.churnq.com/cs.js"
   data-app-id="cs_app_YOUR_APP_ID"
   defer
 ></script>
@@ -45,10 +45,10 @@ Paste it into the `<head>` of every page where your cancel button lives. Use `de
 
 ## Step 4  Identify the subscriber
 
-Before the cancel button is shown, call `ChurnShield.identify()` with the subscriber's details:
+Before the cancel button is shown, call `ChurnQ.identify()` with the subscriber's details:
 
 ```javascript
-ChurnShield.identify({
+ChurnQ.identify({
   subscriberId: "cus_abc123",          // Stripe customer ID
   subscriptionId: "sub_xyz789",        // Stripe subscription ID (recommended)
   subscriberEmail: "user@example.com", // shown in your dashboard
@@ -58,7 +58,7 @@ ChurnShield.identify({
 ```
 
 <Tip>
-  `subscriptionId` is recommended but not required. Without it, ChurnShield picks the customer's first active subscription.
+  `subscriptionId` is recommended but not required. Without it, ChurnQ picks the customer's first active subscription.
 </Tip>
 
 ---
@@ -71,14 +71,14 @@ Add `data-cs-cancel` to your cancel button or link:
 <button data-cs-cancel>Cancel my subscription</button>
 ```
 
-That's it. ChurnShield intercepts clicks on that element and opens the retention chat.
+That's it. ChurnQ intercepts clicks on that element and opens the retention chat.
 
 ---
 
 ## Step 6  Test it
 
 1. Open your test page in a browser
-2. Click the cancel button  the ChurnShield chat should appear
+2. Click the cancel button  the ChurnQ chat should appear
 3. Go through the flow and click **Keep my subscription**
 4. Check **Dashboard → Recent Sessions**  you should see the session logged
 

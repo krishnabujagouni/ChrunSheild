@@ -11,7 +11,7 @@ class Settings(BaseSettings):
         env_file=(
             ".env",
             "agents.env",
-            "src/churnshield_agents/agents/.env",
+            "src/churnq_agents/agents/.env",
         ),
         env_file_encoding="utf-8",
         extra="ignore",
@@ -23,7 +23,7 @@ class Settings(BaseSettings):
     environment: str = Field(default="development")
     anthropic_api_key: str = Field(default="", description="Anthropic API key for LangGraph agents")
     resend_api_key: str = Field(default="", description="Resend API key for transactional email")
-    resend_from_email: str = Field(default="noreply@churnshield.ai", description="From address for recovery emails")
+    resend_from_email: str = Field(default="noreply@ChurnQ.ai", description="From address for recovery emails")
     voyage_api_key: str = Field(default="", description="Voyage AI API key for voyage-3-lite embeddings")
 
 

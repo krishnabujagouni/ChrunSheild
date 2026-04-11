@@ -329,7 +329,7 @@ export function BillingDashboard({
         <div>
           <h2 className="text-sm font-semibold text-foreground">Charge history</h2>
           <p className="text-xs text-muted-foreground mt-0.5">
-            One row per collection from ChurnShield (same Stripe payment ref = same batch).
+            One row per collection from ChurnQ (same Stripe payment ref = same batch).
           </p>
         </div>
         {chargeHistory.length === 0 ? (

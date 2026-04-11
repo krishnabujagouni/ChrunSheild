@@ -1,4 +1,4 @@
-// ChurnShield  Supabase/Postgres. Python agents use the same tables via asyncpg.
+// ChurnQ  Supabase/Postgres. Python agents use the same tables via asyncpg.
 
 generator client {
   provider = "prisma-client-js"
@@ -41,7 +41,7 @@ model Tenant {
   slackChannelName  String?  @map("slack_channel_name")
   /// Discord incoming webhook URL for save + high-risk alerts (optional)
   discordWebhookUrl  String?  @map("discord_webhook_url")
-  /// Discord channel name shown in the UI after OAuth (e.g. churnshield-alerts)
+  /// Discord channel name shown in the UI after OAuth (e.g. ChurnQ-alerts)
   discordChannelName String?  @map("discord_channel_name")
   createdAt       DateTime @default(now()) @map("created_at")
   updatedAt       DateTime @updatedAt @map("updated_at")
@@ -202,14 +202,14 @@ model SubscriberFlag {
   @@map("subscriber_flags")
 }
 
-/// Tenant-configured webhook endpoints  ChurnShield POSTs signed events to these URLs
+/// Tenant-configured webhook endpoints  ChurnQ POSTs signed events to these URLs
 model WebhookEndpoint {
   id        String   @id @default(uuid()) @db.Uuid
   tenantId  String   @map("tenant_id") @db.Uuid
   url       String   @db.VarChar(2048)
   /// Subset of ["save.created","high_risk.detected"] the tenant subscribed to
   events    String[]
-  /// HMAC-SHA256 signing secret (whsec_...)  sent as X-ChurnShield-Signature header
+  /// HMAC-SHA256 signing secret (whsec_...)  sent as X-ChurnQ-Signature header
   secret    String   @db.VarChar(128)
   enabled   Boolean  @default(true)
   /// Optional label to identify source (e.g. "zapier", "make")  used by UI to show connected state

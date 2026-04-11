@@ -19,9 +19,9 @@ from datetime import datetime, timezone
 from urllib.parse import urlparse
 from typing import Any
 
-from churnshield_agents import db as _db
-from churnshield_agents.agents import outreach
-from churnshield_agents.agents.merchant_email import get_owner_email, send_merchant_email
+from churnq_agents import db as _db
+from churnq_agents.agents import outreach
+from churnq_agents.agents.merchant_email import get_owner_email, send_merchant_email
 
 logger = logging.getLogger(__name__)
 
@@ -289,8 +289,8 @@ def _deliver_webhook_with_log(
 
     hdrs = {
         "Content-Type": "application/json",
-        "X-ChurnShield-Signature": sig,
-        "X-ChurnShield-Event": event,
+        "X-ChurnQ-Signature": sig,
+        "X-ChurnQ-Event": event,
     }
     for attempt in range(1, _WEBHOOK_MAX_ATTEMPTS + 1):
         attempts_used = attempt
@@ -429,13 +429,13 @@ async def run_churn_prediction(tenant_id: str) -> dict[str, Any]:
             if owner_email:
                 n = len(high_risk)
                 plural = "s" if n != 1 else ""
-                subject = f"[ChurnShield] {n} high-risk subscriber{plural} detected"
+                subject = f"[ChurnQ] {n} high-risk subscriber{plural} detected"
                 html = (
                     f"<p>Hi,</p>"
-                    f"<p>ChurnShield has identified <strong>{n} high-risk subscriber{plural}</strong> "
+                    f"<p>ChurnQ has identified <strong>{n} high-risk subscriber{plural}</strong> "
                     f"in your account and has automatically sent proactive retention emails.</p>"
                     f"<p>Log in to your dashboard to review risk scores and outreach activity.</p>"
-                    f"<p> ChurnShield</p>"
+                    f"<p> ChurnQ</p>"
                 )
                 await send_merchant_email(owner_email, subject, html)
                 logger.info("churn.alert_email_sent tenant=%s high_risk=%d", tenant_id, n)

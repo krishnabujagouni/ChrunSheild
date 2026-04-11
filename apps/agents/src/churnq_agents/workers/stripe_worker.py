@@ -10,9 +10,9 @@ from uuid import UUID
 
 import stripe as _stripe
 
-from churnshield_agents.agents import payment_recovery
-from churnshield_agents.config import get_settings
-from churnshield_agents.db import pool
+from churnq_agents.agents import payment_recovery
+from churnq_agents.config import get_settings
+from churnq_agents.db import pool
 
 logger = logging.getLogger(__name__)
 

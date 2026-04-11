@@ -20,4 +20,4 @@ RUN uv pip install --system --no-cache -e .
 EXPOSE 8000
 
 # Shell form so $PORT is expanded at runtime (Railway sets PORT dynamically)
-CMD uvicorn churnshield_agents.main:app --host 0.0.0.0 --port ${PORT:-8000}
+CMD uvicorn churnq_agents.main:app --host 0.0.0.0 --port ${PORT:-8000}

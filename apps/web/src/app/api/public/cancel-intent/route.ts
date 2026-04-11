@@ -97,7 +97,7 @@ export async function POST(request: Request) {
       {
         error: "auth_hash_required",
         hint:
-          "HMAC is required. Compute hex(64) HMAC-SHA256(CHURNSHIELD_EMBED_SECRET, subscriberId) and pass authHash, or use identify({ getAuthHash }) in cs.js.",
+          "HMAC is required. Compute hex(64) HMAC-SHA256(ChurnQ_EMBED_SECRET, subscriberId) and pass authHash, or use identify({ getAuthHash }) in cs.js.",
       },
       { status: 401, headers: corsHeaders() },
     );
@@ -137,7 +137,7 @@ export async function POST(request: Request) {
 
   const responseHeaders: HeadersInit = { ...corsHeaders() };
   if (!activated) {
-    (responseHeaders as Record<string, string>)["X-ChurnShield-Warning"] = "embed_unsigned";
+    (responseHeaders as Record<string, string>)["X-ChurnQ-Warning"] = "embed_unsigned";
   }
 
   return NextResponse.json(

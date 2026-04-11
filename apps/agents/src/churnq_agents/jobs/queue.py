@@ -11,11 +11,11 @@ from apscheduler.schedulers.asyncio import AsyncIOScheduler
 from apscheduler.triggers.cron import CronTrigger
 from apscheduler.triggers.interval import IntervalTrigger
 
-from churnshield_agents import db as _db
-from churnshield_agents.agents import billing, churn_prediction, feedback_analyser, payment_recovery
-from churnshield_agents.agents.billing import run_monthly_billing_summary
-from churnshield_agents.agents.payment_recovery import run_payment_recovery_summary
-from churnshield_agents.config import get_settings
+from churnq_agents import db as _db
+from churnq_agents.agents import billing, churn_prediction, feedback_analyser, payment_recovery
+from churnq_agents.agents.billing import run_monthly_billing_summary
+from churnq_agents.agents.payment_recovery import run_payment_recovery_summary
+from churnq_agents.config import get_settings
 
 logger = logging.getLogger(__name__)
 

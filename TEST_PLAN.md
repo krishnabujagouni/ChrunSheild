@@ -1,4 +1,4 @@
-# ChurnShield  Test Plan & Competitive Review
+# ChurnQ  Test Plan & Competitive Review
 *Generated: April 4, 2026*
 
 ---
@@ -73,7 +73,7 @@ Supersede rule: new `saved` outcome voids older unbilled saves for same subscrib
 ```
 Tenant provisioned → embedAppId (cs_app_...) + embedHmacSecret auto-generated
 Grace mode (embedSecretActivated = false):
-  - unsigned requests allowed through with X-ChurnShield-Warning header
+  - unsigned requests allowed through with X-ChurnQ-Warning header
   - wrong hash always rejected
 Activated (after first rotate):
   - missing hash → 401 auth_hash_required
@@ -85,8 +85,8 @@ Merchant signs: HMAC-SHA256(secret, subscriberId) hex from their server
 ```
 /stripe/connect/start → HMAC-signed state param → redirect to Stripe OAuth
 /stripe/connect/callback → verify state → oauth.token → save stripeConnectId
-Coupons created per Connect account + shape: churnshield_ret_{pct}p_{3}m
-No stacking: drop existing ChurnShield discounts before attaching new one
+Coupons created per Connect account + shape: ChurnQ_ret_{pct}p_{3}m
+No stacking: drop existing ChurnQ discounts before attaching new one
 ```
 
 ### E. Churn Prediction (Python)
@@ -152,8 +152,8 @@ Web AI Analyst:
 | C4 | cancel-outcome `cancelled` → no Stripe charges | `/api/public/cancel-outcome` | No false charges |
 | C5 | cancel-outcome supersedes prior unbilled save for same subscriber | `/api/public/cancel-outcome` | Double-charge guard |
 | C6 | cancel-outcome discount → creates Stripe coupon with correct id | `/api/public/cancel-outcome` | Stripe integration |
-| C7 | cancel-outcome discount → drops existing ChurnShield coupon before attaching | `/api/public/cancel-outcome` | No stacking |
-| C8 | cancel-outcome coupon id format: `churnshield_ret_{pct}p_{3}m` | `/api/public/cancel-outcome` | Idempotency key |
+| C7 | cancel-outcome discount → drops existing ChurnQ coupon before attaching | `/api/public/cancel-outcome` | No stacking |
+| C8 | cancel-outcome coupon id format: `ChurnQ_ret_{pct}p_{3}m` | `/api/public/cancel-outcome` | Idempotency key |
 | C9 | cancel-outcome extension → applies Stripe credit balance | `/api/public/cancel-outcome` | Stripe integration |
 | C10 | cancel-chat: messages > 32 rejected | `/api/public/cancel-chat` | Abuse guard |
 | C11 | cancel-chat: message content > 12KB rejected | `/api/public/cancel-chat` | Abuse guard |
@@ -240,9 +240,9 @@ Web AI Analyst:
 
 ## 5. Churnkey Competitive Comparison
 
-### ChurnShield vs Churnkey  Feature Matrix
+### ChurnQ vs Churnkey  Feature Matrix
 
-| Feature | Churnkey | ChurnShield | Gap / Advantage |
+| Feature | Churnkey | ChurnQ | Gap / Advantage |
 |---------|----------|-------------|----------------|
 | **Pricing** | $299–$599/mo flat | 15% of retained MRR | ✅ CS wins for indie/SMB. No upfront risk |
 | **Setup** | Demo required | Self-serve | ✅ CS wins  lower friction |
@@ -271,7 +271,7 @@ Web AI Analyst:
 
 ### Key Takeaways
 
-**Where ChurnShield wins (ICP: indie hackers, solo SaaS founders)**
+**Where ChurnQ wins (ICP: indie hackers, solo SaaS founders)**
 1. Performance pricing  no flat fee risk; aligns incentives
 2. AI conversation vs static modals  higher save rate potential
 3. Proactive churn prediction with outreach  Churnkey is reactive
@@ -288,7 +288,7 @@ Web AI Analyst:
 6. SOC2, enterprise procurement
 7. Multi-seat dashboards
 
-**Gaps to close for ChurnShield to move upmarket:**
+**Gaps to close for ChurnQ to move upmarket:**
 1. Offer analytics dashboard (data already in `save_sessions.offerType`)
 2. Webhooks ("save created", "high risk detected")
 3. CSV export (sessions + subscribers)

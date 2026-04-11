@@ -1,18 +1,18 @@
 ---
-title: "ChurnShield.identify()"
+title: "ChurnQ.identify()"
 description: "JavaScript API reference for identifying a subscriber and arming the cancel intercept."
 ---
 
 ## Overview
 
-`ChurnShield.identify()` is called on your frontend after the `cs.js` snippet loads. It registers the current subscriber's details with ChurnShield so that when they click the cancel button, the retention chat can open with the right context.
+`ChurnQ.identify()` is called on your frontend after the `cs.js` snippet loads. It registers the current subscriber's details with ChurnQ so that when they click the cancel button, the retention chat can open with the right context.
 
 ---
 
 ## Syntax
 
 ```javascript
-ChurnShield.identify(options);
+ChurnQ.identify(options);
 ```
 
 ---
@@ -22,7 +22,7 @@ ChurnShield.identify(options);
 | Field | Type | Required | Description |
 |-------|------|----------|-------------|
 | `subscriberId` | `string` | Yes | Stripe customer ID (`cus_...`). Used to look up the subscription in Stripe and identify the subscriber in your dashboard. |
-| `subscriptionId` | `string` | Recommended | Stripe subscription ID (`sub_...`). Without it, ChurnShield uses the customer's first active subscription. |
+| `subscriptionId` | `string` | Recommended | Stripe subscription ID (`sub_...`). Without it, ChurnQ uses the customer's first active subscription. |
 | `subscriberEmail` | `string` | No | Shown in your dashboard instead of the raw `cus_...` ID. Not required for the flow to work. |
 | `subscriptionMrr` | `number` | Recommended | Monthly recurring revenue in USD (e.g. `49.00`). Used to calculate offer amounts and the 15% success fee. Defaults to `0` if omitted. |
 | `authHash` | `string` | Required in production | HMAC-SHA256 signature of the `subscriberId`. Computed server-side. See [HMAC Signing](/configuration/hmac-signing). |
@@ -32,7 +32,7 @@ ChurnShield.identify(options);
 ## Example
 
 ```javascript
-ChurnShield.identify({
+ChurnQ.identify({
   subscriberId: "cus_abc123",
   subscriptionId: "sub_xyz789",
   subscriberEmail: "user@example.com",
@@ -47,17 +47,17 @@ ChurnShield.identify({
 
 - Safe to call multiple times. The last call wins.
 - Must be called before the subscriber clicks the cancel button.
-- If called without `authHash` and signing is not yet activated, the call succeeds with a `X-ChurnShield-Warning: embed_unsigned` header (grace mode).
+- If called without `authHash` and signing is not yet activated, the call succeeds with a `X-ChurnQ-Warning: embed_unsigned` header (grace mode).
 - If signing is activated and `authHash` is missing or invalid, the session creation is rejected and the cancel intercept will not fire.
 
 ---
 
 ## What happens internally
 
-When `ChurnShield.identify()` is called and the subscriber then clicks `[data-cs-cancel]`:
+When `ChurnQ.identify()` is called and the subscriber then clicks `[data-cs-cancel]`:
 
 1. `cs.js` sends a `POST` to `/api/public/cancel-intent` with the subscriber details and `authHash`
-2. ChurnShield creates a `SaveSession` in the database
+2. ChurnQ creates a `SaveSession` in the database
 3. The retention chat overlay opens with Aria
 4. On save: `POST /api/public/cancel-outcome` records the accepted offer and applies it in Stripe
 

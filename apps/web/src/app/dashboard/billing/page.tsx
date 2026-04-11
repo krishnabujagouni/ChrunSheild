@@ -164,10 +164,10 @@ export default async function BillingPage() {
       <div style={{ marginBottom: 24 }}>
         <h1 style={{ fontSize: 22, fontWeight: 700, margin: 0, color: "#0f172a" }}>Billing</h1>
         <p style={{ color: "#64748b", fontSize: 13, margin: "4px 0 0", maxWidth: 720 }}>
-          ChurnShield charges 15% of MRR retained per successful save. Where Stripe must confirm the
+          ChurnQ charges 15% of MRR retained per successful save. Where Stripe must confirm the
           outcome (e.g. discounted invoice paid), the fee is finalized after that event. All fees are
           collected in <strong>one monthly charge</strong> per workspace on the <strong>1st of the
-          month (UTC)</strong>  one Stripe payment per bill. Per-save detail stays in{" "}
+          month (UTC)</strong>one Stripe payment per bill. Per-save detail stays in{" "}
           <a href="/dashboard/sessions" style={{ color: "#0f172a", fontWeight: 600 }}>
             Recent sessions
           </a>
