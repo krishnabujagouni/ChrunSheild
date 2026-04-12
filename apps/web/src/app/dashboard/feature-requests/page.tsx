@@ -22,7 +22,7 @@ export default function FeatureRequestsPage() {
       {/* Embedded UserJot board */}
       <div style={{ flex: 1, paddingTop: 24 }}>
         <iframe
-          src="https://app.userjot.com/cmnuo1mnc0y3i0iqy3mulay0g/d/requests?status=%5B%22PENDING%22%2C%22REVIEW%22%2C%22PLANNED%22%2C%22PROGRESS%22%5D&board=%5B%5D&tag=%5B%5D&order=newest&search="
+          src="https://churnsheild.userjot.com"
           style={{
             width: "100%",
             height: "100%",

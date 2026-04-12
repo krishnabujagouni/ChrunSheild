@@ -125,7 +125,7 @@ export function HelpButton() {
                 </a>
 
                 <a
-                  href="https://app.userjot.com/cmnuo1mnc0y3i0iqy3mulay0g/d/requests?status=%5B%22PENDING%22%2C%22REVIEW%22%2C%22PLANNED%22%2C%22PROGRESS%22%5D&board=%5B%5D&tag=%5B%5D&order=newest&search="
+                  href="https://churnsheild.userjot.com"
                   target="_blank"
                   rel="noopener noreferrer"
                   style={{
