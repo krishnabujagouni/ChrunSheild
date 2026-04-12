@@ -52,18 +52,17 @@ export const ModemAnimatedFooter = ({
               {socialLinks.length > 0 && (
                 <div className="flex mb-8 mt-4 gap-4">
                   {socialLinks.map((link, index) => (
-                    <Link
+                    <a
                       key={index}
                       href={link.href}
                       className="text-[#94a3b8] hover:text-[#09090b] transition-colors"
-                      target="_blank"
-                      rel="noopener noreferrer"
+                      {...(!link.href.startsWith("mailto:") && { target: "_blank", rel: "noopener noreferrer" })}
                     >
                       <div className="w-5 h-5 hover:scale-110 duration-300">
                         {link.icon}
                       </div>
                       <span className="sr-only">{link.label}</span>
-                    </Link>
+                    </a>
                   ))}
                 </div>
               )}
