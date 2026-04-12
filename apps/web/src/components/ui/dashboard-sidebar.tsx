@@ -258,7 +258,7 @@ export function DashboardSidebar() {
         )}
 
         {/* Bottom nav */}
-        <div style={{ borderTop: "1px solid var(--cs-border, #e4e4e7)", paddingTop: 4, display: "flex", flexDirection: "column", gap: 1 }}>
+        <div style={{ marginTop: "auto", borderTop: "1px solid var(--cs-border, #e4e4e7)", paddingTop: 4, display: "flex", flexDirection: "column", gap: 1 }}>
           {open && (
             <div style={{ padding: "2px 12px 2px", fontSize: 10, fontWeight: 600, color: "var(--cs-text-muted, #71717a)", letterSpacing: "0.06em", textTransform: "uppercase" }}>
               Account
