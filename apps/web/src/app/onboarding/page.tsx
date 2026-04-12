@@ -1,5 +1,5 @@
 "use client";
-import { useState } from "react";
+import { useState, useRef } from "react";
 import { useRouter } from "next/navigation";
 
 const MRR_RANGES = [
@@ -23,6 +23,7 @@ export default function OnboardingPage() {
   const [step, setStep] = useState(1);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
+  const scrollRef = useRef<HTMLDivElement>(null);
   const [form, setForm] = useState({
     productName: "",
     productUrl: "",
@@ -54,14 +55,15 @@ export default function OnboardingPage() {
   }
 
   return (
-    <div style={{
-      minHeight: "100vh",
+    <div ref={scrollRef} style={{
+      height: "100vh",
       background: "#fafafa",
       display: "flex",
       alignItems: "flex-start",
       justifyContent: "center",
       padding: "40px 24px",
       overflowY: "auto",
+      boxSizing: "border-box",
       fontFamily: "var(--font-inter, 'Inter', system-ui, sans-serif)",
     }}>
       <div style={{ width: "100%", maxWidth: 480 }}>
@@ -138,7 +140,7 @@ export default function OnboardingPage() {
             </div>
 
             <button
-              onClick={() => setStep(2)}
+              onClick={() => { setStep(2); scrollRef.current?.scrollTo({ top: 0 }); }}
               disabled={!canProceedStep1}
               style={{
                 width: "100%", marginTop: 24, padding: "12px 0",
