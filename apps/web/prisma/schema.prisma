@@ -35,6 +35,10 @@ model Tenant {
   /// Merchant-configured offer limits for the cancel chat agent
   /// Shape: { allowedDiscountPcts, discountDurationMonths, allowPause, allowFreeExtension, allowPlanDowngrade, customMessage, plans?: { name, priceMonthly, stripePriceId? }[] }
   offerSettings   Json?    @map("offer_settings")
+  /// Set to true after merchant completes onboarding questionnaire
+  onboarded       Boolean  @default(false) @map("onboarded")
+  /// Onboarding answers: productName, productUrl, mrrRange, subscriberCount
+  onboardingData  Json?    @map("onboarding_data")
   /// Slack incoming webhook URL for save + high-risk alerts (optional)
   slackWebhookUrl   String?  @map("slack_webhook_url")
   /// Slack channel name shown in the UI after OAuth (e.g. #churn-alerts)

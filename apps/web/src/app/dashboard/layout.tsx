@@ -3,11 +3,15 @@ import { redirect } from "next/navigation";
 import { ClerkUserButton } from "@/components/clerk-auth-header";
 import { DashboardSidebar } from "@/components/ui/dashboard-sidebar";
 import { HelpButton } from "@/components/ui/help-button";
+import { prisma } from "@/lib/db";
 import "./hide-scroll.css";
 
 export default async function DashboardLayout({ children }: { children: React.ReactNode }) {
   const { userId } = auth();
   if (!userId) redirect("/sign-in");
+
+  const tenant = await prisma.tenant.findFirst({ where: { clerkUserId: userId }, select: { onboarded: true } });
+  if (tenant && !tenant.onboarded) redirect("/onboarding");
 
   return (
     <div style={{
