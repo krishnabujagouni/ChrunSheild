@@ -640,6 +640,7 @@ export default function LandingPage() {
           { href: "#pricing", label: "Pricing" },
           { href: "mailto:hello@churnq.com", label: "Contact" },
           { href: "/privacy", label: "Privacy" },
+          { href: "/cookie-policy", label: "Cookies" },
           { href: "/terms", label: "Terms" },
         ]}
         brandIcon={
