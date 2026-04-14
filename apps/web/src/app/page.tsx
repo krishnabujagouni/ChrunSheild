@@ -2,6 +2,7 @@
 import Link from "next/link";
 import { useState, useEffect } from "react";
 import { usePathname, useRouter } from "next/navigation";
+import { TestimonialsColumn, type Testimonial } from "@/components/ui/testimonials-columns-1";
 import { AnimatedNavigationTabs } from "@/components/ui/animated-navigation-tabs";
 import { HeroSection } from "@/components/ui/hero-section";
 import { BentoGrid, type BentoItem } from "@/components/ui/bento-grid";
@@ -10,6 +11,7 @@ import { PricingCard } from "@/components/ui/pricing-card";
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
 import { Feature108 } from "@/components/blocks/shadcnblocks-com-feature108";
 import { ModemAnimatedFooter } from "@/components/ui/modem-animated-footer";
+import { motion } from "motion/react";
 import { HugeiconsIcon } from "@hugeicons/react";
 import {
   Shield01Icon,
@@ -20,9 +22,17 @@ import {
   CreditCardIcon,
   ChartLineData01Icon,
   Robot01Icon,
+  BarChartIcon,
   Settings02Icon,
   Mail01Icon,
 } from "@hugeicons/core-free-icons";
+
+/* ─── Design tokens (aligned with globals.css) ─────────────────────────── */
+const VL = "var(--cs-accent-soft)";
+const E = "var(--cs-success)";
+const EL = "var(--cs-success-soft)";
+
+
 
 function useMobileNav() {
   const [open, setOpen] = useState(false);
@@ -39,6 +49,59 @@ function useMobileNav() {
   }, [isMobile]);
   return { open, setOpen, isMobile };
 }
+
+/* ─── Testimonials data ─────────────────────────────────────────────────── */
+const testimonials: Testimonial[] = [
+  {
+    text: "ChurnQ saved us $4,200 in MRR last month alone. The AI handles cancellations better than our best support rep.",
+    name: "Briana Patton",
+    role: "Founder, Taskfully",
+  },
+  {
+    text: "We went from 12% monthly churn to under 7% in 6 weeks. Setup took 10 minutes and we haven't touched it since.",
+    name: "Bilal Ahmed",
+    role: "CTO, PlanFlow",
+  },
+  {
+    text: "The performance-only pricing sealed it. No flat fee meant we could try it with zero risk. Now it's in our standard stack.",
+    name: "Saman Malik",
+    role: "CEO, Calmly",
+  },
+  {
+    text: "At-risk outreach alone is worth it  we're reaching subscribers before they even think about cancelling.",
+    name: "Omar Raza",
+    role: "Founder, Notified",
+  },
+  {
+    text: "Our subscribers actually thank us after the cancel flow. The AI is empathetic in a way I didn't expect from a tool.",
+    name: "Zainab Hussain",
+    role: "Head of Growth, Loopify",
+  },
+  {
+    text: "I was sceptical but the numbers don't lie. 41% of cancel attempts are now saves. It pays for itself in week one.",
+    name: "Aliza Khan",
+    role: "Co-founder, Funnelbase",
+  },
+  {
+    text: "Payment recovery was a manual nightmare. ChurnQ's retry sequences recovered $1,800 last quarter without us touching a thing.",
+    name: "Farhan Siddiqui",
+    role: "Founder, Stackr",
+  },
+  {
+    text: "The weekly digest keeps me informed without constant dashboard checking. Exactly what a solo founder needs.",
+    name: "Sana Sheikh",
+    role: "Founder, Writepath",
+  },
+  {
+    text: "Switched from Churnkey  same quality AI flow, but I only pay when it actually saves revenue.",
+    name: "Hassan Ali",
+    role: "Founder, Invoicely",
+  },
+];
+
+const firstColumn = testimonials.slice(0, 3);
+const secondColumn = testimonials.slice(3, 6);
+const thirdColumn = testimonials.slice(6, 9);
 
 /* ─── Mock AI chat card (hero visual) ──────────────────────────────────── */
 function ChatCard() {
@@ -67,9 +130,9 @@ function ChatCard() {
       </div>
       {/* messages */}
       {[
-        { role: "ai",   text: "Before you go — can I ask what's not working for you?" },
-        { role: "user", text: "It's just too expensive right now." },
-        { role: "ai",   text: "That's fair. I can do 40% off for the next 3 months — that brings it down to $17/mo. No contract, cancel any time." },
+        { role: "ai",   text: "Hey! Before you go  we've loved having you. Can I ask what's not working?" },
+        { role: "user", text: "It's too expensive for me right now." },
+        { role: "ai",   text: "Totally get it. How about 40% off for the next 3 months? That's just $17/mo  no commitment." },
       ].map((m, i) => (
         <div key={i} style={{ display: "flex", justifyContent: m.role === "user" ? "flex-end" : "flex-start", marginBottom: 8 }}>
           <div style={{
@@ -104,7 +167,7 @@ function ChatCard() {
         letterSpacing: "-0.01em",
       }}>
         <HugeiconsIcon icon={CheckmarkCircle01Icon} size={16} strokeWidth={1.5} aria-hidden />
-        Claim 40% off — stay subscribed
+        Claim 40% off  stay subscribed
       </button>
     </div>
   );
@@ -131,7 +194,8 @@ export default function LandingPage() {
       {/* ── NAV ────────────────────────────────────────────────────────── */}
       <nav style={{
         position: "sticky", top: 0, zIndex: 100,
-        background: "#ffffff",
+        background: "rgba(255,255,255,0.92)",
+        backdropFilter: "blur(16px)",
         borderBottom: "1px solid var(--cs-border)",
       }}>
         <div style={{
@@ -189,12 +253,12 @@ export default function LandingPage() {
       {/* ── HERO ────────────────────────────────────────────────────────── */}
       <HeroSection
         badge={{
-          text: "Built for SaaS founders",
+          text: "Retention automation for SaaS",
         }}
-        title="Most subscribers who cancel would have stayed."
-        description="ChurnQ talks to them the moment they click cancel, figures out what's wrong, and makes the right offer. It also chases failed payments and flags at-risk accounts before they leave. One script tag to install, no monthly fee."
+        title="Stop losing revenue every time someone clicks cancel."
+        description="ChurnQ intercepts cancel intent with a calm AI conversation, recovers failed payments, and flags who's about to leave before they do. One script tag, zero subscriptions."
         actions={[
-          { text: "Get started free", href: "/sign-up", variant: "default" },
+          { text: "Start for free", href: "/sign-up", variant: "default" },
         ]}
       >
         <ChatCard />
@@ -202,24 +266,24 @@ export default function LandingPage() {
 
       {/* ── BASELINE METRICS ─────────────────────────────────────────────── */}
       <section style={{ background: "var(--cs-surface)", borderBottom: "1px solid var(--cs-border)" }}>
-        <div className="lnd-shell" style={{ padding: "56px 0" }}>
+        <div className="lnd-shell" style={{ padding: "40px 0" }}>
           <div style={{
             display: "grid",
             gridTemplateColumns: "repeat(auto-fit, minmax(160px, 1fr))",
             gap: 0,
           }}>
             {[
-              { n: "40%", l: "Fewer cancellations", sub: "across typical cohorts" },
-              { n: "$2.4k", l: "MRR kept per month", sub: "founder-reported average" },
-              { n: "5 min", l: "Setup to first save", sub: "median time to go live" },
-              { n: "15%", l: "Of revenue we save you", sub: "nothing if we save nothing" },
+              { n: "40%", l: "Voluntary churn reduction", sub: "typical cohorts" },
+              { n: "$2.4k", l: "Avg. MRR saved per month", sub: "founder-reported" },
+              { n: "5 min", l: "Time to first live intercept", sub: "median setup time" },
+              { n: "15%", l: "Our fee, on saved revenue", sub: "zero flat cost" },
             ].map((row, i) => (
               <div key={row.n} style={{
                 padding: "0 28px",
                 borderLeft: i > 0 ? "1px solid var(--cs-border)" : undefined,
               }}>
                 <div style={{ fontSize: 32, fontWeight: 800, color: "var(--cs-text)", letterSpacing: "-0.04em", lineHeight: 1 }}>{row.n}</div>
-                <div style={{ fontSize: 13, fontWeight: 600, color: "var(--cs-text-secondary)", marginTop: 8, lineHeight: 1.5 }}>{row.l}</div>
+                <div style={{ fontSize: 13, fontWeight: 600, color: "var(--cs-text-secondary)", marginTop: 8, lineHeight: 1.3 }}>{row.l}</div>
                 <div style={{ fontSize: 11, color: "var(--cs-text-muted)", marginTop: 4 }}>{row.sub}</div>
               </div>
             ))}
@@ -232,24 +296,24 @@ export default function LandingPage() {
 {/* ── PRODUCT FEATURES (tabbed) ───────────────────────────────────── */}
       <div id="product" style={{ scrollMarginTop: 72 }}>
         <Feature108
-          heading="Four things that stop revenue from walking out the door."
-          description="Cancel flows, payment recovery, churn prediction, and cancellation insights — all connected, all in one dashboard."
+          heading="Everything you need to keep MRR in one place."
+          description="Saves, payment recovery, churn prediction, and feedback tied together instead of four disconnected tools."
           tabs={[
             {
               value: "cancel",
               icon: <HugeiconsIcon icon={BubbleChatIcon} size={16} strokeWidth={1.5} className="shrink-0" />,
               label: "Cancel flows",
               content: {
-                badge: "AI conversation",
-                title: "When someone clicks cancel, ChurnQ talks to them.",
-                description: "Instead of a form that rubber-stamps the cancellation, your subscriber gets a short conversation. The AI asks what's wrong, listens to the answer, and makes a relevant offer — a discount, a pause, a plan change, or just a clean exit if that's what they need.",
+                badge: "AI-powered",
+                title: "Turn cancellations into conversations  not dead ends.",
+                description: "Most cancel buttons fire a blunt form and lose the customer forever. ChurnQ intercepts the moment of intent with a calm, on-brand dialogue: understand the reason, offer what fits, and honour a clean exit when that's what they want.",
                 bullets: [
-                  "Adapts the offer based on the reason: price, missing features, not using it, switching to a competitor.",
-                  "You control what offers are on the table, how deep discounts can go, and what tone it uses.",
-                  "Every conversation is logged so you can see exactly what was said and what worked.",
+                  "AI-powered flows that adapt to price, missing features, seasonality, or competitor switches.",
+                  "You set guardrails: offer types, limits, segments, and tone  so it feels like your product.",
+                  "Full transcripts and outcomes in the dashboard for product, support, and growth.",
                 ],
                 stat: "40%+",
-                statLabel: "Of cancel attempts turn into saves in typical cohorts",
+                statLabel: "Save rate commonly seen in assisted cancel sessions",
                 buttonText: "See how it works",
                 buttonHref: "#features",
               },
@@ -259,16 +323,16 @@ export default function LandingPage() {
               icon: <HugeiconsIcon icon={CreditCardIcon} size={16} strokeWidth={1.5} className="shrink-0" />,
               label: "Payment recovery",
               content: {
-                badge: "Failed payment handling",
-                title: "A lot of churn is just a card that failed.",
-                description: "When a payment fails, most tools send the same generic email to everyone. ChurnQ writes the message based on why it failed — expired card, insufficient funds, bank block — and retries at the right time. Most people just forgot to update their card.",
+                badge: "Smart dunning",
+                title: "Recover failed payments before they become churn.",
+                description: "Involuntary churn from card failures is silent MRR leakage. ChurnQ generates contextual dunning for each failure type and uses intelligent retry windows so subscribers update billing without opening a ticket.",
                 bullets: [
-                  "Different messages for different failure reasons, not one blast that reads like spam.",
-                  "Retry timing you can tune to match how your billing processor behaves.",
-                  "Recovered payments show up next to your voluntary saves so you see the full picture.",
+                  "Copy tuned to insufficient funds, expired cards, and bank blocks  not one generic dunning blast.",
+                  "Retry cadences you can align with how your processor and product behave.",
+                  "Pending retries and recovered revenue sit beside voluntary saves in the same dashboard.",
                 ],
                 stat: "35%",
-                statLabel: "Of involuntary churn recovered in early cohorts",
+                statLabel: "Involuntary churn reduction teams report in early cohorts",
                 buttonText: "See how it works",
                 buttonHref: "#features",
               },
@@ -279,15 +343,15 @@ export default function LandingPage() {
               label: "Churn prediction",
               content: {
                 badge: "Daily risk scores",
-                title: "Know who's about to leave before they do.",
-                description: "Every day, ChurnQ scores your subscribers based on how they're behaving — logins dropping off, usage declining, payment issues piling up. The ones most likely to cancel float to the top so you can reach out before they've made up their mind.",
+                title: "See who is about to leave  before they click cancel.",
+                description: "Daily risk scores across subscribers make it obvious where to intervene: high-value accounts going quiet, usage cliffs, or payment friction. Optional alerts nudge your team while automation handles the cancel moment.",
                 bullets: [
-                  "Scores update daily from signals in your existing data, no extra tracking needed.",
-                  "Focus your outreach on the accounts where a conversation would actually change something.",
-                  "At-risk alerts sit alongside your saves and recovery data — one place, not three tools.",
+                  "Risk classes and scores refresh from behaviour you already track  no extra instrumentation.",
+                  "Prioritise outreach and roadmap bets on accounts that actually move MRR.",
+                  "Fits one narrative with saves and recovery instead of another siloed churn tool.",
                 ],
                 stat: "Days earlier",
-                statLabel: "Catch at-risk accounts before they reach the cancel button",
+                statLabel: "Surface at-risk accounts before cancel intent spikes",
                 buttonText: "See how it works",
                 buttonHref: "#features",
               },
@@ -297,16 +361,16 @@ export default function LandingPage() {
               icon: <HugeiconsIcon icon={Robot01Icon} size={16} strokeWidth={1.5} className="shrink-0" />,
               label: "Feedback & AI analyst",
               content: {
-                badge: "Cancellation insights",
-                title: "Find out why people are actually leaving.",
-                description: "Every cancel conversation goes into a log. ChurnQ reads them weekly and tells you what themes are coming up — price complaints, missing features, competitor names. You can also just ask it questions and get answers from your real data, not industry averages.",
+                badge: "Ask your data",
+                title: "Turn raw cancellations into product and growth decisions.",
+                description: "Weekly digests summarise themes across transcripts. Ask plain-English questions  which enterprise tier cites price most?  and get answers grounded in your tenant's data, not generic benchmarks.",
                 bullets: [
-                  "Weekly summary of what your churning subscribers actually said, grouped by theme.",
-                  "Ask questions in plain English: 'Why do annual subscribers cancel at month 11?'",
-                  "Useful for product decisions, not just retention — these are your most honest customers.",
+                  "Emergent themes from real cancellation dialogue, not survey guesswork.",
+                  "AI analyst chat over your history  no SQL wall, no manual tagging backlog.",
+                  "Same vocabulary your cancel flows use, so insights match what people actually said.",
                 ],
                 stat: "3×",
-                statLabel: "Faster from feedback signal to product decision (team-reported)",
+                statLabel: "Faster loop from feedback signals to roadmap focus (team-reported)",
                 buttonText: "See how it works",
                 buttonHref: "#features",
               },
@@ -319,140 +383,70 @@ export default function LandingPage() {
       <HowItWorks />
 
       {/* ── FEATURES ────────────────────────────────────────────────────── */}
-      <section id="features" style={{ background: "var(--cs-bg)", padding: "96px 0", borderTop: "1px solid var(--cs-border)", scrollMarginTop: 72 }}>
+      <section id="features" style={{ background: "var(--cs-bg)", padding: "72px 0", borderTop: "1px solid var(--cs-border)", scrollMarginTop: 72 }}>
         <div className="lnd-shell">
           <div style={{ textAlign: "center", marginBottom: 48 }}>
-            <div style={{ display: "inline-block", background: "#f4f4f5", color: "#18181b", fontSize: 12, fontWeight: 600, padding: "6px 14px", borderRadius: 99, marginBottom: 14, letterSpacing: "0.02em", border: "1px solid #e4e4e7" }}>Features</div>
+            <div style={{ display: "inline-block", background: EL, color: E, fontSize: 12, fontWeight: 600, padding: "6px 14px", borderRadius: 99, marginBottom: 14, letterSpacing: "0.02em", border: "1px solid rgba(5,150,105,0.2)" }}>Features</div>
             <h2 style={{ fontSize: "clamp(26px, 3.5vw, 36px)", fontWeight: 700, color: "var(--cs-text)", margin: 0, letterSpacing: "-0.03em" }}>
-              What's inside
+              Everything you need to stop losing subscribers
             </h2>
             <p style={{ fontSize: 15, color: "var(--cs-text-secondary)", margin: "14px auto 0", maxWidth: 520, lineHeight: 1.6 }}>
-              Everything talks to each other. A save in the cancel flow, a recovered payment, a risk score — they all feed the same dashboard.
+              One platform. Cancel flows, payment recovery, churn prediction, and product insights  all talking to each other.
             </p>
           </div>
 
           <BentoGrid
             items={([
               {
-                title: "Cancel flow agent",
-                meta: "41% saves last month",
-                description: "A real conversation, not a form. The AI reads what the subscriber says and responds to it.",
+                title: "AI Cancel Agent",
+                meta: "40%+ save rate",
+                description: "Aria  our AI retention agent  intercepts every cancel click. Detects the subscriber's reason and presents a personalised offer  discount, pause, or plan change  in seconds.",
+                icon: <HugeiconsIcon icon={BubbleChatIcon} size={16} strokeWidth={1.5} style={{ color: "#18181b" }} />,
+                status: "Core",
+                tags: ["Cancel flow", "Aria AI Agent", "Personalised"],
+                cta: "See it live →",
                 colSpan: 2,
                 hasPersistentHover: true,
-                tags: ["AI conversation", "Instant"],
-                cta: "See it live →",
-                visual: (
-                  <div style={{ background: "#f8fafc", border: "1px solid #e4e4e7", borderRadius: 12, padding: 14, fontSize: 12 }}>
-                    <div style={{ fontSize: 10, fontWeight: 600, color: "#94a3b8", marginBottom: 10, textTransform: "uppercase", letterSpacing: "0.06em" }}>Live session · 2 min ago</div>
-                    <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
-                      <div style={{ alignSelf: "flex-start", background: "#fff", border: "1px solid #e4e4e7", borderRadius: "12px 12px 12px 3px", padding: "7px 11px", maxWidth: "85%", color: "#18181b", lineHeight: 1.5 }}>Before you go — what's not working for you?</div>
-                      <div style={{ alignSelf: "flex-end", background: "#18181b", borderRadius: "12px 12px 3px 12px", padding: "7px 11px", maxWidth: "85%", color: "#fff", lineHeight: 1.5 }}>It's too expensive right now.</div>
-                      <div style={{ alignSelf: "flex-start", background: "#fff", border: "1px solid #e4e4e7", borderRadius: "12px 12px 12px 3px", padding: "7px 11px", maxWidth: "85%", color: "#18181b", lineHeight: 1.5 }}>I can do 40% off for 3 months — brings it to $17/mo. No contract.</div>
-                    </div>
-                    <div style={{ marginTop: 10, background: "#f0fdf4", border: "1px solid #86efac", borderRadius: 8, padding: "8px 12px", fontSize: 11, fontWeight: 600, color: "#166534" }}>
-                      Offer accepted — subscriber stayed
-                    </div>
-                  </div>
-                ),
               },
               {
-                title: "Payment recovery",
-                meta: "35% of failed cards recovered",
-                description: "Writes the message based on why the card failed, then retries at the right time.",
-                tags: ["Failed cards", "Smart retry"],
-                visual: (
-                  <div style={{ background: "#f8fafc", border: "1px solid #e4e4e7", borderRadius: 12, padding: 14 }}>
-                    <div style={{ fontSize: 26, fontWeight: 800, color: "#18181b", letterSpacing: "-0.03em", lineHeight: 1 }}>$1,840</div>
-                    <div style={{ fontSize: 12, color: "#64748b", marginTop: 4, marginBottom: 12 }}>recovered from failed cards · last 30 days</div>
-                    <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
-                      {[
-                        { label: "Expired card", count: 6, pct: 50 },
-                        { label: "Bank block", count: 4, pct: 33 },
-                        { label: "Insufficient funds", count: 2, pct: 17 },
-                      ].map(r => (
-                        <div key={r.label} style={{ display: "flex", alignItems: "center", gap: 8, fontSize: 11 }}>
-                          <div style={{ width: 90, color: "#52525b", flexShrink: 0 }}>{r.label}</div>
-                          <div style={{ flex: 1, height: 4, background: "#e4e4e7", borderRadius: 99 }}>
-                            <div style={{ width: `${r.pct}%`, height: "100%", background: "#18181b", borderRadius: 99 }} />
-                          </div>
-                          <div style={{ color: "#94a3b8", width: 14, textAlign: "right" }}>{r.count}</div>
-                        </div>
-                      ))}
-                    </div>
-                  </div>
-                ),
+                title: "Payment Recovery",
+                meta: "35% recovery",
+                description: "Contextual dunning for each failure type  expired cards, insufficient funds, bank blocks. Smart retry windows recover revenue silently.",
+                icon: <HugeiconsIcon icon={CreditCardIcon} size={16} strokeWidth={1.5} className="text-blue-500" />,
+                status: "Active",
+                tags: ["Dunning", "Smart retry"],
               },
               {
-                title: "Churn prediction",
-                meta: "Updated daily",
-                description: "Scores every subscriber daily. The ones most likely to cancel rise to the top.",
-                tags: ["Risk scores", "Early warning"],
-                visual: (
-                  <div style={{ background: "#f8fafc", border: "1px solid #e4e4e7", borderRadius: 12, padding: 14 }}>
-                    <div style={{ fontSize: 10, fontWeight: 600, color: "#94a3b8", marginBottom: 10, textTransform: "uppercase", letterSpacing: "0.06em" }}>At-risk today · 17 subscribers</div>
-                    {[
-                      { id: "acme_corp", score: 91, label: "High" },
-                      { id: "user_4821", score: 84, label: "High" },
-                      { id: "studio_inc", score: 67, label: "Med" },
-                    ].map(s => (
-                      <div key={s.id} style={{ display: "flex", alignItems: "center", justifyContent: "space-between", padding: "6px 0", borderBottom: "1px solid #f0f0f0", fontSize: 12 }}>
-                        <span style={{ color: "#18181b", fontFamily: "monospace" }}>{s.id}</span>
-                        <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
-                          <span style={{ color: s.label === "High" ? "#dc2626" : "#d97706", fontWeight: 600, fontSize: 11 }}>{s.label}</span>
-                          <span style={{ color: "#94a3b8", fontSize: 11 }}>{s.score}</span>
-                        </div>
-                      </div>
-                    ))}
-                    <div style={{ fontSize: 11, color: "#94a3b8", marginTop: 8 }}>+14 more flagged this week</div>
-                  </div>
-                ),
+                title: "Churn Prediction",
+                meta: "Daily scores",
+                description: "Risk scores refresh daily from usage signals. Surface at-risk accounts before they reach the cancel button.",
+                icon: <HugeiconsIcon icon={ChartLineData01Icon} size={16} strokeWidth={1.5} className="text-rose-500" />,
+                status: "Daily",
+                tags: ["Risk scores", "Alerts"],
               },
               {
-                title: "Weekly cancellation digest",
-                meta: "In your inbox every Monday",
-                description: "Reads all your cancel transcripts and tells you what themes are coming up — no manual tagging, no spreadsheets.",
+                title: "Feedback Digest",
+                meta: "Weekly AI summary",
+                description: "Themes, complaints, and product signals extracted from real cancellation transcripts  delivered to your inbox every week.",
+                icon: <HugeiconsIcon icon={BarChartIcon} size={16} strokeWidth={1.5} className="text-amber-500" />,
+                status: "Weekly",
+                tags: ["Themes", "Product signal"],
                 colSpan: 2,
-                tags: ["Themes", "Inbox"],
-                visual: (
-                  <div style={{ background: "#f8fafc", border: "1px solid #e4e4e7", borderRadius: 12, padding: 14 }}>
-                    <div style={{ fontSize: 10, fontWeight: 600, color: "#94a3b8", marginBottom: 10, textTransform: "uppercase", letterSpacing: "0.06em" }}>Week of Apr 7 · 23 cancellations</div>
-                    <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 8 }}>
-                      {[
-                        { theme: "Price too high", count: 9, pct: 39 },
-                        { theme: "Missing features", count: 6, pct: 26 },
-                        { theme: "Not using it enough", count: 5, pct: 22 },
-                        { theme: "Switched to competitor", count: 3, pct: 13 },
-                      ].map(t => (
-                        <div key={t.theme} style={{ background: "#fff", border: "1px solid #e4e4e7", borderRadius: 8, padding: "8px 10px" }}>
-                          <div style={{ fontSize: 12, fontWeight: 600, color: "#18181b" }}>{t.count} <span style={{ fontWeight: 400, color: "#64748b" }}>({t.pct}%)</span></div>
-                          <div style={{ fontSize: 11, color: "#64748b", marginTop: 2 }}>{t.theme}</div>
-                        </div>
-                      ))}
-                    </div>
-                  </div>
-                ),
               },
               {
-                title: "Ask your data",
-                meta: "Plain English answers",
-                description: "Type a question and get an answer from your actual transcripts — not a benchmark, not a guess.",
+                title: "AI Feedback Chat",
+                meta: "Plain English",
+                description: "Ask 'Why do annual users cancel at month 11?' and get answers grounded in your actual transcript data  not generic benchmarks.",
+                icon: <HugeiconsIcon icon={Robot01Icon} size={16} strokeWidth={1.5} className="text-emerald-500" />,
+                status: "AI",
+                tags: ["Ask anything", "Your data"],
                 colSpan: 2,
-                tags: ["Your data", "AI analyst"],
-                visual: (
-                  <div style={{ background: "#f8fafc", border: "1px solid #e4e4e7", borderRadius: 12, padding: 14 }}>
-                    <div style={{ fontSize: 11, color: "#94a3b8", marginBottom: 6, fontStyle: "italic" }}>Why do annual subscribers cancel at month 9?</div>
-                    <div style={{ fontSize: 12, color: "#18181b", lineHeight: 1.7, background: "#fff", border: "1px solid #e4e4e7", borderRadius: 8, padding: "10px 12px" }}>
-                      Of 14 annual cancellations at month 9, <strong>8 mentioned the reporting features</strong> — specifically the lack of CSV export. 4 cited budget cuts after a company restructure. The remaining 2 named a competitor by name.
-                    </div>
-                    <div style={{ fontSize: 10, color: "#94a3b8", marginTop: 8 }}>Based on 14 transcripts · Apr 2025 cohort</div>
-                  </div>
-                ),
               },
               {
-                title: "You control the rules",
-                meta: "Fully configurable",
-                description: "Set which offers are available, how deep discounts go, which segments see what, and what tone the AI uses. It should feel like your product, not a bolt-on.",
-                icon: <HugeiconsIcon icon={Settings02Icon} size={16} strokeWidth={1.5} style={{ color: "#18181b" }} />,
+                title: "Full Customisation",
+                meta: "Your rules",
+                description: "Control offer types, discount percentages, duration, custom messages, and per-segment guardrails. It acts like your product, not a bolt-on.",
+                icon: <HugeiconsIcon icon={Settings02Icon} size={16} strokeWidth={1.5} className="text-gray-400" />,
                 status: "Config",
                 tags: ["Guardrails", "Segments"],
               },
@@ -462,65 +456,102 @@ export default function LandingPage() {
       </section>
 
       {/* ── PRICING ─────────────────────────────────────────────────────── */}
-      <section id="pricing" style={{ background: "#fff", padding: "96px 0", borderTop: "1px solid var(--cs-border)", scrollMarginTop: 72 }}>
+      <section id="pricing" style={{ background: "#fff", padding: "80px 0", borderTop: "1px solid #e2e8f0", scrollMarginTop: 72 }}>
         <div className="lnd-shell" style={{ maxWidth: 900 }}>
           <div style={{ textAlign: "center", marginBottom: 52 }}>
             <div style={{ display: "inline-block", background: "#f4f4f5", color: "#18181b", fontSize: 12, fontWeight: 600, padding: "6px 14px", borderRadius: 99, marginBottom: 14, letterSpacing: "0.02em", border: "1px solid #e4e4e7" }}>Pricing</div>
             <h2 style={{ fontSize: "clamp(28px, 4vw, 40px)", fontWeight: 800, color: "#09090b", margin: "0 0 12px", letterSpacing: "-0.03em" }}>
-              No monthly fee. Ever.
+              We only win when you win
             </h2>
-            <p style={{ color: "#64748b", fontSize: 16, margin: 0 }}>We charge 15% of the revenue we actually save you. If we save nothing, you pay nothing.</p>
+            <p style={{ color: "#64748b", fontSize: 16, margin: 0 }}>No monthly fees. No subscriptions. We take 15% of the revenue we save you  nothing else.</p>
           </div>
 
           <PricingCard
-            title="Performance pricing"
-            description="Every feature is included. We only make money when you keep a subscriber you would have lost."
+            title="Performance Pricing"
+            description="We only charge when we save your revenue. Every feature included  no tiers, no upsells."
             price={15}
             priceSuffix="%"
-            priceSubtitle="of the revenue we save you"
+            priceSubtitle="of MRR we save you"
             features={[
               {
-                title: "What you get",
+                title: "Everything included",
                 items: [
-                  "AI cancel flow conversations, unlimited",
-                  "Failed payment recovery emails",
-                  "Daily churn risk scores",
-                  "Weekly cancellation digest",
-                  "AI analyst — ask questions about your data",
-                  "Full dashboard and session history",
+                  "Full AI cancel flow agent  unlimited",
+                  "Payment recovery emails",
+                  "Churn prediction & risk scores",
+                  "AI Feedback Chat",
+                  "Dashboard & analytics",
                 ],
               },
               {
-                title: "How we charge",
+                title: "How billing works",
                 items: [
-                  "15% of MRR we recover for you",
-                  "No save, no charge",
+                  "15% of MRR we recover",
+                  "No save = no charge",
                   "No monthly subscription",
                   "No setup fee",
                 ],
               },
             ]}
-            buttonText="Get started free"
+            buttonText="Get started  free"
             onButtonClick={() => router.push("/sign-up")}
           />
 
           <p style={{ textAlign: "center", marginTop: 24, fontSize: 13, color: "#64748b" }}>
-            Processing a lot of volume?{" "}
-            <a href="mailto:hello@churnq.com" style={{ color: "#18181b", fontWeight: 600, textDecoration: "none" }}>Get in touch and we'll work something out.</a>
+            High-volume or enterprise?{" "}
+            <a href="mailto:hello@churnq.com" style={{ color: "#18181b", fontWeight: 600, textDecoration: "none" }}>Talk to us</a>
           </p>
         </div>
       </section>
 
+      {/* ── TESTIMONIALS ────────────────────────────────────────────────── */}
+      <section style={{ background: "var(--cs-surface)", padding: "72px 0", borderTop: "1px solid var(--cs-border)" }}>
+        <div className="lnd-shell">
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.8, delay: 0.1, ease: [0.16, 1, 0.3, 1] }}
+            viewport={{ once: true }}
+            style={{ display: "flex", flexDirection: "column", alignItems: "center", maxWidth: 540, margin: "0 auto 48px" }}
+          >
+            <div style={{ display: "inline-flex", alignItems: "center", gap: 6, background: VL, color: "var(--cs-accent)", fontSize: 12, fontWeight: 600, padding: "6px 14px", borderRadius: 99, marginBottom: 14, letterSpacing: "0.02em", border: "1px solid var(--cs-accent-ring)" }}>
+              Testimonials
+            </div>
+            <h2 style={{ fontSize: "clamp(26px, 4vw, 38px)", fontWeight: 800, color: "var(--cs-text)", margin: "0 0 12px", letterSpacing: "-0.03em", textAlign: "center" }}>
+              What our users say
+            </h2>
+            <p style={{ color: "var(--cs-text-secondary)", fontSize: 15, margin: 0, textAlign: "center", lineHeight: 1.6 }}>
+              See how ChurnQ founders are saving MRR every single day.
+            </p>
+          </motion.div>
+
+          <div style={{
+            display: "flex",
+            justifyContent: "center",
+            gap: 24,
+            marginTop: 8,
+            maxHeight: 780,
+            overflow: "hidden",
+            WebkitMaskImage: "linear-gradient(to bottom, transparent, black 20%, black 80%, transparent)",
+            maskImage: "linear-gradient(to bottom, transparent, black 20%, black 80%, transparent)",
+          }}>
+            <TestimonialsColumn testimonials={firstColumn} duration={22} startIndex={0} />
+            <TestimonialsColumn testimonials={secondColumn} duration={28} startIndex={3} />
+            <TestimonialsColumn testimonials={thirdColumn} duration={25} startIndex={6} />
+          </div>
+        </div>
+      </section>
+
       {/* ── FAQ ─────────────────────────────────────────────────────────── */}
-      <section id="faq" style={{ background: "#fff", padding: "96px 0", borderTop: "1px solid var(--cs-border)", scrollMarginTop: 72 }}>
+      <section id="faq" style={{ background: "#fff", padding: "80px 0", borderTop: "1px solid #e2e8f0", scrollMarginTop: 72 }}>
         <div className="lnd-shell" style={{ maxWidth: 760 }}>
           <div style={{ textAlign: "center", marginBottom: 52 }}>
             <div style={{ display: "inline-block", background: "#f4f4f5", color: "#18181b", fontSize: 12, fontWeight: 600, padding: "6px 14px", borderRadius: 99, marginBottom: 14, letterSpacing: "0.02em", border: "1px solid #e4e4e7" }}>FAQ</div>
             <h2 style={{ fontSize: "clamp(26px, 4vw, 38px)", fontWeight: 800, color: "#09090b", margin: "0 0 12px", letterSpacing: "-0.03em" }}>
-              Common questions
+              Everything you need to know
             </h2>
             <p style={{ color: "#64748b", fontSize: 16, margin: 0 }}>
-              Things people usually ask before signing up.
+              Common questions about ChurnQ, how it compares, and how billing works.
             </p>
           </div>
 
@@ -529,42 +560,42 @@ export default function LandingPage() {
               {
                 id: "q1",
                 q: "How is ChurnQ different from Churnkey?",
-                a: "Mainly the pricing model. Churnkey charges a flat monthly fee whether it saves anyone or not — you're paying regardless of results. ChurnQ only charges when we actually keep a subscriber: 15% of what we save, nothing if we don't. The other difference is the cancel flow itself. Churnkey uses configurable forms and templates. ChurnQ has a live AI conversation that reads what the subscriber says and responds to it — it's not a decision tree.",
+                a: "The biggest difference is how we charge. Churnkey charges a flat monthly subscription fee regardless of results  you pay even if they save zero customers. ChurnQ uses pure performance pricing: we take 15% of MRR we actually recover. If we don't save anyone, you pay nothing. We also use a live AI agent that adapts its offer in real time, while most competitors rely on static templates you configure manually.",
               },
               {
                 id: "q2",
-                q: "Is there a monthly fee?",
-                a: "No. No monthly fee, no setup fee, no subscription. We only charge a 15% cut of the MRR we recover for you. If a subscriber cancels anyway, we get nothing from that interaction.",
+                q: "Is there a monthly fee or subscription cost?",
+                a: "No. ChurnQ has zero monthly fees, zero setup costs, and zero subscriptions. Our only revenue comes from a 15% share of the revenue we save you. This aligns our incentives completely with yours  we only win when you win.",
               },
               {
                 id: "q3",
-                q: "What's the best cancel flow tool for SaaS?",
-                a: "Honestly, the one that costs you nothing when it doesn't work. Most tools charge you a flat fee and hope you don't notice the save rate. With ChurnQ, if we're not saving subscribers, we're not making money — so we have a real reason to make it work. That said, the right tool depends on your product. We're a good fit for subscription SaaS where a 5-minute setup matters and you want performance pricing.",
+                q: "What is the best cancel flow software for SaaS in 2025?",
+                a: "The best cancel flow tool is one that charges you nothing unless it delivers results. ChurnQ's AI-powered cancel flow engages subscribers in real time, surfaces the right offer (discount, pause, downgrade, or empathy), and only bills you for successful saves. Unlike fixed-fee platforms, you're never paying for performance you didn't get.",
               },
               {
                 id: "q4",
-                q: "How is a live AI conversation better than a form?",
-                a: "A form shows the same options to everyone. An AI conversation responds to what the subscriber actually says. If they say 'it's too expensive', the AI can offer a discount. If they say 'I'm not using it enough', it might suggest a pause. The response fits the reason, which is why save rates are higher than with static flows.",
+                q: "How does ChurnQ's AI compare to template-based retention tools?",
+                a: "Traditional retention tools let you build a decision tree  if the customer says X show them Y. ChurnQ uses a conversational AI agent that reads the subscriber's reason for cancelling, their usage history, and their MRR tier to generate a personalised offer on the fly. This produces higher save rates because the response feels human, not scripted.",
               },
               {
                 id: "q5",
-                q: "Which billing platforms does it work with?",
-                a: "Stripe right now. You connect your Stripe account during setup, drop the script tag into your product, and ChurnQ handles the rest. Paddle support is on the roadmap.",
+                q: "Which billing platforms does ChurnQ integrate with?",
+                a: "ChurnQ integrates with Stripe and Paddle out of the box via a single JavaScript snippet. Setup takes under 5 minutes  you drop in the script tag, connect your billing provider, and ChurnQ automatically intercepts cancel events from that point forward.",
               },
               {
                 id: "q6",
-                q: "How long before I see results?",
-                a: "Usually within the first day someone tries to cancel. The AI doesn't need a warm-up period — it works from the first conversation. Save rates tend to settle into a steady range after the first couple of weeks once it's seen enough of your subscribers.",
+                q: "How quickly can I see results after setup?",
+                a: "Most customers see their first saved subscriber within 24 hours of going live. The AI model improves as it sees more sessions from your specific product  typically within the first two weeks your save rate stabilises at its peak for your audience.",
               },
               {
                 id: "q7",
-                q: "What if someone still cancels anyway?",
-                a: "You don't pay anything. No save means no fee. We don't charge for the attempt, only for the result.",
+                q: "What happens if ChurnQ doesn't save a subscriber?",
+                a: "Nothing  you owe us nothing. There is no base fee. If a customer cancels despite the AI's best effort, we charge zero. This is the core promise of performance pricing: our interests are identical to yours.",
               },
               {
                 id: "q8",
-                q: "Can I switch from another tool easily?",
-                a: "Yes. Remove your current cancel-flow script, add ours. No data migration, no setup call, no paperwork. Most people are live in under an hour.",
+                q: "Can I switch from Churnkey or another provider easily?",
+                a: "Yes. Switching is a one-line script change. Remove your existing cancel-flow snippet and add ours  there's no data migration, no configuration wizard, and no onboarding call required. Most teams are live in under an hour.",
               },
             ].map(({ id, q, a }) => (
               <AccordionItem
@@ -595,7 +626,7 @@ export default function LandingPage() {
 
       <ModemAnimatedFooter
         brandName="ChurnQ"
-        brandDescription="ChurnQ talks to subscribers who try to cancel, chases failed payments, and tells you who's at risk before they leave. No monthly fee — we only charge when we save revenue."
+        brandDescription="Stop losing revenue every time someone clicks cancel. AI-powered retention for SaaS founders  zero flat fee, pay only on results."
         socialLinks={[
           {
             icon: <HugeiconsIcon icon={Mail01Icon} size={20} strokeWidth={1.5} />,

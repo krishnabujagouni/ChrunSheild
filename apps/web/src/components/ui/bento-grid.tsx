@@ -5,9 +5,7 @@ import { cn } from "@/lib/utils";
 export interface BentoItem {
   title: string;
   description: string;
-  icon?: React.ReactNode;
-  /** When provided, replaces the icon+status row with a rich visual preview */
-  visual?: React.ReactNode;
+  icon: React.ReactNode;
   status?: string;
   tags?: string[];
   meta?: string;
@@ -46,23 +44,26 @@ function BentoGrid({ items, className }: BentoGridProps) {
             <div className="absolute inset-0 bg-[radial-gradient(circle_at_center,rgba(0,0,0,0.025)_1px,transparent_1px)] bg-[length:4px_4px]" />
           </div>
 
+          {/* gradient border on hover */}
+          <div
+            className={cn(
+              "absolute inset-0 -z-10 rounded-2xl p-px bg-gradient-to-br from-transparent via-gray-200/60 to-transparent transition-opacity duration-300",
+              item.hasPersistentHover ? "opacity-100" : "opacity-0 group-hover:opacity-100",
+            )}
+          />
 
           <div className="relative flex flex-col space-y-4">
-            {/* Visual preview OR icon+status row */}
-            {item.visual ? (
-              <div className="w-full">{item.visual}</div>
-            ) : (
-              <div className="flex items-center justify-between">
-                <div className="w-9 h-9 rounded-xl flex items-center justify-center bg-gray-50 border border-gray-100 group-hover:border-gray-200 transition-all duration-300">
-                  {item.icon}
-                </div>
-                {item.status && (
-                  <span className="text-xs font-medium px-2.5 py-1 rounded-lg bg-gray-50 text-gray-500 border border-gray-100 group-hover:bg-gray-100 transition-colors duration-300">
-                    {item.status}
-                  </span>
-                )}
+            {/* Icon + status row */}
+            <div className="flex items-center justify-between">
+              <div className="w-9 h-9 rounded-xl flex items-center justify-center bg-gray-50 border border-gray-100 group-hover:border-gray-200 transition-all duration-300">
+                {item.icon}
               </div>
-            )}
+              {item.status && (
+                <span className="text-xs font-medium px-2.5 py-1 rounded-lg bg-gray-50 text-gray-500 border border-gray-100 group-hover:bg-gray-100 transition-colors duration-300">
+                  {item.status}
+                </span>
+              )}
+            </div>
 
             {/* Title + meta + description */}
             <div className="space-y-1.5">

@@ -22,38 +22,38 @@ const STEPS: Step[] = [
   {
     step: "01",
     icon: SourceCodeIcon,
-    accentColor: "#18181b",
-    accentBg: "#f4f4f5",
-    title: "Paste in one script tag",
+    accentColor: "#6d28d9",
+    accentBg: "#f5f3ff",
+    title: "Add one script tag",
     description:
-      "Copy the snippet from your dashboard and drop it into your app. It finds your cancel button automatically — no backend work, no webhook config.",
-    detail: "Works with React, Next.js, plain HTML, anything.",
+      "Drop a single JS snippet into your app. It auto-detects cancel buttons  no webhook wiring, no backend changes.",
+    detail: "Works with any framework: React, Next.js, plain HTML.",
   },
   {
     step: "02",
     icon: BubbleChatSparkIcon,
-    accentColor: "#18181b",
-    accentBg: "#f4f4f5",
-    title: "ChurnQ talks to the subscriber",
+    accentColor: "#2563eb",
+    accentBg: "#eff6ff",
+    title: "AI handles the cancel",
     description:
-      "When someone clicks cancel, a short AI conversation opens. It listens to their reason and makes a relevant offer — discount, pause, plan change, or a clean exit.",
-    detail: "You decide what offers are available and how far they go.",
+      "Aria, our AI retention agent, opens a conversation, understands the subscriber's reason, and makes a personalised offer in seconds.",
+    detail: "You set the guardrails: offer types, limits, tone.",
   },
   {
     step: "03",
     icon: Analytics01Icon,
-    accentColor: "#18181b",
-    accentBg: "#f4f4f5",
-    title: "You see what happened",
+    accentColor: "#059669",
+    accentBg: "#ecfdf5",
+    title: "Watch revenue stay",
     description:
-      "Saves, failed payment recoveries, and at-risk subscribers all show up in your dashboard. You see exactly what was said and what worked.",
-    detail: "We take 15% of what we save. Nothing if the subscriber cancels anyway.",
+      "Saved subscribers appear in your dashboard instantly. MRR recovered, save rates, and churn reasons  all in one place.",
+    detail: "We charge 15% of what we save. Zero cost if nothing saves.",
   },
 ];
 
 export function HowItWorks() {
   return (
-    <section className="py-24 bg-white border-t border-[#e4e4e7]">
+    <section className="py-16 bg-white border-t border-[#e4e4e7]">
       <div className="lnd-shell">
         {/* header */}
         <div className="flex flex-col items-center gap-3 text-center mb-12">
@@ -64,10 +64,11 @@ export function HowItWorks() {
             How it works
           </Badge>
           <h2 className="max-w-lg text-3xl font-bold tracking-tight text-[#09090b] md:text-4xl leading-tight">
-            You can be live in about five minutes.
+            Live in <span className="text-violet-600">three steps.</span>
           </h2>
-          <p className="text-muted-foreground max-w-md text-base leading-relaxed">
-            One script tag, no backend work, no webhook setup. ChurnQ handles everything from there.
+          <p className="text-muted-foreground max-w-md text-base">
+            Drop one script tag and ChurnQ does the rest  no webhook
+            config, no backend changes, no flat monthly fee.
           </p>
         </div>
 

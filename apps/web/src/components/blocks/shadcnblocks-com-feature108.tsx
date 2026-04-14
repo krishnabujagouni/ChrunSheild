@@ -40,7 +40,7 @@ const Feature108 = ({
   if (!tabs.length) return null;
 
   return (
-    <section className="py-24 bg-white">
+    <section className="py-16 bg-white">
       <div className="lnd-shell">
         {(badge || heading || description) && (
           <div className="flex flex-col items-center gap-3 text-center mb-10">
@@ -55,7 +55,7 @@ const Feature108 = ({
               </h2>
             )}
             {description && (
-              <p className="text-muted-foreground max-w-xl text-base leading-relaxed">{description}</p>
+              <p className="text-muted-foreground max-w-xl text-base">{description}</p>
             )}
           </div>
         )}
@@ -89,7 +89,7 @@ const Feature108 = ({
                   <h3 className="text-2xl font-bold tracking-tight text-[#09090b] lg:text-3xl leading-tight">
                     {tab.content.title}
                   </h3>
-                  <p className="text-muted-foreground leading-relaxed text-[15px]">
+                  <p className="text-muted-foreground leading-relaxed">
                     {tab.content.description}
                   </p>
                   <ul className="flex flex-col gap-2.5">
