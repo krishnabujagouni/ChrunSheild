@@ -119,7 +119,7 @@ export function ProductSelector() {
 
       {noneSelected && (
         <div style={{ marginBottom: 12, padding: "10px 14px", background: "#fffbeb", border: "1px solid #fcd34d", borderRadius: 8, fontSize: 12, color: "#92400e" }}>
-          No products selected — ChurnQ will intercept cancel events for <strong>all</strong> subscribers.
+          No products selected  ChurnQ will intercept cancel events for <strong>all</strong> subscribers.
         </div>
       )}
 

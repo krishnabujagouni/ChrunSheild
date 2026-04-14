@@ -11,7 +11,7 @@ export default async function OnboardingLayout({ children }: { children: React.R
     select: { onboarded: true },
   });
 
-  // Already onboarded — skip straight to dashboard
+  // Already onboarded  skip straight to dashboard
   if (tenant?.onboarded) redirect("/dashboard");
 
   return <>{children}</>;

@@ -127,6 +127,8 @@ model SaveSession {
   subscriberId       String      @map("subscriber_id")
   /// Stripe Subscription id (sub_...) when passed from embed  targets the correct sub for offers if customer has several.
   stripeSubscriptionId String?   @map("stripe_subscription_id") @db.VarChar(64)
+  /// Stripe Product id (prod_...) when passed from embed  enables per-product filtering in dashboard.
+  stripeProductId      String?   @map("stripe_product_id") @db.VarChar(64)
   /// Merchant-facing display; optional. Pass from embed as subscriberEmail (Stripe customer id stays in subscriberId).
   subscriberEmail    String?     @map("subscriber_email") @db.VarChar(320)
   subscriptionMrr    Decimal     @map("subscription_mrr") @db.Decimal(12, 2)

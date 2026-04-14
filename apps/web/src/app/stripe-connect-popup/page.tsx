@@ -205,7 +205,7 @@ export default function StripeConnectPopupPage() {
                 </div>
               ) : (
                 <div style={{ padding: "10px 14px", background: "#fffbeb", border: "1px solid #fcd34d", borderRadius: 8, fontSize: 12, color: "#92400e", marginBottom: 4 }}>
-                  No products added — ChurnQ will protect <strong>all</strong> subscribers.
+                  No products added  ChurnQ will protect <strong>all</strong> subscribers.
                 </div>
               )}
             </>

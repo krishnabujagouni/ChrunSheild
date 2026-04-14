@@ -3,7 +3,7 @@ import { termsOfServiceHtml } from "@/content/terms-of-service";
 
 export const metadata = {
   title: "Terms of Service | ChurnQ",
-  description: "ChurnQ Terms of Service — the rules governing your use of the ChurnQ platform.",
+  description: "ChurnQ Terms of Service  the rules governing your use of the ChurnQ platform.",
 };
 
 export default function TermsPage() {

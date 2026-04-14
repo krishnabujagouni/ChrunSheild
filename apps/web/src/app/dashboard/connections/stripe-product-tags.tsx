@@ -51,6 +51,9 @@ export function StripeProductTags() {
     return <div style={{ fontSize: 11, color: "#94a3b8", marginTop: 8 }}>Loading products…</div>;
   }
 
+  // Single-product tenants don't need a selector
+  if (products.length < 2) return null;
+
   return (
     <div style={{ marginTop: 10 }}>
       <div style={{ fontSize: 11, fontWeight: 600, color: "#64748b", marginBottom: 6, textTransform: "uppercase", letterSpacing: "0.05em" }}>
@@ -89,7 +92,7 @@ export function StripeProductTags() {
         {/* Empty state */}
         {activeProducts.length === 0 && (
           <span style={{ fontSize: 12, color: "#94a3b8", fontStyle: "italic" }}>
-            No products selected — embed the snippet first, then add here
+            No products selected  embed the snippet first, then add here
           </span>
         )}
 

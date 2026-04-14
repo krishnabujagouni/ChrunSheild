@@ -3,7 +3,7 @@ import { privacyPolicyHtml } from "@/content/privacy-policy";
 
 export const metadata = {
   title: "Privacy Policy | ChurnQ",
-  description: "ChurnQ Privacy Policy — how we collect, use, and protect your data.",
+  description: "ChurnQ Privacy Policy  how we collect, use, and protect your data.",
 };
 
 export default function PrivacyPage() {

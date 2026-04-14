@@ -36,6 +36,8 @@ type Body = {
   subscriptionId?: string;
   stripeSubscriptionId?: string;
   subscriptionMrr?: number | string;
+  /** Optional  Stripe prod_...; stored for per-product filtering */
+  stripeProductId?: string;
 };
 
 export async function POST(request: Request) {
@@ -121,6 +123,9 @@ export async function POST(request: Request) {
 
   const subscriberEmail = normalizeSubscriberEmail(body.subscriberEmail);
 
+  const rawProductId = body.stripeProductId?.trim();
+  const stripeProductId = rawProductId && /^prod_/.test(rawProductId) ? rawProductId.slice(0, 64) : undefined;
+
   const session = await prisma.saveSession.create({
     data: {
       tenantId: tenant.id,
@@ -128,6 +133,7 @@ export async function POST(request: Request) {
       subscriberId,
       subscriptionMrr,
       ...(stripeSubscriptionId ? { stripeSubscriptionId } : {}),
+      ...(stripeProductId ? { stripeProductId } : {}),
     },
   });
 

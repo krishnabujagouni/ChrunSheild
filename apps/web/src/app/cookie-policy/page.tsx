@@ -3,7 +3,7 @@ import { cookiePolicyHtml } from "@/content/cookie-policy";
 
 export const metadata = {
   title: "Cookie Policy | ChurnQ",
-  description: "ChurnQ Cookie Policy — how we use cookies and similar tracking technologies.",
+  description: "ChurnQ Cookie Policy  how we use cookies and similar tracking technologies.",
 };
 
 export default function CookiePolicyPage() {
