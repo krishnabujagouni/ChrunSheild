@@ -2,7 +2,6 @@
 import Link from "next/link";
 import { useState, useEffect } from "react";
 import { usePathname, useRouter } from "next/navigation";
-import { TestimonialsColumn, type Testimonial } from "@/components/ui/testimonials-columns-1";
 import { AnimatedNavigationTabs } from "@/components/ui/animated-navigation-tabs";
 import { HeroSection } from "@/components/ui/hero-section";
 import { BentoGrid, type BentoItem } from "@/components/ui/bento-grid";
@@ -11,7 +10,6 @@ import { PricingCard } from "@/components/ui/pricing-card";
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
 import { Feature108 } from "@/components/blocks/shadcnblocks-com-feature108";
 import { ModemAnimatedFooter } from "@/components/ui/modem-animated-footer";
-import { motion } from "motion/react";
 import { HugeiconsIcon } from "@hugeicons/react";
 import {
   Shield01Icon,
@@ -28,7 +26,6 @@ import {
 } from "@hugeicons/core-free-icons";
 
 /* ─── Design tokens (aligned with globals.css) ─────────────────────────── */
-const VL = "var(--cs-accent-soft)";
 const E = "var(--cs-success)";
 const EL = "var(--cs-success-soft)";
 
@@ -49,59 +46,6 @@ function useMobileNav() {
   }, [isMobile]);
   return { open, setOpen, isMobile };
 }
-
-/* ─── Testimonials data ─────────────────────────────────────────────────── */
-const testimonials: Testimonial[] = [
-  {
-    text: "ChurnQ saved us $4,200 in MRR last month alone. The AI handles cancellations better than our best support rep.",
-    name: "Briana Patton",
-    role: "Founder, Taskfully",
-  },
-  {
-    text: "We went from 12% monthly churn to under 7% in 6 weeks. Setup took 10 minutes and we haven't touched it since.",
-    name: "Bilal Ahmed",
-    role: "CTO, PlanFlow",
-  },
-  {
-    text: "The performance-only pricing sealed it. No flat fee meant we could try it with zero risk. Now it's in our standard stack.",
-    name: "Saman Malik",
-    role: "CEO, Calmly",
-  },
-  {
-    text: "At-risk outreach alone is worth it  we're reaching subscribers before they even think about cancelling.",
-    name: "Omar Raza",
-    role: "Founder, Notified",
-  },
-  {
-    text: "Our subscribers actually thank us after the cancel flow. The AI is empathetic in a way I didn't expect from a tool.",
-    name: "Zainab Hussain",
-    role: "Head of Growth, Loopify",
-  },
-  {
-    text: "I was sceptical but the numbers don't lie. 41% of cancel attempts are now saves. It pays for itself in week one.",
-    name: "Aliza Khan",
-    role: "Co-founder, Funnelbase",
-  },
-  {
-    text: "Payment recovery was a manual nightmare. ChurnQ's retry sequences recovered $1,800 last quarter without us touching a thing.",
-    name: "Farhan Siddiqui",
-    role: "Founder, Stackr",
-  },
-  {
-    text: "The weekly digest keeps me informed without constant dashboard checking. Exactly what a solo founder needs.",
-    name: "Sana Sheikh",
-    role: "Founder, Writepath",
-  },
-  {
-    text: "Switched from Churnkey  same quality AI flow, but I only pay when it actually saves revenue.",
-    name: "Hassan Ali",
-    role: "Founder, Invoicely",
-  },
-];
-
-const firstColumn = testimonials.slice(0, 3);
-const secondColumn = testimonials.slice(3, 6);
-const thirdColumn = testimonials.slice(6, 9);
 
 /* ─── Mock AI chat card (hero visual) ──────────────────────────────────── */
 function ChatCard() {
@@ -383,7 +327,7 @@ export default function LandingPage() {
       <HowItWorks />
 
       {/* ── FEATURES ────────────────────────────────────────────────────── */}
-      <section id="features" style={{ background: "var(--cs-bg)", padding: "72px 0", borderTop: "1px solid var(--cs-border)", scrollMarginTop: 72 }}>
+      <section id="features" style={{ background: "var(--cs-bg)", padding: "96px 0", borderTop: "1px solid var(--cs-border)", scrollMarginTop: 72 }}>
         <div className="lnd-shell">
           <div style={{ textAlign: "center", marginBottom: 48 }}>
             <div style={{ display: "inline-block", background: EL, color: E, fontSize: 12, fontWeight: 600, padding: "6px 14px", borderRadius: 99, marginBottom: 14, letterSpacing: "0.02em", border: "1px solid rgba(5,150,105,0.2)" }}>Features</div>
@@ -456,7 +400,7 @@ export default function LandingPage() {
       </section>
 
       {/* ── PRICING ─────────────────────────────────────────────────────── */}
-      <section id="pricing" style={{ background: "#fff", padding: "80px 0", borderTop: "1px solid #e2e8f0", scrollMarginTop: 72 }}>
+      <section id="pricing" style={{ background: "#fff", padding: "96px 0", borderTop: "1px solid #e2e8f0", scrollMarginTop: 72 }}>
         <div className="lnd-shell" style={{ maxWidth: 900 }}>
           <div style={{ textAlign: "center", marginBottom: 52 }}>
             <div style={{ display: "inline-block", background: "#f4f4f5", color: "#18181b", fontSize: 12, fontWeight: 600, padding: "6px 14px", borderRadius: 99, marginBottom: 14, letterSpacing: "0.02em", border: "1px solid #e4e4e7" }}>Pricing</div>
@@ -504,46 +448,8 @@ export default function LandingPage() {
         </div>
       </section>
 
-      {/* ── TESTIMONIALS ────────────────────────────────────────────────── */}
-      <section style={{ background: "var(--cs-surface)", padding: "72px 0", borderTop: "1px solid var(--cs-border)" }}>
-        <div className="lnd-shell">
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            whileInView={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.8, delay: 0.1, ease: [0.16, 1, 0.3, 1] }}
-            viewport={{ once: true }}
-            style={{ display: "flex", flexDirection: "column", alignItems: "center", maxWidth: 540, margin: "0 auto 48px" }}
-          >
-            <div style={{ display: "inline-flex", alignItems: "center", gap: 6, background: VL, color: "var(--cs-accent)", fontSize: 12, fontWeight: 600, padding: "6px 14px", borderRadius: 99, marginBottom: 14, letterSpacing: "0.02em", border: "1px solid var(--cs-accent-ring)" }}>
-              Testimonials
-            </div>
-            <h2 style={{ fontSize: "clamp(26px, 4vw, 38px)", fontWeight: 800, color: "var(--cs-text)", margin: "0 0 12px", letterSpacing: "-0.03em", textAlign: "center" }}>
-              What our users say
-            </h2>
-            <p style={{ color: "var(--cs-text-secondary)", fontSize: 15, margin: 0, textAlign: "center", lineHeight: 1.6 }}>
-              Here's what founders have said after running ChurnQ.
-            </p>
-          </motion.div>
-
-          <div style={{
-            display: "flex",
-            justifyContent: "center",
-            gap: 24,
-            marginTop: 8,
-            maxHeight: 780,
-            overflow: "hidden",
-            WebkitMaskImage: "linear-gradient(to bottom, transparent, black 20%, black 80%, transparent)",
-            maskImage: "linear-gradient(to bottom, transparent, black 20%, black 80%, transparent)",
-          }}>
-            <TestimonialsColumn testimonials={firstColumn} duration={22} startIndex={0} />
-            <TestimonialsColumn testimonials={secondColumn} duration={28} startIndex={3} />
-            <TestimonialsColumn testimonials={thirdColumn} duration={25} startIndex={6} />
-          </div>
-        </div>
-      </section>
-
       {/* ── FAQ ─────────────────────────────────────────────────────────── */}
-      <section id="faq" style={{ background: "#fff", padding: "80px 0", borderTop: "1px solid #e2e8f0", scrollMarginTop: 72 }}>
+      <section id="faq" style={{ background: "#fff", padding: "96px 0", borderTop: "1px solid #e2e8f0", scrollMarginTop: 72 }}>
         <div className="lnd-shell" style={{ maxWidth: 760 }}>
           <div style={{ textAlign: "center", marginBottom: 52 }}>
             <div style={{ display: "inline-block", background: "#f4f4f5", color: "#18181b", fontSize: 12, fontWeight: 600, padding: "6px 14px", borderRadius: 99, marginBottom: 14, letterSpacing: "0.02em", border: "1px solid #e4e4e7" }}>FAQ</div>

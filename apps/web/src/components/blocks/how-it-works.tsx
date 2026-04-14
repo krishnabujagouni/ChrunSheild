@@ -53,7 +53,7 @@ const STEPS: Step[] = [
 
 export function HowItWorks() {
   return (
-    <section className="py-16 bg-white border-t border-[#e4e4e7]">
+    <section className="bg-white border-t border-[#e4e4e7]" style={{ padding: "96px 0" }}>
       <div className="lnd-shell">
         {/* header */}
         <div className="flex flex-col items-center gap-3 text-center mb-12">

@@ -4,7 +4,6 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { ArrowRightIcon } from "lucide-react";
 import { Mockup, MockupFrame } from "@/components/ui/mockup";
-import { Glow } from "@/components/ui/glow";
 import Image from "next/image";
 import { cn } from "@/lib/utils";
 
@@ -48,7 +47,7 @@ export function HeroSection({
       className={cn(
         "bg-background text-foreground",
         "py-12 sm:py-24 md:py-32 px-4",
-        "fade-bottom overflow-hidden pb-0",
+        "overflow-hidden pb-0",
       )}
     >
       <div className="mx-auto flex max-w-container flex-col gap-12 pt-16 sm:gap-24">
@@ -111,10 +110,6 @@ export function HeroSection({
                 </Mockup>
               </MockupFrame>
             ) : null}
-            <Glow
-              variant="top"
-              className="animate-appear-zoom opacity-0 delay-1000"
-            />
           </div>
         </div>
       </div>

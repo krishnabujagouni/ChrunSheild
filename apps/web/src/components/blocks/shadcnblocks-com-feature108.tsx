@@ -40,7 +40,7 @@ const Feature108 = ({
   if (!tabs.length) return null;
 
   return (
-    <section className="py-16 bg-white">
+    <section className="bg-white" style={{ padding: "96px 0" }}>
       <div className="lnd-shell">
         {(badge || heading || description) && (
           <div className="flex flex-col items-center gap-3 text-center mb-10">
