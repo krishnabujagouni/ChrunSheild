@@ -9,6 +9,7 @@ import { SlackConnectCard } from "@/app/dashboard/settings/slack-connect-card";
 import { DiscordConnectCard } from "@/app/dashboard/settings/discord-connect-card";
 import { WebhooksSection } from "./webhooks-section";
 import { ZapierMakeSection } from "./zapier-make-card";
+import { StripeProductTags } from "./stripe-product-tags";
 
 const row: CSSProperties = {
   display: "flex",
@@ -121,6 +122,7 @@ export default async function ConnectionsPage() {
             {tenant.stripeConnectId && (
               <div style={{ marginTop: 4 }}>
                 <ConnectedBadge />
+                <StripeProductTags />
               </div>
             )}
           </div>
