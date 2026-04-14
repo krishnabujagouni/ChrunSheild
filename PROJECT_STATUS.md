@@ -7,6 +7,28 @@
 
 **Read this block first** when picking up the repo; it summarizes implementation not obvious from file names alone.
 
+### Favicon + SEO + Google Search Console (April 13, 2026)
+
+#### Favicon
+- Files generated via **RealFaviconGenerator** and placed in `apps/web/public/favicon/`:
+  - `favicon.ico`, `favicon.svg`, `favicon-96x96.png`, `apple-touch-icon.png`
+  - `web-app-manifest-192x192.png`, `web-app-manifest-512x512.png`, `site.webmanifest`
+- `site.webmanifest` icon paths updated to `/favicon/` prefix (generator writes them as `/` by default which 404s when files are in a subfolder).
+- `apps/web/src/app/layout.tsx` `metadata.icons` updated to reference `/favicon/favicon-96x96.png`, `/favicon/favicon.svg`, `/favicon/favicon.ico`, `/favicon/apple-touch-icon.png`. `manifest` points to `/favicon/site.webmanifest`.
+- `apps/web/src/app/icon.svg` created (Next.js file convention) then superseded by the RealFaviconGenerator files.
+
+#### SEO — sitemap + robots
+- **`apps/web/src/app/sitemap.ts`**: expanded from 3 to 6 URLs. Added `/privacy`, `/terms`, `/cookie-policy` (yearly, priority 0.3) and `/sign-up` (monthly, priority 0.6). All use a static `LAST_UPDATED = new Date("2026-04-13")` instead of `new Date()` so `lastmod` doesn't change on every deploy.
+- **`apps/web/src/app/robots.ts`** (NEW): Next.js file-based robots. Allows all, disallows `/dashboard/`, declares `Sitemap: https://churnq.com/sitemap.xml`.
+- **`apps/web/src/middleware.ts`**: added `/sitemap.xml`, `/robots.txt`, `/privacy(.*)`, `/terms(.*)`, `/cookie-policy(.*)` to the `isPublic` matcher. Previously Clerk intercepted these routes and redirected to sign-in — Google was receiving an HTML login page instead of XML, causing "Invalid sitemap" error.
+
+#### Domain canonical + Google Search Console
+- Vercel domain config fixed: `churnq.com` is now **Production (primary)**, `www.churnq.com` → **307 redirect → churnq.com**. Previously it was backwards (non-www redirected to www while sitemap used non-www as canonical).
+- Sitemap submitted to Google Search Console under the **Domain property** `churnq.com` as full URL `https://churnq.com/sitemap.xml`. Status: accepted — Google will crawl periodically.
+- **Note for Domain property**: unlike URL-prefix properties, the Sitemaps field requires the full URL (`https://churnq.com/sitemap.xml`), not just the path (`sitemap.xml`).
+
+---
+
 ### Multi-product foundation + UX fixes (April 13, 2026)
 
 #### `stripe_product_id` on SaveSession
