@@ -253,10 +253,10 @@ export default function LandingPage() {
       {/* ── HERO ────────────────────────────────────────────────────────── */}
       <HeroSection
         badge={{
-          text: "Retention automation for SaaS",
+          text: "For SaaS founders losing subscribers",
         }}
         title="Stop losing revenue every time someone clicks cancel."
-        description="ChurnQ intercepts cancel intent with a calm AI conversation, recovers failed payments, and flags who's about to leave before they do. One script tag, zero subscriptions."
+        description="When someone clicks cancel, ChurnQ starts a conversation, figures out why they're leaving, and makes them an offer. It also chases failed payments and shows you who's at risk before they decide to leave. One script tag and it handles the rest."
         actions={[
           { text: "Start for free", href: "/sign-up", variant: "default" },
         ]}
@@ -296,24 +296,24 @@ export default function LandingPage() {
 {/* ── PRODUCT FEATURES (tabbed) ───────────────────────────────────── */}
       <div id="product" style={{ scrollMarginTop: 72 }}>
         <Feature108
-          heading="Everything you need to keep MRR in one place."
-          description="Saves, payment recovery, churn prediction, and feedback tied together instead of four disconnected tools."
+          heading="Cancel flows, payment recovery, and churn signals — in one place."
+          description="Instead of four separate tools that don't talk to each other, ChurnQ handles all of it."
           tabs={[
             {
               value: "cancel",
               icon: <HugeiconsIcon icon={BubbleChatIcon} size={16} strokeWidth={1.5} className="shrink-0" />,
               label: "Cancel flows",
               content: {
-                badge: "AI-powered",
-                title: "Turn cancellations into conversations  not dead ends.",
-                description: "Most cancel buttons fire a blunt form and lose the customer forever. ChurnQ intercepts the moment of intent with a calm, on-brand dialogue: understand the reason, offer what fits, and honour a clean exit when that's what they want.",
+                badge: "AI cancel flow",
+                title: "When someone clicks cancel, ChurnQ talks to them.",
+                description: "Most cancel flows are a dead-end form. ChurnQ opens a real conversation — asks why they're leaving, offers something that fits, and only lets them go if they really want to. You stay on-brand the whole time.",
                 bullets: [
-                  "AI-powered flows that adapt to price, missing features, seasonality, or competitor switches.",
-                  "You set guardrails: offer types, limits, segments, and tone  so it feels like your product.",
-                  "Full transcripts and outcomes in the dashboard for product, support, and growth.",
+                  "Adapts to the reason: price complaints, missing features, taking a break, or switching to a competitor.",
+                  "You set the limits — what it can offer, how deep a discount, which plans — so it never goes further than you want.",
+                  "Every conversation is logged so you can see exactly what's making people leave.",
                 ],
                 stat: "40%+",
-                statLabel: "Save rate commonly seen in assisted cancel sessions",
+                statLabel: "of cancel attempts end in a save",
                 buttonText: "See how it works",
                 buttonHref: "#features",
               },
@@ -323,16 +323,16 @@ export default function LandingPage() {
               icon: <HugeiconsIcon icon={CreditCardIcon} size={16} strokeWidth={1.5} className="shrink-0" />,
               label: "Payment recovery",
               content: {
-                badge: "Smart dunning",
-                title: "Recover failed payments before they become churn.",
-                description: "Involuntary churn from card failures is silent MRR leakage. ChurnQ generates contextual dunning for each failure type and uses intelligent retry windows so subscribers update billing without opening a ticket.",
+                badge: "Payment recovery",
+                title: "Chase failed payments automatically.",
+                description: "Cards fail for different reasons — expired, blocked by the bank, not enough funds. Most tools send one generic email and leave it. ChurnQ sends the right message for each failure type and retries at a sensible time.",
                 bullets: [
-                  "Copy tuned to insufficient funds, expired cards, and bank blocks  not one generic dunning blast.",
-                  "Retry cadences you can align with how your processor and product behave.",
-                  "Pending retries and recovered revenue sit beside voluntary saves in the same dashboard.",
+                  "Different email copy for expired cards, bank blocks, and insufficient funds — not one blast for all.",
+                  "Retry timing you can tune to match how your payment processor behaves.",
+                  "Recovered payments appear in the same dashboard as your saved subscribers.",
                 ],
                 stat: "35%",
-                statLabel: "Involuntary churn reduction teams report in early cohorts",
+                statLabel: "reduction in failed-payment churn",
                 buttonText: "See how it works",
                 buttonHref: "#features",
               },
@@ -343,15 +343,15 @@ export default function LandingPage() {
               label: "Churn prediction",
               content: {
                 badge: "Daily risk scores",
-                title: "See who is about to leave  before they click cancel.",
-                description: "Daily risk scores across subscribers make it obvious where to intervene: high-value accounts going quiet, usage cliffs, or payment friction. Optional alerts nudge your team while automation handles the cancel moment.",
+                title: "See who's about to leave before they hit cancel.",
+                description: "Every day, ChurnQ looks across your subscribers and flags the ones going quiet, dropping usage, or hitting payment friction. You see who's at risk with enough time to actually do something about it.",
                 bullets: [
-                  "Risk classes and scores refresh from behaviour you already track  no extra instrumentation.",
-                  "Prioritise outreach and roadmap bets on accounts that actually move MRR.",
-                  "Fits one narrative with saves and recovery instead of another siloed churn tool.",
+                  "Scores update from your existing data — no new tracking to add.",
+                  "Focus outreach on the accounts that actually move the needle.",
+                  "Lives in the same dashboard as your saves and recoveries — not a separate tool to check.",
                 ],
                 stat: "Days earlier",
-                statLabel: "Surface at-risk accounts before cancel intent spikes",
+                statLabel: "you'll spot at-risk accounts before they reach the cancel button",
                 buttonText: "See how it works",
                 buttonHref: "#features",
               },
@@ -362,15 +362,15 @@ export default function LandingPage() {
               label: "Feedback & AI analyst",
               content: {
                 badge: "Ask your data",
-                title: "Turn raw cancellations into product and growth decisions.",
-                description: "Weekly digests summarise themes across transcripts. Ask plain-English questions  which enterprise tier cites price most?  and get answers grounded in your tenant's data, not generic benchmarks.",
+                title: "Find out why people are really leaving.",
+                description: "ChurnQ reads through every cancellation conversation and pulls out the common threads. You get a weekly digest, and you can just ask it questions — 'why do annual users cancel?' — and it answers from your actual data.",
                 bullets: [
-                  "Emergent themes from real cancellation dialogue, not survey guesswork.",
-                  "AI analyst chat over your history  no SQL wall, no manual tagging backlog.",
-                  "Same vocabulary your cancel flows use, so insights match what people actually said.",
+                  "Themes come from real conversations, not surveys people rush through.",
+                  "Ask plain questions and get answers — no SQL, no manual tagging.",
+                  "The language matches what subscribers actually said, not a summarised version.",
                 ],
                 stat: "3×",
-                statLabel: "Faster loop from feedback signals to roadmap focus (team-reported)",
+                statLabel: "faster from 'why are people leaving?' to a product decision",
                 buttonText: "See how it works",
                 buttonHref: "#features",
               },
@@ -400,7 +400,7 @@ export default function LandingPage() {
               {
                 title: "AI Cancel Agent",
                 meta: "40%+ save rate",
-                description: "Aria  our AI retention agent  intercepts every cancel click. Detects the subscriber's reason and presents a personalised offer  discount, pause, or plan change  in seconds.",
+                description: "When someone clicks cancel, Aria starts a conversation — asks what's wrong, then makes a personalised offer before they go. Discount, pause, or plan change.",
                 icon: <HugeiconsIcon icon={BubbleChatIcon} size={16} strokeWidth={1.5} style={{ color: "#18181b" }} />,
                 status: "Core",
                 tags: ["Cancel flow", "Aria AI Agent", "Personalised"],
@@ -411,8 +411,8 @@ export default function LandingPage() {
               {
                 title: "Payment Recovery",
                 meta: "35% recovery",
-                description: "Contextual dunning for each failure type  expired cards, insufficient funds, bank blocks. Smart retry windows recover revenue silently.",
-                icon: <HugeiconsIcon icon={CreditCardIcon} size={16} strokeWidth={1.5} className="text-blue-500" />,
+                description: "Different emails for different card failures — expired, blocked, or short on funds. Smart retries recover most failed payments without the subscriber ever opening a ticket.",
+                icon: <HugeiconsIcon icon={CreditCardIcon} size={16} strokeWidth={1.5} style={{ color: "#18181b" }} />,
                 status: "Active",
                 tags: ["Dunning", "Smart retry"],
               },
@@ -420,7 +420,7 @@ export default function LandingPage() {
                 title: "Churn Prediction",
                 meta: "Daily scores",
                 description: "Risk scores refresh daily from usage signals. Surface at-risk accounts before they reach the cancel button.",
-                icon: <HugeiconsIcon icon={ChartLineData01Icon} size={16} strokeWidth={1.5} className="text-rose-500" />,
+                icon: <HugeiconsIcon icon={ChartLineData01Icon} size={16} strokeWidth={1.5} style={{ color: "#18181b" }} />,
                 status: "Daily",
                 tags: ["Risk scores", "Alerts"],
               },
@@ -428,7 +428,7 @@ export default function LandingPage() {
                 title: "Feedback Digest",
                 meta: "Weekly AI summary",
                 description: "Themes, complaints, and product signals extracted from real cancellation transcripts  delivered to your inbox every week.",
-                icon: <HugeiconsIcon icon={BarChartIcon} size={16} strokeWidth={1.5} className="text-amber-500" />,
+                icon: <HugeiconsIcon icon={BarChartIcon} size={16} strokeWidth={1.5} style={{ color: "#18181b" }} />,
                 status: "Weekly",
                 tags: ["Themes", "Product signal"],
                 colSpan: 2,
@@ -437,7 +437,7 @@ export default function LandingPage() {
                 title: "AI Feedback Chat",
                 meta: "Plain English",
                 description: "Ask 'Why do annual users cancel at month 11?' and get answers grounded in your actual transcript data  not generic benchmarks.",
-                icon: <HugeiconsIcon icon={Robot01Icon} size={16} strokeWidth={1.5} className="text-emerald-500" />,
+                icon: <HugeiconsIcon icon={Robot01Icon} size={16} strokeWidth={1.5} style={{ color: "#18181b" }} />,
                 status: "AI",
                 tags: ["Ask anything", "Your data"],
                 colSpan: 2,
@@ -445,7 +445,7 @@ export default function LandingPage() {
               {
                 title: "Full Customisation",
                 meta: "Your rules",
-                description: "Control offer types, discount percentages, duration, custom messages, and per-segment guardrails. It acts like your product, not a bolt-on.",
+                description: "Set exactly what Aria can offer: discount amounts, pause lengths, custom messages, and per-plan limits. It behaves like part of your product, not a third-party widget dropped in.",
                 icon: <HugeiconsIcon icon={Settings02Icon} size={16} strokeWidth={1.5} className="text-gray-400" />,
                 status: "Config",
                 tags: ["Guardrails", "Segments"],
@@ -521,7 +521,7 @@ export default function LandingPage() {
               What our users say
             </h2>
             <p style={{ color: "var(--cs-text-secondary)", fontSize: 15, margin: 0, textAlign: "center", lineHeight: 1.6 }}>
-              See how ChurnQ founders are saving MRR every single day.
+              Here's what founders have said after running ChurnQ.
             </p>
           </motion.div>
 
@@ -626,7 +626,7 @@ export default function LandingPage() {
 
       <ModemAnimatedFooter
         brandName="ChurnQ"
-        brandDescription="Stop losing revenue every time someone clicks cancel. AI-powered retention for SaaS founders  zero flat fee, pay only on results."
+        brandDescription="When someone clicks cancel, ChurnQ tries to save them. No monthly fee — we take 15% of what we actually save."
         socialLinks={[
           {
             icon: <HugeiconsIcon icon={Mail01Icon} size={20} strokeWidth={1.5} />,

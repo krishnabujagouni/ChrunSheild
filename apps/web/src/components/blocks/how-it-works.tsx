@@ -22,8 +22,8 @@ const STEPS: Step[] = [
   {
     step: "01",
     icon: SourceCodeIcon,
-    accentColor: "#6d28d9",
-    accentBg: "#f5f3ff",
+    accentColor: "#18181b",
+    accentBg: "#f4f4f5",
     title: "Add one script tag",
     description:
       "Drop a single JS snippet into your app. It auto-detects cancel buttons  no webhook wiring, no backend changes.",
@@ -32,11 +32,11 @@ const STEPS: Step[] = [
   {
     step: "02",
     icon: BubbleChatSparkIcon,
-    accentColor: "#2563eb",
-    accentBg: "#eff6ff",
+    accentColor: "#18181b",
+    accentBg: "#f4f4f5",
     title: "AI handles the cancel",
     description:
-      "Aria, our AI retention agent, opens a conversation, understands the subscriber's reason, and makes a personalised offer in seconds.",
+      "When someone hits cancel, Aria starts a chat, asks why they're leaving, and makes an offer that fits — all in a few seconds.",
     detail: "You set the guardrails: offer types, limits, tone.",
   },
   {
