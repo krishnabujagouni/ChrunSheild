@@ -4,7 +4,8 @@ export default function SignUpPage() {
   return (
     <div style={{
       display: "flex",
-      minHeight: "100vh",
+      height: "100vh",
+      overflow: "hidden",
       fontFamily: "var(--font-inter, system-ui, sans-serif)",
     }}>
       {/* Left branding panel */}
@@ -74,9 +75,10 @@ export default function SignUpPage() {
         display: "flex",
         flexDirection: "column",
         alignItems: "center",
-        justifyContent: "center",
+        justifyContent: "flex-start",
         padding: "48px 24px",
         background: "#fafafa",
+        overflowY: "auto",
       }}>
         <div style={{ width: "100%", maxWidth: 400 }}>
           <div style={{ marginBottom: 32, textAlign: "center" }}>

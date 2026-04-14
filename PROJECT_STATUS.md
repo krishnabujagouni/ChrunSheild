@@ -1,11 +1,25 @@
 # ChurnQ  Project Status
-*Last updated: April 8, 2026 (Production deployment  Vercel + Railway)*
+*Last updated: April 12, 2026*
 
 ---
 
 ## For future sessions  what changed recently
 
 **Read this block first** when picking up the repo; it summarizes implementation not obvious from file names alone.
+
+### Stripe offer application fix (April 12, 2026)
+
+**Problem:** Cancel flow saved sessions correctly but the coupon/discount was never applied in Stripe. Vercel logs showed `No such subscription: 'sub_...'`.
+
+**Root cause:** The tenant's `stripeConnectId` in the DB was `acct_1TLFiwEKemBKJ0NJ` but the test subscription lived on `acct_1TG6OH1o8oT6sd4n`. The wrong Stripe account was connected via OAuth.
+
+**Fix:** Merchant went to Dashboard → Connections → disconnected Stripe → reconnected with the correct account (`acct_1TG6OH1o8oT6sd4n`). After reconnect, `applyStripeOffer` in `cancel-outcome/route.ts` correctly retrieved and updated the subscription on the right account. Coupon `ChurnQ_ret_10p_3m` applied successfully (`stripeApplied: true`).
+
+**Key rule for future debugging:** If `applyStripeOffer` logs `resource_missing` for a subscription, the `stripeConnectId` on the tenant does not match the Stripe account where the subscription lives. Fix = reconnect Stripe via OAuth with the correct account. The account ID is usually embedded in subscription resource IDs (e.g. `sub_1TJLOS1o8oT6sd4n` → owner account `acct_1TG6OH1o8oT6sd4n`).
+
+**Debugging approach used:** Added temporary `console.log` to `cancel-outcome/route.ts` logging `offerType`, `resolvedSource`, `stripeConnectId`, `stripeSubscriptionId`, `stripeApplied`, `stripeDetail`. Removed after confirming fix. Vercel function logs showed the mismatch immediately.
+
+---
 
 ### Monthly billing model + Billing dashboard + docs (April 7–8, 2026)
 
@@ -41,10 +55,12 @@
 ### Production Deployment (April 7, 2026)
 
 #### URLs
-- **Web (Vercel)**: `https://chrunsheild.vercel.app`
+- **Web (Vercel)**: `https://app.churnq.com` (also `https://chrunsheild.vercel.app`)
 - **Agents (Railway)**: `https://chrunsheild-production.up.railway.app`
 - **Health check**: `https://chrunsheild-production.up.railway.app/health`
-discord devloper : krishnabujagouni@gmail.com
+- **Docs**: `https://docs.churnq.com` (Mintlify, connected to `churndocs` GitHub repo)
+- **Marketing**: `https://churnq.com`
+- **Discord developer**: krishnabujagouni@gmail.com
 #### Vercel (Next.js web app)
 - Root directory: `apps/web`
 - All env vars set in Vercel dashboard (Production + Preview + Development)
