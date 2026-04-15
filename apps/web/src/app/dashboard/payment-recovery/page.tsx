@@ -89,7 +89,6 @@ export default async function PaymentRecoveryPage() {
   if (!tenant) redirect("/dashboard");
 
   const { rows, kpis } = await getRecoveryData(tenant.id);
-  const total = rows.length;
 
   return (
     <div style={{ width: "100%" }}>
@@ -107,7 +106,7 @@ export default async function PaymentRecoveryPage() {
       <div style={{ display: "flex", gap: 14, flexWrap: "wrap", marginBottom: 28 }}>
         <KpiCard
           label="Total tracked"
-          value={total}
+          value={rows.length}
           sub="failed invoices handled"
         />
         <KpiCard
@@ -130,27 +129,7 @@ export default async function PaymentRecoveryPage() {
         />
       </div>
 
-      {total === 0 ? (
-        <div style={{
-          background: "var(--cs-surface, #fff)",
-          border: "1px solid var(--cs-border, #e4e4e7)",
-          borderRadius: 14,
-          padding: "48px 32px",
-          textAlign: "center",
-          color: "var(--cs-text-muted, #71717a)",
-        }}>
-          <div style={{ fontSize: 32, marginBottom: 12 }}>✓</div>
-          <div style={{ fontWeight: 600, fontSize: 15, color: "var(--cs-text, #18181b)", marginBottom: 4 }}>
-            All clear  no failed payments
-          </div>
-          <div style={{ fontSize: 13 }}>
-            If a subscriber&apos;s payment fails, it&apos;ll show up here and ChurnQ will
-            start retrying automatically.
-          </div>
-        </div>
-      ) : (
-        <RecoveryTable rows={rows} />
-      )}
+      <RecoveryTable rows={rows} />
     </div>
   );
 }
