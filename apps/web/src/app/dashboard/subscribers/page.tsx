@@ -3,6 +3,7 @@ import { redirect } from "next/navigation";
 import { prisma } from "@/lib/db";
 import { fetchLatestEmailBySubscriberId } from "@/lib/save-session-emails";
 import { ExportSubscribersButton } from "./export-button";
+import { RunPredictionButton } from "./run-prediction-button";
 import { SubscribersTable, type SubscriberRow } from "./subscribers-table";
 
 export default async function SubscribersPage() {
@@ -102,7 +103,10 @@ export default async function SubscribersPage() {
             Churn scores from the daily job · {predictions.length} scored · {mergedIds.length} with cancel activity
           </p>
         </div>
-        <ExportSubscribersButton />
+        <div style={{ display: "flex", gap: 8 }}>
+          <RunPredictionButton />
+          <ExportSubscribersButton />
+        </div>
       </div>
 
       <SubscribersTable rows={tableRows} />
