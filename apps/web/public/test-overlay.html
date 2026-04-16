@@ -91,11 +91,6 @@
     Cancel subscription
   </button>
 
-  <div class="note" id="test-note">
-    Open <code>test-overlay.html</code> in the editor and set <code>USE_REAL_APIS</code> + <code>TEST_CONFIG</code>. With real APIs: run <code>npm run dev</code>, open this page, complete chat, then tap <strong>Keep my subscription</strong>. Verify rows in Supabase → <code>save_sessions</code>.
-    <br /><br />
-    <strong>Downgrade test:</strong> In Dashboard → Settings, enable <em>Allow plan downgrade</em> and add plans (e.g. Starter $29, Growth $49, Pro $99). Set <code>planName</code> + <code>subscriptionMrr</code> here to the <em>current</em> tier (e.g. Pro / 99). Say you want something cheaper  Aria should mention only cheaper tiers. Stripe product prices are separate; ChurnQ does not auto-switch the subscription to another price yet.
-  </div>
 </div>
 
 <!-- ── Test config ───────────────────────────────────────────────────────────── -->
@@ -106,9 +101,9 @@
   var TEST_CONFIG = {
     /** App ID  Settings → Embed (data-app-id). */
     embedAppId:       "cs_app_9atqi15uqfbvpxsk",
-    snippetKey:       "cs_live_skgnj0eud3ia8bm2yjcsaj39", // data-key (same workspace as embedAppId)
+    snippetKey:       "cs_live_skgnj0eud3ia8bm2yjcsaj39", // leave empty  falls back to embedAppId
     /** Same secret as ChurnQ_EMBED_SECRET / last rotated secret in Settings (DEV ONLY  never ship). */
-    embedSecret:      "",
+    embedSecret:      "db74c24b33b440438fb00d87c83a5a1379e23bdbdc5eb3ff5235f4aef98fb1f8",
     subscriberId:     "cus_UJtc6HWaLaMfmE",              // Must be cus_... on the connected account
     subscriptionId:   "sub_1TLFqA1o8oT6sd4now6Qbcam",                 // Real sub_... from Stripe (optional but recommended)
     subscriberEmail:  "test.customer@example.com",      // Dashboard shows this instead of cus_...
@@ -150,19 +145,9 @@
       // Option A: raw secret in TEST_CONFIG (DEV only  never ship to production)
       var sec = TEST_CONFIG.embedSecret;
       opts.getAuthHash = function (cus) { return ChurnQLocalAuthHash(sec, cus); };
-    } else if (USE_REAL_APIS) {
-      // Option B: dev signing endpoint (no secret needed in HTML  localhost only)
-      var key = TEST_CONFIG.snippetKey || TEST_CONFIG.embedAppId;
-      opts.getAuthHash = function (cus) {
-        return fetch("/api/dashboard/dev/auth-hash", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ subscriberId: cus, snippetKey: key }),
-        })
-          .then(function (r) { return r.json(); })
-          .then(function (j) { return j.authHash || null; });
-      };
     }
+    // No getAuthHash when embedSecret is empty  works as long as embed secret is not activated
+    // in Settings. Activate it + set embedSecret here only when locking down the embed.
     return opts;
   }
 </script>
