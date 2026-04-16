@@ -188,8 +188,8 @@ async def _schedule_retries(
             """
             INSERT INTO payment_retries
                 (id, tenant_id, stripe_event_id, invoice_id, customer_id, customer_email,
-                 failure_class, delay_hours, next_retry_at, max_attempts)
-            VALUES ($1::uuid, $2::uuid, $3, $4, $5, $6, $7, $8::integer[], $9, $10)
+                 failure_class, delay_hours, next_retry_at, max_attempts, updated_at)
+            VALUES ($1::uuid, $2::uuid, $3, $4, $5, $6, $7, $8::integer[], $9, $10, NOW())
             ON CONFLICT (stripe_event_id) DO NOTHING
             """,
             str(_uuid.uuid4()),
